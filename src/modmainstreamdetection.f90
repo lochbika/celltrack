@@ -118,7 +118,7 @@ module mainstreamdetection
           end if
         end do
         nquit=tp
-        ! calculate the step of peakVAL for all connections and initialize eta
+        ! calculate the step of peakVAL and clarea for all connections and initialize eta
         allocate(eta(maxconlen))
         eta=-1
         do k=1,maxconlen
