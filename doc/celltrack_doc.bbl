@@ -1,0 +1,20 @@
+\begin{thebibliography}{}
+
+\bibitem[Dorigo, 1992]{Dor1992:thesis}
+Dorigo, M. (1992).
+\newblock {\em Optimization, Learning and Natural Algorithms (in {I}talian)}.
+\newblock PhD thesis, Dipartimento di Elettronica, Politecnico di Milano,
+  Milan, Italy.
+
+\bibitem[Dorigo and St\"{u}tzle, 2004]{DorSta2004:book}
+Dorigo, M. and St\"{u}tzle, T. (2004).
+\newblock {\em Ant Colony Optimization}.
+\newblock MIT Press, Cambridge, MA.
+
+\bibitem[Moseley et~al., 2013]{moseley2013}
+Moseley, C., Berg, P., and Haerter, J.~O. (2013).
+\newblock Probing the precipitation life cycle by iterative rain cell tracking.
+\newblock {\em Journal of Geophysical Research: Atmospheres},
+  118(24):13,361--13,370.
+
+\end{thebibliography}
