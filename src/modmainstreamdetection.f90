@@ -118,6 +118,13 @@ module mainstreamdetection
           end if
         end do
         nquit=tp
+        ! if not set, set the number of ants equal to the number of connections
+        if(nants.eq.-1)then
+          do k=1,maxconlen
+            if(allcon(i,k,1)==-1)exit
+            nants=k
+          end do
+        end if
         ! calculate the step of peakVAL and clarea for all connections and initialize eta
         allocate(eta(maxconlen))
         eta=-1

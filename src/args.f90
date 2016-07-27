@@ -33,7 +33,7 @@ subroutine cliarguments
   ifile=""
   ivar=0
   levelID=0
-  nants=15
+  nants=-1
   nruns=300
   lout=.false.
   pherevap=0.5D0
