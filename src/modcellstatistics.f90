@@ -1,10 +1,10 @@
 !-------------------------------------------------------------------------------------------
-!  ######  ######## ##       ##       ######## ########     ###     ######  ##    ## 
-! ##    ## ##       ##       ##          ##    ##     ##   ## ##   ##    ## ##   ##  
-! ##       ##       ##       ##          ##    ##     ##  ##   ##  ##       ##  ##   
-! ##       ######   ##       ##          ##    ########  ##     ## ##       #####    
-! ##       ##       ##       ##          ##    ##   ##   ######### ##       ##  ##   
-! ##    ## ##       ##       ##          ##    ##    ##  ##     ## ##    ## ##   ##  
+!  ######  ######## ##       ##       ######## ########     ###     ######  ##    ##
+! ##    ## ##       ##       ##          ##    ##     ##   ## ##   ##    ## ##   ##
+! ##       ##       ##       ##          ##    ##     ##  ##   ##  ##       ##  ##
+! ##       ######   ##       ##          ##    ########  ##     ## ##       #####
+! ##       ##       ##       ##          ##    ##   ##   ######### ##       ##  ##
+! ##    ## ##       ##       ##          ##    ##    ##  ##     ## ##    ## ##   ##
 !  ######  ######## ######## ########    ##    ##     ## ##     ##  ######  ##    ##
 !-------------------------------------------------------------------------------------------
 ! This file is part of celltrack
@@ -32,11 +32,8 @@ module cellstatistics
       real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! array for doing the clustering
 
-      real(kind=8) :: wsum
-      real(kind=8), allocatable :: clgrdc(:,:),wclgrdc(:,:)
+      real(kind=8), allocatable :: wsum(:)
 
-      logical, allocatable :: mask1d(:)
-      
       write(*,*)"======================================="
       write(*,*)"=========== CELL STATISTICS ==========="
       write(*,*)"======================================="
@@ -99,7 +96,7 @@ module cellstatistics
         ! assign time steps
         do i=1,nx*ny
           if(dat(i).ne.-999.D0)then
-            if(tsclID(INT(dat(i))).ne.-1)tsclID(INT(dat(i)))=tsID+1
+            tsclID(INT(dat(i)))=tsID+1
             if(verbose)write(*,*)"cluster: ",clIDs(INT(dat(i)))," is at timestep: ",tsclID(INT(dat(i)))
           end if
         end do
@@ -140,95 +137,78 @@ module cellstatistics
       taxisID2=vlistInqTaxis(vlistID2)
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
 
+      ! arrays for cell statistics
       allocate(clarea(globnIDs))
-      allocate(wclarea(globnIDs))
       allocate(touchb(globnIDs))
-      touchb=.false.
       allocate(clcmass(globnIDs,2))
       allocate(wclcmass(globnIDs,2))
       allocate(clavint(globnIDs))
       allocate(clpint(globnIDs))
+      allocate(wsum(globnIDs))
+      clarea=0
+      touchb=.false.
       clavint=0
       clpint=0
-
-
-      do i=1,globnIDs
-        if(MOD(i,outstep*5)==0 .OR. i==1 .OR. i==globnIDs)then
-          write(*,*)"Processing cell: ",i,"/",globnIDs,"..."
+      wsum=0
+      clcmass=0
+      wclcmass=0
+    
+      do tsID=0,(ntp-1)
+        if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1)then
+          write(*,*)"Processing timestep: ",tsID+1,"/",ntp,"..."
         end if
-
-        ! Allocate arrays for data storage
-        allocate(dat(nx*ny))
-        allocate(pdat(nx*ny))
-        ! Allocate array for masking
-        allocate(mask1d(nx*ny))
-        mask1d=.false.
-
-        ! set timestep according to cluster
-        tsID=tsclID(i)-1
-
-        ! get cluster ID
-        clID=clIDs(i)
 
         ! Set time step for input file
         status=streamInqTimestep(streamID1,tsID)
         status=streamInqTimestep(streamID2,tsID)
 
+        ! Allocate arrays for data storage
+        allocate(dat(nx*ny))
+        allocate(pdat(nx*ny))
+
         ! Read time step from input
         call streamReadVar(streamID1,varID1,dat,nmiss2)
         call streamReadVarSlice(streamID2,varID2,levelID,pdat,nmiss2)
 
-        ! mask gridpoints with this cluster
-        do k=1,nx*ny
-          if(dat(k)==clID)mask1d(k)=.true.
-        end do
-
-        ! now calc area of this cluster
-        clarea(i)=SUM(dat,MASK=mask1d)/clID
-        if(verbose)write(*,*)"cluster: ",clID," has area: ",clarea(i)
-
-        !reashape to 2d for center of mass calculation
+        !reashape to 2d; better for center of mass calculation
         allocate(dat2d(nx,ny),pdat2d(nx,ny))
         CALL reshapeT2d(dat,nx,ny,dat2d)
         CALL reshapeT2d(pdat,nx,ny,pdat2d)
         deallocate(dat,pdat)
 
-        ! allocate coordinates array
-        allocate(clgrdc(clarea(i),2))
-        allocate(wclgrdc(clarea(i),2))
-
         ! now loop dat2d and check if gridpoints belong to cluster
-        tp=1
-        k=-1
-        wsum=0
         do y=1,ny
           do x=1,nx
-            if(dat2d(x,y)==clID)then
-              if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny)touchb(i)=.true.
-              clgrdc(tp,1)=x
-              clgrdc(tp,2)=y
-              wclgrdc(tp,1)=x*pdat2d(x,y)
-              wclgrdc(tp,2)=y*pdat2d(x,y)
-              wsum=wsum+pdat2d(x,y)
-              if(clpint(i)<pdat2d(x,y))clpint(i)=pdat2d(x,y)
-              clavint(i)=clavint(i)+pdat2d(x,y)
-              tp=tp+1
-              k=0
-            else
-              if(k>-1)k=k+1
+            if(dat2d(x,y).ne.-999.D0)then
+              if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny)touchb(INT(dat2d(x,y))) = .true.
+              ! cell area
+              clarea(INT(dat2d(x,y))) = clarea(INT(dat2d(x,y))) + 1
+              ! average intensity
+              clavint(INT(dat2d(x,y))) = clavint(INT(dat2d(x,y))) + pdat2d(x,y)
+              ! peak intensity
+              if(clpint(INT(dat2d(x,y)))<pdat2d(x,y))clpint(INT(dat2d(x,y))) = pdat2d(x,y)
+              ! centers of masses
+              clcmass(INT(dat2d(x,y)),1) = clcmass(INT(dat2d(x,y)),1) + x
+              clcmass(INT(dat2d(x,y)),2) = clcmass(INT(dat2d(x,y)),2) + y
+              wclcmass(INT(dat2d(x,y)),1) = wclcmass(INT(dat2d(x,y)),1) + x * pdat2d(x,y)
+              wclcmass(INT(dat2d(x,y)),2) = wclcmass(INT(dat2d(x,y)),2) + y * pdat2d(x,y)
+              wsum(INT(dat2d(x,y))) = wsum(INT(dat2d(x,y))) + pdat2d(x,y)
             end if
           end do
-          if(k>2*nx)exit
         end do
+        deallocate(dat2d,pdat2d)
+      end do
+      
+      ! divide by area
+      do i=1,globnIDs
+        ! average intensity
         clavint(i)=clavint(i)/clarea(i)
-        clcmass(i,1)=SUM(clgrdc(:,1))/clarea(i)
-        clcmass(i,2)=SUM(clgrdc(:,2))/clarea(i)
-        wclcmass(i,1)=SUM(wclgrdc(:,1))/wsum
-        wclcmass(i,2)=SUM(wclgrdc(:,2))/wsum
-        if(verbose)write(*,*)"cluster: ",clID," has center of mass at: ",clcmass(i,:)
-
-        deallocate(mask1d,clgrdc,wclgrdc,dat2d,pdat2d)
-
+        ! center of mass
+        clcmass(i,1)=clcmass(i,1)/clarea(i)
+        clcmass(i,2)=clcmass(i,2)/clarea(i)
+        ! weighted center of mass
+        wclcmass(i,1)=wclcmass(i,1)/wsum(i)
+        wclcmass(i,2)=wclcmass(i,2)/wsum(i)
       end do
 
       CALL streamClose(streamID1)
@@ -261,7 +241,7 @@ module cellstatistics
           & wclcmass(i,:),clpint(i),clavint(i),touchb(i)
       end do
       close(unit=1)
-      
+
       write(*,*)"======================================="
       write(*,*)"========= FINISHED STATISTICS ========="
       write(*,*)"======================================="
