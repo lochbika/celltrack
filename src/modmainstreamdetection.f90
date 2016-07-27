@@ -126,6 +126,7 @@ module mainstreamdetection
             if(allcon(i,k,1)==-1)exit
             nants=k
           end do
+          if(nants<5)nants=5
           if(verbose)write(*,*)"--- number of ants: ",nants
         else
           resetnants=.false.
@@ -141,17 +142,17 @@ module mainstreamdetection
             intsum=clpint(alltracks(allcon(i,k,1),j))
             areasum=clarea(alltracks(allcon(i,k,1),j))
           end do
-          intsum=sqrt( ( intsum - clpint(alltracks(allcon(i,k,2),1)) )**2 )
-          areasum=sqrt( ( areasum - clarea(alltracks(allcon(i,k,2),1)) )**2 )
+          intsum=sqrt( ( intsum - clpint(alltracks(allcon(i,k,2),1)) )**2 ) /intsum
+          areasum=sqrt( ( areasum - clarea(alltracks(allcon(i,k,2),1)) )**2 ) / areasum
           eta(k)=intsum + areasum
         end do
         ! initialize the pheromone tracks
         allocate(pher(maxconlen))
+        pher=-1
         allocate(paths(nants,maxconlen*2))
         ! do this 10 times to determine more trustworthy initial pheromone values
         isum=0 ! total average cost value
-        do n=1,10
-          pher=-1
+        do n=1,nants
           paths=-1
           ! use a random init and do a nn track; temporarely use paths to store it
           CALL RANDOM_NUMBER(rnum)
@@ -177,7 +178,7 @@ module mainstreamdetection
           isum=isum+wsum
         end do
         ! average isum and save in wsum
-        wsum=isum/10
+        wsum=isum/nants
         ! reset paths
         paths=-1
         ! update the pheromone trails with
@@ -400,7 +401,7 @@ module mainstreamdetection
     subroutine nnPath(init,cons,ncons,lens,path)
       !! if lens contains differences this algorithm will find a nearest neighbour path
       !! if lens contains absolute values this is a local minimum cost algorithm
-      
+
       implicit none
 
       integer,intent(out) :: path(ncons*2)
