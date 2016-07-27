@@ -96,7 +96,7 @@ module cellstatistics
         ! assign time steps
         do i=1,nx*ny
           if(dat(i).ne.-999.D0)then
-            tsclID(INT(dat(i)))=tsID+1
+            if(tsclID(INT(dat(i)))==-1)tsclID(INT(dat(i)))=tsID+1
             if(verbose)write(*,*)"cluster: ",clIDs(INT(dat(i)))," is at timestep: ",tsclID(INT(dat(i)))
           end if
         end do
@@ -137,7 +137,7 @@ module cellstatistics
       taxisID2=vlistInqTaxis(vlistID2)
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
 
-      ! arrays for cell statistics
+      ! allocater and initialize arrays for cell statistics
       allocate(clarea(globnIDs))
       allocate(touchb(globnIDs))
       allocate(clcmass(globnIDs,2))
@@ -152,13 +152,13 @@ module cellstatistics
       wsum=0
       clcmass=0
       wclcmass=0
-    
+
       do tsID=0,(ntp-1)
         if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1)then
           write(*,*)"Processing timestep: ",tsID+1,"/",ntp,"..."
         end if
 
-        ! Set time step for input file
+        ! Set time step for input files
         status=streamInqTimestep(streamID1,tsID)
         status=streamInqTimestep(streamID2,tsID)
 
@@ -176,7 +176,7 @@ module cellstatistics
         CALL reshapeT2d(pdat,nx,ny,pdat2d)
         deallocate(dat,pdat)
 
-        ! now loop dat2d and check if gridpoints belong to cluster
+        ! now loop dat2d
         do y=1,ny
           do x=1,nx
             if(dat2d(x,y).ne.-999.D0)then
@@ -198,7 +198,7 @@ module cellstatistics
         end do
         deallocate(dat2d,pdat2d)
       end do
-      
+
       ! divide by area
       do i=1,globnIDs
         ! average intensity
