@@ -104,7 +104,7 @@ A very simple example for a construction graph of a meta track is depicted in fi
 	\item tr1 - tr3 - tr4	
 	\item tr1 - tr3 - tr5.
 \end{enumerate}
-To rank these candidate solutions by quality, celltrack calculates the average cost of a path by $\overline{C}=\frac{1}{m}\sum_{k=1}^{m}{c_{ij}^k}$ with the number of nodes in this path ($m$) and the difference in peak intensities ($c_{ij}^k$) between the last cell of track $i$ and first cell of track $j$ at the $k\textendash th$ node of this path. This defines the mainstream as the one path of arbitrary length (time/tracks) with the on average smoothest transitions between connected tracks. Concerning the example in figure \ref{meta_track_con}a it is fairly easy to compute the cost for all paths and detect the one with the lowest cost value as mainstream. But, switching to the example in figure \ref{meta_track_con}b makes things more complicated. Although only two tracks were added to the construction graph, the number of candidate solutions increases from three to eight. But still, it is feasible to compute all solutions and chose the best. However, the assumption is that the number of possible solutions increases exponentially with the complexity of a meta track. Thus, it is necessary to introduce an optimization algorithm. ACO algorithms can reduce the computation time to find a reasonable solution to combinatorial problems. celltrack incorporates a simplified version of an ACO algorithm \citep{DorSta2004:book} to find a mainstream of a meta track at low computational cost. It consists of the following steps
+To rank these candidate solutions by quality, celltrack calculates the average cost of a path by $\overline{C}=\frac{1}{m}\sum_{k=1}^{m}{c_{ij}^k}$ where $m$ is the number of nodes in this path and $c_{ij}^k=|A_i-A_j| + |P_i-P_j|$. $A$ and $P$ are area and peak intensity of the last cell of track $i$ and first cell of track $j$ at the $k\textendash th$ node of this path. Concerning the example in figure \ref{meta_track_con}a it is fairly easy to compute the cost for all paths and detect the one with the lowest cost value as mainstream. But, switching to the example in figure \ref{meta_track_con}b makes things more complicated. Although only two tracks were added to the construction graph, the number of candidate solutions increases from three to eight. But still, it is feasible to compute all solutions and chose the best. However, the assumption is that the number of possible solutions increases exponentially with the complexity of a meta track. Thus, it is necessary to introduce an optimization algorithm. ACO algorithms can reduce the computation time to find a reasonable solution to combinatorial problems. celltrack incorporates a simplified version of an ACO algorithm \citep{DorSta2004:book} to find a mainstream of a meta track at low computational cost. It consists of the following steps
 \begin{enumerate}
 	\item initialize the pheromone values of all arcs by $\tau_{ij}=m/\overline{C^{nn}}$, where $\overline{C^{nn}}$ is the cost value of a nearest-neighbor path of length $m$ (number of nodes) starting at a random initiation point
 	\item a certain number of artificial ants construct candidate solutions
@@ -196,9 +196,9 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
 	\item[-var] NetCDF/grib variable ID. Default is 0.
 	\item[-lev] NetCDF/grib level ID. Default is 0 i.e. the first variable.
 	\item[-thres] All grid points with values greater than this are considered. Default is 0.
-	\item[-nants] Number of agents for mainstream detection. Default is 15.
+	\item[-nants] Number of ants for mainstream detection. Default value is the number of nodes of a meta track.
 	\item[-nruns] Number of iterations for mainstream detection. Default is 300.
-	\item[-rho] Pheromone evaporation. Default is 0.5.
+	\item[-rho] Pheromone evaporation rate. Default is 0.5.
 	\item[-rseed] If set, the random number generator will use this seed.
 	\item[-o] Output file name. Default is 'cells.nc'.
     \item[-lout] Write the truncated logical links matrix to file cell\_links.txt.
