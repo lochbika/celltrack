@@ -30,6 +30,7 @@ module mainstreamdetection
       integer, allocatable :: paths(:,:),qicon(:,:)
       real(kind=8),allocatable :: eta(:),pher(:)
       logical,allocatable :: backw(:)
+      logical :: resetnants
       character(len=800) :: ttrack
       real(kind=8) :: wsum,isum,areasum,intsum
 
@@ -120,10 +121,14 @@ module mainstreamdetection
         nquit=tp
         ! if not set, set the number of ants equal to the number of connections
         if(nants.eq.-1)then
+          resetnants=.true.
           do k=1,maxconlen
             if(allcon(i,k,1)==-1)exit
             nants=k
           end do
+          if(verbose)write(*,*)"--- number of ants: ",nants
+        else
+          resetnants=.false.
         end if
         ! calculate the step of peakVAL and clarea for all connections and initialize eta
         allocate(eta(maxconlen))
@@ -296,6 +301,7 @@ module mainstreamdetection
         end do
 
         deallocate(init,quit,eta,pher,paths)
+        if(resetnants)nants=-1
       end do
       close(unit=1)
 
