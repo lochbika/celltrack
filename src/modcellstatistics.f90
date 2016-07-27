@@ -137,7 +137,7 @@ module cellstatistics
       taxisID2=vlistInqTaxis(vlistID2)
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
 
-      ! allocater and initialize arrays for cell statistics
+      ! allocate and initialize arrays for cell statistics
       allocate(clarea(globnIDs))
       allocate(touchb(globnIDs))
       allocate(clcmass(globnIDs,2))
@@ -158,6 +158,9 @@ module cellstatistics
           write(*,*)"Processing timestep: ",tsID+1,"/",ntp,"..."
         end if
 
+        ! cycle if there are no cells in this time step
+        if(.NOT.ANY(tsclID==tsID+1))cycle
+
         ! Set time step for input files
         status=streamInqTimestep(streamID1,tsID)
         status=streamInqTimestep(streamID2,tsID)
@@ -170,30 +173,29 @@ module cellstatistics
         call streamReadVar(streamID1,varID1,dat,nmiss2)
         call streamReadVarSlice(streamID2,varID2,levelID,pdat,nmiss2)
 
-        !reashape to 2d; better for center of mass calculation
+        ! reashape to 2d; better for center of mass calculation
         allocate(dat2d(nx,ny),pdat2d(nx,ny))
         CALL reshapeT2d(dat,nx,ny,dat2d)
         CALL reshapeT2d(pdat,nx,ny,pdat2d)
         deallocate(dat,pdat)
 
-        ! now loop dat2d
+        ! now loop dat2d and calculate statistics
         do y=1,ny
           do x=1,nx
-            if(dat2d(x,y).ne.-999.D0)then
-              if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny)touchb(INT(dat2d(x,y))) = .true.
-              ! cell area
-              clarea(INT(dat2d(x,y))) = clarea(INT(dat2d(x,y))) + 1
-              ! average intensity
-              clavint(INT(dat2d(x,y))) = clavint(INT(dat2d(x,y))) + pdat2d(x,y)
-              ! peak intensity
-              if(clpint(INT(dat2d(x,y)))<pdat2d(x,y))clpint(INT(dat2d(x,y))) = pdat2d(x,y)
-              ! centers of masses
-              clcmass(INT(dat2d(x,y)),1) = clcmass(INT(dat2d(x,y)),1) + x
-              clcmass(INT(dat2d(x,y)),2) = clcmass(INT(dat2d(x,y)),2) + y
-              wclcmass(INT(dat2d(x,y)),1) = wclcmass(INT(dat2d(x,y)),1) + x * pdat2d(x,y)
-              wclcmass(INT(dat2d(x,y)),2) = wclcmass(INT(dat2d(x,y)),2) + y * pdat2d(x,y)
-              wsum(INT(dat2d(x,y))) = wsum(INT(dat2d(x,y))) + pdat2d(x,y)
-            end if
+            if(dat2d(x,y)==-999.D0)cycle
+            if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny)touchb(INT(dat2d(x,y))) = .true.
+            ! cell area
+            clarea(INT(dat2d(x,y))) = clarea(INT(dat2d(x,y))) + 1
+            ! average intensity
+            clavint(INT(dat2d(x,y))) = clavint(INT(dat2d(x,y))) + pdat2d(x,y)
+            ! peak intensity
+            if(clpint(INT(dat2d(x,y)))<pdat2d(x,y))clpint(INT(dat2d(x,y))) = pdat2d(x,y)
+            ! centers of masses
+            clcmass(INT(dat2d(x,y)),1) = clcmass(INT(dat2d(x,y)),1) + x
+            clcmass(INT(dat2d(x,y)),2) = clcmass(INT(dat2d(x,y)),2) + y
+            wclcmass(INT(dat2d(x,y)),1) = wclcmass(INT(dat2d(x,y)),1) + x * pdat2d(x,y)
+            wclcmass(INT(dat2d(x,y)),2) = wclcmass(INT(dat2d(x,y)),2) + y * pdat2d(x,y)
+            wsum(INT(dat2d(x,y))) = wsum(INT(dat2d(x,y))) + pdat2d(x,y)
           end do
         end do
         deallocate(dat2d,pdat2d)
