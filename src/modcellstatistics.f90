@@ -99,7 +99,7 @@ module cellstatistics
         ! assign time steps
         do i=1,nx*ny
           if(dat(i).ne.-999.D0)then
-            tsclID(INT(dat(i)))=tsID+1
+            if(tsclID(INT(dat(i))).ne.-1)tsclID(INT(dat(i)))=tsID+1
             if(verbose)write(*,*)"cluster: ",clIDs(INT(dat(i)))," is at timestep: ",tsclID(INT(dat(i)))
           end if
         end do
