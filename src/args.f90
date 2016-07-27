@@ -86,6 +86,14 @@ subroutine cliarguments
       arg=arg+1
       call getarg(arg,argc)
       read(argc,*)rseed
+    case ("-alpha")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)alpha
+    case ("-beta")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)beta
 
     case DEFAULT
       call help(trim(command)//": ERROR: unknown argument: "//trim(argc))
