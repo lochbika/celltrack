@@ -25,9 +25,10 @@ module mainstreamdetection
 
       implicit none
 
-      integer :: ant,run,maxconlen
+      integer :: ant,run,maxconlen,numeqsol
       integer, allocatable :: init(:),quit(:),qi(:),ninit,nquit
       integer, allocatable :: paths(:,:),qicon(:,:)
+      integer, allocatable :: thismainstream(:),lastmainstream(:)
       real(kind=8),allocatable :: eta(:),pher(:)
       logical,allocatable :: backw(:)
       logical :: resetnants
@@ -95,6 +96,12 @@ module mainstreamdetection
           write(*,*)"Processing meta track ",i," of ",nmeta
         end if
 
+        ! allocate and init array and counter for stagnation detection
+        allocate(thismainstream(maxmetalen),lastmainstream(maxmetalen))
+        thismainstream=-1
+        lastmainstream=-1
+        numeqsol=0
+        
         ! which tracks are of type 17 and 33 -> init
         allocate(init(maxmetalen))
         init=-1
@@ -275,22 +282,46 @@ module mainstreamdetection
             end do
           end do
           deallocate(backw)
-        end do
-
-        ! now chose the init with the highest pheromone trail and do nn path with the inverse pheromone values
-        wsum=0
-        tp=0
-        do k=1,maxconlen
-          if(allcon(i,k,1)==-1)exit
-          if(ANY(allcon(i,k,1)==init))then
-            if(pher(k)>wsum)then
-              wsum=pher(k)
-              tp=k
+          
+          ! Do the following each 5th run
+          if(MOD(run,5)==0 .OR. run==nruns)then
+            ! check if the current mainstream is different from the last 5
+            ! generate the solution: chose the init with the highest pheromone trail and do nn path with the inverse pheromone values
+            wsum=0
+            tp=0
+            do k=1,maxconlen
+              if(allcon(i,k,1)==-1)exit
+              if(ANY(allcon(i,k,1)==init))then
+                if(pher(k)>wsum)then
+                  wsum=pher(k)
+                  tp=k
+                end if
+              end if
+            end do
+            ! nn path
+            thismainstream=-1
+            CALL nnPath(allcon(i,tp,1),allcon(i,:,:),maxconlen,1/pher,thismainstream(:))
+            if(ALL(thismainstream==lastmainstream))then
+              numeqsol=numeqsol+1
+            else
+              numeqsol=0
             end if
+            lastmainstream=thismainstream
+          end if
+          
+          ! check the termination conditions
+          if(numeqsol>5)then
+            if(verbose)write(*,*)"Stagnation in solution construction: Mainstream didn't change since 25 iterations. Stop!"
+            exit
+          end if
+          if(run==nruns)then
+            ! only notify if in verbose mode; the loop will stop after this anyway
+            if(verbose)write(*,*)"Maximum number of runs reached. Stop!"
           end if
         end do
-        ! nn path
-        CALL nnPath(allcon(i,tp,1),allcon(i,:,:),maxconlen,1/pher,allmainstream(i,:))
+
+        ! use the latest thismainstream to set the global mainstream for this meta track
+        allmainstream(i,:)=thismainstream
 
         ! write the connections with their pheromone values
         ! write header meta_con_pher.txt
@@ -301,7 +332,7 @@ module mainstreamdetection
           write(1,'(2i12,1f12.2)')allcon(i,k,:),pher(k)
         end do
 
-        deallocate(init,quit,eta,pher,paths)
+        deallocate(init,quit,eta,pher,paths,thismainstream,lastmainstream)
         if(resetnants)nants=-1
       end do
       close(unit=1)
