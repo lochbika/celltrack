@@ -284,7 +284,7 @@ module mainstreamdetection
           deallocate(backw)
           
           ! Do the following each 5th run
-          if(MOD(run,5)==0 .OR. run==nruns)then
+          if(MOD(run,1)==0 .OR. run==nruns)then
             ! check if the current mainstream is different from the last 5
             ! generate the solution: chose the init with the highest pheromone trail and do nn path with the inverse pheromone values
             wsum=0
@@ -310,8 +310,8 @@ module mainstreamdetection
           end if
           
           ! check the termination conditions
-          if(numeqsol>5)then
-            if(verbose)write(*,*)"Stagnation in solution construction: Mainstream didn't change since 25 iterations. Stop!"
+          if(numeqsol>10)then
+            if(verbose)write(*,*)"Stagnation in solution construction: Mainstream didn't change since 10 iterations. Stop!"
             exit
           end if
           if(run==nruns)then
