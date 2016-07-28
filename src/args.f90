@@ -78,6 +78,7 @@ subroutine cliarguments
       arg=arg+1
       call getarg(arg,argc)
       read(argc,*)nruns
+      if(nruns<5)nruns=5
     case ("-rho")
       arg=arg+1
       call getarg(arg,argc)
