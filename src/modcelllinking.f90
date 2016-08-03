@@ -30,7 +30,6 @@ module celllinking
       
       ! data arrays
       real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
-      real(kind=8), allocatable :: pdat2d(:,:)  ! array for doing the clustering
 
       write(*,*)"======================================="
       write(*,*)"=========== STARTED LINKING ==========="
