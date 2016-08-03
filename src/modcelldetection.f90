@@ -91,6 +91,7 @@ module celldetection
       write(*,*)"---------"
       write(*,'(A,1a12)')" VAR     : ",trim(vname)
       write(*,'(A,1a12)')" Unit    : ",trim(vunit)
+      write(*,'(A,1f12.2)')" MissVal : ",nmiss1
       write(*,'(A,1i12)')" NX      : ",nx
       write(*,'(A,1f12.2)')" MIN X   : ",xvals(0)
       write(*,'(A,1f12.2)')" MAX X   : ",xvals(nblon-1)
@@ -207,6 +208,7 @@ module celldetection
     subroutine clustering(data2d,startID,finID,numIDs,tcl)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
+      use ncdfpars, only : nmiss1
       
       implicit none
       integer, intent(in) :: startID
@@ -223,10 +225,10 @@ module celldetection
       clID=startID
       numIDs=0
     
-      ! mask values higher than threshold
+      ! mask values higher than threshold and if not missing value
       do y=1,ny
         do x=1,nx
-          if(data2d(x,y)>thres)mask(x,y)=.true.
+          if(data2d(x,y)>thres .AND. data2d(x,y).ne.nmiss1)mask(x,y)=.true.
         end do
       end do
     
