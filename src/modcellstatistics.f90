@@ -87,7 +87,7 @@ module cellstatistics
         call streamReadVar(streamID2,varID2,dat,nmiss2)
 
         !cycle if all values are missing
-        if(ALL(dat==missval2))then
+        if(nmiss2==nx*ny)then
           if(verbose)write(*,*)"NO clusters in timestep:  ",tsID+1
           deallocate(dat)
           cycle
