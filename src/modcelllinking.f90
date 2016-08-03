@@ -43,16 +43,16 @@ module celllinking
       CALL datainfo(outfile)
     
       ! Open the cells file
-      streamID1=streamOpenRead(outfile)
-      if(streamID1<0)then
-         write(*,*)cdiStringError(streamID1)
+      streamID2=streamOpenRead(outfile)
+      if(streamID2<0)then
+         write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID1=0
-      vlistID1=streamInqVlist(streamID1)
-      gridID1=vlistInqVarGrid(vlistID1,varID1)
-      taxisID1=vlistInqTaxis(vlistID1)
-      zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
+      varID2=0
+      vlistID2=streamInqVlist(streamID2)
+      gridID2=vlistInqVarGrid(vlistID2,varID2)
+      taxisID2=vlistInqTaxis(vlistID2)
+      zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
     
       ! find th maximum number of cells per timestep
       ! to reduce 2nd dimension of the logical link matrix
@@ -116,13 +116,13 @@ module celllinking
         allocate(dat(nx*ny))
     
         ! Set time step for input file
-        status=streamInqTimestep(streamID1,tsID)
+        status=streamInqTimestep(streamID2,tsID)
     
         ! Read time step from input
-        call streamReadVar(streamID1,varID1,dat,nmiss2)
+        call streamReadVar(streamID2,varID2,dat,nmiss2)
     
         !cycle if all values are -999
-        if(ALL(dat==-999.D0))then
+        if(nmiss2==nx*ny)then
           if(verbose)write(*,*)"NO clusters in timestep:  ",tsID+1
           deallocate(dat)
           cycle
@@ -132,12 +132,12 @@ module celllinking
           ! load previous timestep
           allocate(pdat(nx*ny))
           ! Set time step for input file
-          status=streamInqTimestep(streamID1,tsID-1)
+          status=streamInqTimestep(streamID2,tsID-1)
           ! Read time step from input
-          call streamReadVar(streamID1,varID1,pdat,nmiss2)
+          call streamReadVar(streamID2,varID2,pdat,nmiss2)
           ! now loop all gridpoints
-          do i=1,ny*ny
-            if(dat(i).ne.-999.D0 .AND. pdat(i).ne.-999.D0)then
+          do i=1,nx*ny
+            if(dat(i).ne.missval2 .AND. pdat(i).ne.missval2)then
               if(verbose)write(*,*)"BACKWARD::We have an overlap! cluster ",dat(i)," with ",pdat(i)
               k=dat(i)
               j=pdat(i)
@@ -153,7 +153,7 @@ module celllinking
         deallocate(dat)
       end do
     
-      CALL streamClose(streamID1)
+      CALL streamClose(streamID2)
     
       ! now we need to find where in links 2nd dim is i; iclIDloc
       allocate(iclIDloc(globnIDs))
