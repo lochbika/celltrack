@@ -283,9 +283,9 @@ module mainstreamdetection
           end do
           deallocate(backw)
           
-          ! Do the following each 5th run
+          ! Do the following each run
           if(MOD(run,1)==0 .OR. run==nruns)then
-            ! check if the current mainstream is different from the last 5
+            ! check if the current mainstream is different from the last ones
             ! generate the solution: chose the init with the highest pheromone trail and do nn path with the inverse pheromone values
             wsum=0
             tp=0

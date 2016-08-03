@@ -184,55 +184,55 @@ module metatrackstatistics
       write(*,*)"=== ... to meta.nc ..."
       write(*,*)"---------"
 
-      ! Get initial Information about grid and timesteps of both files
+      ! Get initial Information about grid and timesteps
       CALL datainfo(outfile)
 
-      ! Open the dataset 1
-      streamID1=streamOpenRead(outfile)
-      if(streamID1<0)then
-         write(*,*)cdiStringError(streamID1)
-         stop
-      end if
-
-      ! Set the variable IDs 1
-      varID1=0
-      vlistID1=streamInqVlist(streamID1)
-      gridID1=vlistInqVarGrid(vlistID1,varID1)
-      taxisID1=vlistInqTaxis(vlistID1)
-      zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
-
-
-      !! open new nc file for results
-      ! define grid
-      gridID2=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID2,nx)
-      CALL gridDefYsize(gridID2,ny)
-      CALL gridDefXvals(gridID2,xvals)
-      CALL gridDefYvals(gridID2,yvals)
-      CALL gridDefXunits(gridID2,"m")
-      CALL gridDefYunits(gridID2,"m")
-      zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
-      CALL zaxisDefLevels(zaxisID2, level)
-      ! define variables
-      nmiss2=-999.D0
-      vlistID2=vlistCreate()
-      varID2=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
-      CALL vlistDefVarName(vlistID2,varID2,"metaID")
-      CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each meta track")
-      CALL vlistDefVarUnits(vlistID2,varID2,"-")
-      CALL vlistDefVarMissval(vlistID2,varID2,nmiss2)
-      CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
-      ! copy time axis from input
-      taxisID2=vlistInqTaxis(vlistID1)
-      call vlistDefTaxis(vlistID2,taxisID2)
-      ! Open the dataset for writing
-      streamID2=streamOpenWrite("meta.nc",FILETYPE_NC)
+      ! Open the cells file
+      streamID2=streamOpenRead(outfile)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
+
+      ! Set the IDs
+      varID2=0
+      vlistID2=streamInqVlist(streamID2)
+      gridID2=vlistInqVarGrid(vlistID2,varID2)
+      taxisID2=vlistInqTaxis(vlistID2)
+      zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
+      missval2=vlistInqVarMissval(vlistID2,varID2)
+
+      !! open new nc file for results
+      ! define grid
+      gridID1=gridCreate(GRID_GENERIC, nx*ny)
+      CALL gridDefXsize(gridID1,nx)
+      CALL gridDefYsize(gridID1,ny)
+      CALL gridDefXvals(gridID1,xvals)
+      CALL gridDefYvals(gridID1,yvals)
+      CALL gridDefXunits(gridID1,"m")
+      CALL gridDefYunits(gridID1,"m")
+      zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
+      CALL zaxisDefLevels(zaxisID1, level)
+      ! define variables
+      missval1=-999.D0
+      vlistID1=vlistCreate()
+      varID1=vlistDefVar(vlistID1,gridID1,zaxisID1,TIME_VARIABLE)
+      CALL vlistDefVarName(vlistID1,varID1,"metaID")
+      CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each meta track")
+      CALL vlistDefVarUnits(vlistID1,varID1,"-")
+      CALL vlistDefVarMissval(vlistID1,varID1,nmiss1)
+      CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
+      ! copy time axis from input
+      taxisID1=vlistInqTaxis(vlistID2)
+      call vlistDefTaxis(vlistID1,taxisID1)
+      ! Open the dataset for writing
+      streamID1=streamOpenWrite("meta.nc",FILETYPE_NC)
+      if(streamID1<0)then
+         write(*,*)cdiStringError(streamID1)
+         stop
+      end if
       ! Assign variables to dataset
-      call streamDefVList(streamID2,vlistID2)
+      call streamDefVList(streamID1,vlistID1)
 
       ! allocate data arrays for storage
       allocate(dat(nx*ny),pdat(nx*ny))
@@ -243,40 +243,40 @@ module metatrackstatistics
         end if
 
         ! Set time step for input and output
-        status=streamInqTimestep(streamID1,tsID)
-        status=streamDefTimestep(streamID2,tsID)
+        status=streamInqTimestep(streamID2,tsID)
+        status=streamDefTimestep(streamID1,tsID)
 
         ! Read time step from input
-        call streamReadVar(streamID1,varID1,dat,nmiss2)
+        call streamReadVar(streamID2,varID2,dat,nmiss2)
 
         !cycle if all values are -999
-        if(ALL(dat==-999.D0))then
+        if(nmiss2==nx*ny)then
           if(verbose)write(*,*)"NO tracks in timestep:  ",tsID+1
-          call streamWriteVar(streamID2,varID2,dat,nmiss2)
+          call streamWriteVar(streamID1,varID1,dat,nmiss1)
           cycle
         end if
 
         ! now loop dat and replace clIDs with metaIDs
-        pdat=-999.D0
+        pdat=missval1
         do i=1,nx*ny
-          if(dat(i)==-999.D0)then
+          if(dat(i)==missval2)then
             cycle
           end if
           if(clmeta(INT(dat(i)))==-1)then
-            pdat(i)=-999.D0
+            pdat(i)=missval1
             cycle
           end if
           pdat(i)=clmeta(INT(dat(i)))
         end do
 
         ! write this time step to meta.nc
-        call streamWriteVar(streamID2,varID2,pdat,nmiss2)
+        call streamWriteVar(streamID1,varID1,pdat,nmiss1)
 
       end do
 
       deallocate(dat,pdat)
-      CALL gridDestroy(gridID2)
-      CALL vlistDestroy(vlistID2)
+      CALL gridDestroy(gridID1)
+      CALL vlistDestroy(vlistID1)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
 
@@ -307,52 +307,53 @@ module metatrackstatistics
       ! Get initial Information about grid and timesteps of both files
       CALL datainfo(outfile)
 
-      ! Open the dataset 1
-      streamID1=streamOpenRead(outfile)
-      if(streamID1<0)then
-         write(*,*)cdiStringError(streamID1)
-         stop
-      end if
-
-      ! Set the variable IDs 1
-      varID1=0
-      vlistID1=streamInqVlist(streamID1)
-      gridID1=vlistInqVarGrid(vlistID1,varID1)
-      taxisID1=vlistInqTaxis(vlistID1)
-      zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
-
-
-      !! open new nc file for results
-      ! define grid
-      gridID2=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID2,nx)
-      CALL gridDefYsize(gridID2,ny)
-      CALL gridDefXvals(gridID2,xvals)
-      CALL gridDefYvals(gridID2,yvals)
-      CALL gridDefXunits(gridID2,"m")
-      CALL gridDefYunits(gridID2,"m")
-      zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
-      CALL zaxisDefLevels(zaxisID2, level)
-      ! define variables
-      nmiss2=-999.D0
-      vlistID2=vlistCreate()
-      varID2=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
-      CALL vlistDefVarName(vlistID2,varID2,"metaID")
-      CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each meta track")
-      CALL vlistDefVarUnits(vlistID2,varID2,"-")
-      CALL vlistDefVarMissval(vlistID2,varID2,nmiss2)
-      CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
-      ! copy time axis from input
-      taxisID2=vlistInqTaxis(vlistID1)
-      call vlistDefTaxis(vlistID2,taxisID2)
-      ! Open the dataset for writing
-      streamID2=streamOpenWrite("meta_mainstream.nc",FILETYPE_NC)
+      ! Open the cells file
+      streamID2=streamOpenRead(outfile)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
+
+      ! Set the IDs
+      varID2=0
+      vlistID2=streamInqVlist(streamID2)
+      gridID2=vlistInqVarGrid(vlistID2,varID2)
+      taxisID2=vlistInqTaxis(vlistID2)
+      zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
+      missval2=vlistInqVarMissval(vlistID2,varID2)
+
+
+      !! open new nc file for results
+      ! define grid
+      gridID1=gridCreate(GRID_GENERIC, nx*ny)
+      CALL gridDefXsize(gridID1,nx)
+      CALL gridDefYsize(gridID1,ny)
+      CALL gridDefXvals(gridID1,xvals)
+      CALL gridDefYvals(gridID1,yvals)
+      CALL gridDefXunits(gridID1,"m")
+      CALL gridDefYunits(gridID1,"m")
+      zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
+      CALL zaxisDefLevels(zaxisID1, level)
+      ! define variables
+      missval1=-999.D0
+      vlistID1=vlistCreate()
+      varID1=vlistDefVar(vlistID1,gridID1,zaxisID1,TIME_VARIABLE)
+      CALL vlistDefVarName(vlistID1,varID1,"metaID")
+      CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each meta track")
+      CALL vlistDefVarUnits(vlistID1,varID1,"-")
+      CALL vlistDefVarMissval(vlistID1,varID1,missval1)
+      CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
+      ! copy time axis from input
+      taxisID1=vlistInqTaxis(vlistID2)
+      call vlistDefTaxis(vlistID1,taxisID1)
+      ! Open the dataset for writing
+      streamID1=streamOpenWrite("meta_mainstream.nc",FILETYPE_NC)
+      if(streamID1<0)then
+         write(*,*)cdiStringError(streamID1)
+         stop
+      end if
       ! Assign variables to dataset
-      call streamDefVList(streamID2,vlistID2)
+      call streamDefVList(streamID1,vlistID1)
 
       ! allocate data arrays for storage
       allocate(dat(nx*ny),pdat(nx*ny))
@@ -363,40 +364,40 @@ module metatrackstatistics
         end if
 
         ! Set time step for input and output
-        status=streamInqTimestep(streamID1,tsID)
-        status=streamDefTimestep(streamID2,tsID)
+        status=streamInqTimestep(streamID2,tsID)
+        status=streamDefTimestep(streamID1,tsID)
 
         ! Read time step from input
-        call streamReadVar(streamID1,varID1,dat,nmiss2)
+        call streamReadVar(streamID2,varID2,dat,nmiss2)
 
         !cycle if all values are -999
-        if(ALL(dat==-999.D0))then
+        if(nmiss2==nx*ny)then
           if(verbose)write(*,*)"NO tracks in timestep:  ",tsID+1
-          call streamWriteVar(streamID2,varID2,dat,nmiss2)
+          call streamWriteVar(streamID1,varID1,dat,nmiss1)
           cycle
         end if
 
         ! now loop dat and replace clIDs with metaIDs
-        pdat=-999.D0
+        pdat=missval1
         do i=1,nx*ny
-          if(dat(i)==-999.D0)then
+          if(dat(i)==missval2)then
             cycle
           end if
           if(clmetamstr(INT(dat(i)))==-1)then
-            pdat(i)=-999.D0
+            pdat(i)=missval1
             cycle
           end if
           pdat(i)=clmetamstr(INT(dat(i)))
         end do
 
         ! write this time step to meta.nc
-        call streamWriteVar(streamID2,varID2,pdat,nmiss2)
+        call streamWriteVar(streamID1,varID1,pdat,nmiss1)
 
       end do
 
       deallocate(dat,pdat)
-      CALL gridDestroy(gridID2)
-      CALL vlistDestroy(vlistID2)
+      CALL gridDestroy(gridID1)
+      CALL vlistDestroy(vlistID1)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
 

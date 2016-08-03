@@ -185,63 +185,63 @@ module trackstatistics
       ! Get initial Information about grid and timesteps of both files
       CALL datainfo(outfile)
 
-      ! Open the dataset 1
-      streamID1=streamOpenRead(outfile)
-      if(streamID1<0)then
-         write(*,*)cdiStringError(streamID1)
-         stop
-      end if
-
-      ! Set the variable IDs 1
-      varID1=0
-      vlistID1=streamInqVlist(streamID1)
-      gridID1=vlistInqVarGrid(vlistID1,varID1)
-      taxisID1=vlistInqTaxis(vlistID1)
-      zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
-
-
-      !! open new nc file for results
-      ! define grid
-      gridID2=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID2,nx)
-      CALL gridDefYsize(gridID2,ny)
-      CALL gridDefXvals(gridID2,xvals)
-      CALL gridDefYvals(gridID2,yvals)
-      CALL gridDefXunits(gridID2,"m")
-      CALL gridDefYunits(gridID2,"m")
-      zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
-      CALL zaxisDefLevels(zaxisID2, level)
-      ! define variables
-      nmiss2=-999.D0
-      vlistID2=vlistCreate()
-      varID2=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
-      CALL vlistDefVarName(vlistID2,varID2,"trackID")
-      CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each track")
-      CALL vlistDefVarUnits(vlistID2,varID2,"-")
-      CALL vlistDefVarMissval(vlistID2,varID2,nmiss2)
-      CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
-      ! copy time axis from input
-      taxisID2=vlistInqTaxis(vlistID1)
-      call vlistDefTaxis(vlistID2,taxisID2)
-      ! Open the dataset for writing
-      streamID2=streamOpenWrite("tracks.nc",FILETYPE_NC)
+      ! Open the cells file
+      streamID2=streamOpenRead(outfile)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
+
+      ! Set the IDs
+      varID2=0
+      vlistID2=streamInqVlist(streamID2)
+      gridID2=vlistInqVarGrid(vlistID2,varID2)
+      taxisID2=vlistInqTaxis(vlistID2)
+      zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
+      missval2=vlistInqVarMissval(vlistID2,varID2)
+
+      !! open new nc file for results
+      ! define grid
+      gridID1=gridCreate(GRID_GENERIC, nx*ny)
+      CALL gridDefXsize(gridID1,nx)
+      CALL gridDefYsize(gridID1,ny)
+      CALL gridDefXvals(gridID1,xvals)
+      CALL gridDefYvals(gridID1,yvals)
+      CALL gridDefXunits(gridID1,"m")
+      CALL gridDefYunits(gridID1,"m")
+      zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
+      CALL zaxisDefLevels(zaxisID1, level)
+      ! define variables
+      missval1=-999.D0
+      vlistID1=vlistCreate()
+      varID1=vlistDefVar(vlistID1,gridID1,zaxisID1,TIME_VARIABLE)
+      CALL vlistDefVarName(vlistID1,varID1,"trackID")
+      CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each track")
+      CALL vlistDefVarUnits(vlistID1,varID1,"-")
+      CALL vlistDefVarMissval(vlistID1,varID1,missval1)
+      CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
+      ! copy time axis from input
+      taxisID1=vlistInqTaxis(vlistID2)
+      call vlistDefTaxis(vlistID1,taxisID1)
+      ! Open the dataset for writing
+      streamID1=streamOpenWrite("tracks.nc",FILETYPE_NC)
+      if(streamID1<0)then
+         write(*,*)cdiStringError(streamID1)
+         stop
+      end if
       ! Assign variables to dataset
-      call streamDefVList(streamID2,vlistID2)
+      call streamDefVList(streamID1,vlistID1)
 
       ! allocate data arrays for storage
       allocate(dat(nx*ny))
 
       do tsID=0,ntp-1
         ! Set time step for input and output
-        status=streamInqTimestep(streamID1,tsID)
-        status=streamDefTimestep(streamID2,tsID)
+        status=streamInqTimestep(streamID2,tsID)
+        status=streamDefTimestep(streamID1,tsID)
 
         ! Read time step from input
-        call streamReadVar(streamID1,varID1,dat,nmiss2)
+        call streamReadVar(streamID2,varID2,dat,nmiss2)
 
         ! check which tracks are in this time step
         allocate(tnums(5000))
@@ -260,7 +260,7 @@ module trackstatistics
 
         ! now loop dat and replace clIDs with trIDs
         do i=1,nx*ny
-          if(dat(i)==-999.D0)cycle
+          if(dat(i)==missval2)cycle
           do j=1,5000
             if(tnums(j)==-1)exit
             do k=1,maxtrlen
@@ -272,13 +272,13 @@ module trackstatistics
         deallocate(tnums)
 
         ! write this time step to tracks.nc
-        call streamWriteVar(streamID2,varID2,dat,nmiss2)
+        call streamWriteVar(streamID1,varID1,dat,nmiss1)
 
       end do
 
       deallocate(dat)
-      CALL gridDestroy(gridID2)
-      CALL vlistDestroy(vlistID2)
+      CALL gridDestroy(gridID1)
+      CALL vlistDestroy(vlistID1)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
 
