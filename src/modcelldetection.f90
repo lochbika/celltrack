@@ -81,7 +81,7 @@ module celldetection
       CALL vlistInqVarUnits(vlistID1,varID1,vunit)
       CALL gridInqXunits(gridID1,xunit)
       CALL gridInqYunits(gridID1,yunit)
-      nmiss1=vlistInqVarMissval(vlistID1,varID1)
+      missval1=vlistInqVarMissval(vlistID1,varID1)
       call vlistInqVarName(vlistID1,varID1,vname)
     
       write(*,*)"======================================="
@@ -91,7 +91,7 @@ module celldetection
       write(*,*)"---------"
       write(*,'(A,1a12)')" VAR     : ",trim(vname)
       write(*,'(A,1a12)')" Unit    : ",trim(vunit)
-      write(*,'(A,1f12.2)')" MissVal : ",nmiss1
+      write(*,'(A,1f12.2)')" MissVal : ",missval1
       write(*,'(A,1i12)')" NX      : ",nx
       write(*,'(A,1f12.2)')" MIN X   : ",xvals(0)
       write(*,'(A,1f12.2)')" MAX X   : ",xvals(nblon-1)
@@ -124,13 +124,13 @@ module celldetection
       zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID2, level)
       ! define variables
-      nmiss2=-999.D0
+      missval2=-999.D0
       vlistID2=vlistCreate()
       varID2=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
       CALL vlistDefVarName(vlistID2,varID2,"cellID")
       CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each cell")
       CALL vlistDefVarUnits(vlistID2,varID2,"-")
-      CALL vlistDefVarMissval(vlistID2,varID2,nmiss2)
+      CALL vlistDefVarMissval(vlistID2,varID2,missval2)
       CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
       ! copy time axis from input
       taxisID2=vlistInqTaxis(vlistID1)
@@ -169,7 +169,7 @@ module celldetection
         ! cluster the frame
         ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
         allocate(cl(nx,ny))
-        CALL clustering(dat2d,globID,globID,nIDs,cl)
+        CALL clustering(dat2d,globID,globID,nIDs,cl,missval1)
         if(nIDs.ne.0)globID=globID+1
         globnIDs=globnIDs+nIDs
         deallocate(dat2d)
@@ -183,6 +183,7 @@ module celldetection
         status=streamDefTimestep(streamID2,tsID)
     
         ! write time step to output file
+        nmiss2=nmiss1
         CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
         deallocate(dat)
       end do
@@ -205,22 +206,22 @@ module celldetection
     
     end subroutine docelldetection
     
-    subroutine clustering(data2d,startID,finID,numIDs,tcl)
+    subroutine clustering(data2d,startID,finID,numIDs,tcl,missval)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
-      use ncdfpars, only : nmiss1
+      use ncdfpars, only : missval1,missval2
       
       implicit none
       integer, intent(in) :: startID
       integer, intent(out) :: finID,numIDs
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
-      real(kind=8), intent(in) :: data2d(nx,ny)
+      real(kind=8), intent(in) :: data2d(nx,ny),missval
       real(kind=8),intent(out) :: tcl(nx,ny)
       logical :: mask(nx,ny)
     
       ! initialize variables and arrays
-      tcl=-999
+      tcl=missval2
       mask=.false.
       clID=startID
       numIDs=0
@@ -228,7 +229,7 @@ module celldetection
       ! mask values higher than threshold and if not missing value
       do y=1,ny
         do x=1,nx
-          if(data2d(x,y)>thres .AND. data2d(x,y).ne.nmiss1)mask(x,y)=.true.
+          if(data2d(x,y)>thres .AND. data2d(x,y).ne.missval)mask(x,y)=.true.
         end do
       end do
     
