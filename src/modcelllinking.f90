@@ -136,7 +136,7 @@ module celllinking
           ! Read time step from input
           call streamReadVar(streamID1,varID1,pdat,nmiss2)
           ! now loop all gridpoints
-          do i=1,ny*ny
+          do i=1,nx*ny
             if(dat(i).ne.-999.D0 .AND. pdat(i).ne.-999.D0)then
               if(verbose)write(*,*)"BACKWARD::We have an overlap! cluster ",dat(i)," with ",pdat(i)
               k=dat(i)
