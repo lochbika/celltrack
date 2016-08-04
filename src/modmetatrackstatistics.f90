@@ -209,8 +209,8 @@ module metatrackstatistics
       CALL gridDefYsize(gridID1,ny)
       CALL gridDefXvals(gridID1,xvals)
       CALL gridDefYvals(gridID1,yvals)
-      CALL gridDefXunits(gridID1,"m")
-      CALL gridDefYunits(gridID1,"m")
+      CALL gridDefXunits(gridID1,TRIM(xunit))
+      CALL gridDefYunits(gridID1,TRIM(yunit))
       zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID1, level)
       ! define variables

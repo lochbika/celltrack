@@ -116,8 +116,8 @@ module celldetection
       CALL gridDefYsize(gridID2,ny)
       CALL gridDefXvals(gridID2,xvals)
       CALL gridDefYvals(gridID2,yvals)
-      CALL gridDefXunits(gridID2,"m")
-      CALL gridDefYunits(gridID2,"m")
+      CALL gridDefXunits(gridID2,TRIM(xunit))
+      CALL gridDefYunits(gridID2,TRIM(yunit))
       zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID2, level)
       ! define variables
