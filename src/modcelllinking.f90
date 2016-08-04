@@ -83,9 +83,8 @@ module celllinking
       ! truncate the 2nd dim of the link matrix
       do i=1,globnIDs
         tsID=tsclID(i)
-        if(tsID==1)then
+        if(tsID==1 .OR. i<(maxnIDs-5)/3)then
           minclIDloc(i)=0
-          cycle
         else
           do k=1,i
             if(tsclID(k)==tsID-1 .AND. tsclID(k)>1)then
@@ -140,6 +139,7 @@ module celllinking
               if(verbose)write(*,*)"BACKWARD::We have an overlap! cluster ",dat(i)," with ",pdat(i)
               k=dat(i)
               j=pdat(i)
+              write(*,*)k,j,minclIDloc(k),minclIDloc(j)
               ! backward linking
               links(k,j-minclIDloc(k))=.true.
               ! forward linking
