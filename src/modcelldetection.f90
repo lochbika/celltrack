@@ -36,9 +36,6 @@ module celldetection
       real(kind=8), allocatable :: dat(:)          ! array for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:)      ! array for doing the clustering
       
-      character(len=800) :: vname
-      character(len=100) :: vunit,xunit,yunit
-      
       globnIDs=0
       globID=1
       
