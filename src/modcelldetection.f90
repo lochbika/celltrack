@@ -36,9 +36,6 @@ module celldetection
       real(kind=8), allocatable :: dat(:)          ! array for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:)      ! array for doing the clustering
       
-      character(len=800) :: vname
-      character(len=100) :: vunit,xunit,yunit
-      
       globnIDs=0
       globID=1
       
@@ -81,7 +78,7 @@ module celldetection
       CALL vlistInqVarUnits(vlistID1,varID1,vunit)
       CALL gridInqXunits(gridID1,xunit)
       CALL gridInqYunits(gridID1,yunit)
-      nmiss1=vlistInqVarMissval(vlistID1,varID1)
+      missval1=vlistInqVarMissval(vlistID1,varID1)
       call vlistInqVarName(vlistID1,varID1,vname)
     
       write(*,*)"======================================="
@@ -91,6 +88,7 @@ module celldetection
       write(*,*)"---------"
       write(*,'(A,1a12)')" VAR     : ",trim(vname)
       write(*,'(A,1a12)')" Unit    : ",trim(vunit)
+      write(*,'(A,1f12.2)')" MissVal : ",missval1
       write(*,'(A,1i12)')" NX      : ",nx
       write(*,'(A,1f12.2)')" MIN X   : ",xvals(0)
       write(*,'(A,1f12.2)')" MAX X   : ",xvals(nblon-1)
@@ -118,18 +116,18 @@ module celldetection
       CALL gridDefYsize(gridID2,ny)
       CALL gridDefXvals(gridID2,xvals)
       CALL gridDefYvals(gridID2,yvals)
-      CALL gridDefXunits(gridID2,"m")
-      CALL gridDefYunits(gridID2,"m")
+      CALL gridDefXunits(gridID2,TRIM(xunit))
+      CALL gridDefYunits(gridID2,TRIM(yunit))
       zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID2, level)
       ! define variables
-      nmiss2=-999.D0
+      missval2=-999.D0
       vlistID2=vlistCreate()
       varID2=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
       CALL vlistDefVarName(vlistID2,varID2,"cellID")
       CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each cell")
       CALL vlistDefVarUnits(vlistID2,varID2,"-")
-      CALL vlistDefVarMissval(vlistID2,varID2,nmiss2)
+      CALL vlistDefVarMissval(vlistID2,varID2,missval2)
       CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
       ! copy time axis from input
       taxisID2=vlistInqTaxis(vlistID1)
@@ -168,7 +166,7 @@ module celldetection
         ! cluster the frame
         ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
         allocate(cl(nx,ny))
-        CALL clustering(dat2d,globID,globID,nIDs,cl)
+        CALL clustering(dat2d,globID,globID,nIDs,cl,missval1)
         if(nIDs.ne.0)globID=globID+1
         globnIDs=globnIDs+nIDs
         deallocate(dat2d)
@@ -182,6 +180,7 @@ module celldetection
         status=streamDefTimestep(streamID2,tsID)
     
         ! write time step to output file
+        nmiss2=nmiss1
         CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
         deallocate(dat)
       end do
@@ -204,98 +203,103 @@ module celldetection
     
     end subroutine docelldetection
     
-    subroutine clustering(data2d,startID,finID,numIDs,tcl)
+    subroutine clustering(data2d,startID,finID,numIDs,tcl,missval)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
+      use ncdfpars, only : missval1,missval2
       
       implicit none
       integer, intent(in) :: startID
       integer, intent(out) :: finID,numIDs
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
-      real(kind=8), intent(in) :: data2d(nx,ny)
+      real(kind=8), intent(in) :: data2d(nx,ny),missval
       real(kind=8),intent(out) :: tcl(nx,ny)
       logical :: mask(nx,ny)
     
       ! initialize variables and arrays
-      tcl=-999
+      tcl=missval2
       mask=.false.
       clID=startID
       numIDs=0
     
-      ! mask values higher than threshold
+      ! mask values higher than threshold and if not missing value
       do y=1,ny
         do x=1,nx
-          if(data2d(x,y)>thres)mask(x,y)=.true.
+          if(data2d(x,y)>thres .AND. data2d(x,y).ne.missval)mask(x,y)=.true.
         end do
       end do
-    
-      ! assign IDs to continous cells
-      do y=1,ny
-        do x=1,nx
-          neighb=-999
-          if(mask(x,y))then
-            ! gather neighbouring IDs; left,up
-            if(x.ne.1)  neighb(1)=tcl((x-1),y)
-            if(y.ne.1)  neighb(2)=tcl(x,(y-1))
-            ! check if there is NO cluster around the current pixel; create new one
-            if(ALL(neighb==-999))then
-              tcl(x,y)=clID
-              clID=clID+1
-              numIDs=numIDs+1
-            else
-              ! both neighbours are in the same cluster
-              if(neighb(1)==neighb(2).and.neighb(1).ne.-999)then
-                tcl(x,y)=neighb(1)
-              end if
-              ! both neighbors are in different clusters but none of them is (-999)
-              if(neighb(1).ne.neighb(2) .and. neighb(1).ne.-999 .and. neighb(2).ne.-999)then
-                numIDs=numIDs-1
-                tcl(x,y)=MINVAL(neighb)
-                ! update the existing higher cluster with the lowest neighbour
-                do cony=1,ny
-                  do conx=1,nx
-                    if(tcl(conx,cony)==MAXVAL(neighb))tcl(conx,cony)=MINVAL(neighb)
-                  end do
-                end do
-              end if
-              ! both neighbors are in different clusters but ONE of them is empty(-999)
-              if(neighb(1).ne.neighb(2) .and. (neighb(1)==-999 .or. neighb(2)==-999))then
-                tcl(x,y)=MAXVAL(neighb)
-              end if
-            end if
-          end if
-        end do
-      end do
-    
-      ! gather IDs and rename to gapless ascending IDs
-      if(numIDs>0)then
-        allocate(allIDs(numIDs))
-        allIDs=-999
-        clID=startID-1
-        tp=1
+      
+      ! check if there are any gridpoints to cluster
+      if(ANY(mask))then
+      
+        ! assign IDs to continous cells
         do y=1,ny
           do x=1,nx
-            if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.-999)then
-              allIDs(tp)=tcl(x,y)
-              tp=tp+1
+            neighb=-999
+            if(mask(x,y))then
+              ! gather neighbouring IDs; left,up
+              if(x.ne.1)  neighb(1)=tcl((x-1),y)
+              if(y.ne.1)  neighb(2)=tcl(x,(y-1))
+              ! check if there is NO cluster around the current pixel; create new one
+              if(ALL(neighb==-999))then
+                tcl(x,y)=clID
+                clID=clID+1
+                numIDs=numIDs+1
+              else
+                ! both neighbours are in the same cluster
+                if(neighb(1)==neighb(2).and.neighb(1).ne.-999)then
+                  tcl(x,y)=neighb(1)
+                end if
+                ! both neighbors are in different clusters but none of them is (-999)
+                if(neighb(1).ne.neighb(2) .and. neighb(1).ne.-999 .and. neighb(2).ne.-999)then
+                  numIDs=numIDs-1
+                  tcl(x,y)=MINVAL(neighb)
+                  ! update the existing higher cluster with the lowest neighbour
+                  do cony=1,ny
+                    do conx=1,nx
+                      if(tcl(conx,cony)==MAXVAL(neighb))tcl(conx,cony)=MINVAL(neighb)
+                    end do
+                  end do
+                end if
+                ! both neighbors are in different clusters but ONE of them is empty(-999)
+                if(neighb(1).ne.neighb(2) .and. (neighb(1)==-999 .or. neighb(2)==-999))then
+                  tcl(x,y)=MAXVAL(neighb)
+                end if
+              end if
             end if
           end do
         end do
-    
-        do i=1,tp-1
-          clID=clID+1
+      
+        ! gather IDs and rename to gapless ascending IDs
+        if(numIDs>0)then
+          allocate(allIDs(numIDs))
+          allIDs=-999
+          clID=startID-1
+          tp=1
           do y=1,ny
             do x=1,nx
-              if(tcl(x,y)==allIDs(i))then
-                tcl(x,y)=clID
+              if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.-999)then
+                allIDs(tp)=tcl(x,y)
+                tp=tp+1
               end if
             end do
           end do
-        end do
-        deallocate(allIDs)
+      
+          do i=1,tp-1
+            clID=clID+1
+            do y=1,ny
+              do x=1,nx
+                if(tcl(x,y)==allIDs(i))then
+                  tcl(x,y)=clID
+                end if
+              end do
+            end do
+          end do
+          deallocate(allIDs)
+        end if
+        
       end if
-    
       ! return final cluster ID
       finID=clID
     end subroutine clustering

@@ -56,16 +56,16 @@ module cellstatistics
       CALL datainfo(outfile)
 
       ! Open the cells file
-      streamID1=streamOpenRead(outfile)
-      if(streamID1<0)then
-         write(*,*)cdiStringError(streamID1)
+      streamID2=streamOpenRead(outfile)
+      if(streamID2<0)then
+         write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID1=0
-      vlistID1=streamInqVlist(streamID1)
-      gridID1=vlistInqVarGrid(vlistID1,varID1)
-      taxisID1=vlistInqTaxis(vlistID1)
-      zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
+      varID2=0
+      vlistID2=streamInqVlist(streamID2)
+      gridID2=vlistInqVarGrid(vlistID2,varID2)
+      taxisID2=vlistInqTaxis(vlistID2)
+      zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
 
       allocate(tsclID(globnIDs))
       tsclID=-1
@@ -81,13 +81,13 @@ module cellstatistics
         allocate(dat(nx*ny))
 
         ! Set time step for input file
-        status=streamInqTimestep(streamID1,tsID)
+        status=streamInqTimestep(streamID2,tsID)
 
         ! Read time step from input
-        call streamReadVar(streamID1,varID1,dat,nmiss2)
+        call streamReadVar(streamID2,varID2,dat,nmiss2)
 
-        !cycle if all values are -999
-        if(ALL(dat==-999.D0))then
+        !cycle if all values are missing
+        if(nmiss2==nx*ny)then
           if(verbose)write(*,*)"NO clusters in timestep:  ",tsID+1
           deallocate(dat)
           cycle
@@ -95,7 +95,7 @@ module cellstatistics
 
         ! assign time steps
         do i=1,nx*ny
-          if(dat(i).ne.-999.D0)then
+          if(dat(i).ne.missval2)then
             if(tsclID(INT(dat(i)))==-1)tsclID(INT(dat(i)))=tsID+1
             if(verbose)write(*,*)"cluster: ",clIDs(INT(dat(i)))," is at timestep: ",tsclID(INT(dat(i)))
           end if
@@ -103,7 +103,7 @@ module cellstatistics
         deallocate(dat)
       end do
 
-      CALL streamClose(streamID1)
+      CALL streamClose(streamID2)
 
       write(*,*)"======================================="
       write(*,*)"=== calculating area, (weighted) center of mass, peak and average values ..."
@@ -114,28 +114,28 @@ module cellstatistics
       CALL datainfo(outfile)
 
       ! Open the cells file
-      streamID1=streamOpenRead(outfile)
-      if(streamID1<0)then
-         write(*,*)cdiStringError(streamID1)
-         stop
-      end if
-      varID1=0
-      vlistID1=streamInqVlist(streamID1)
-      gridID1=vlistInqVarGrid(vlistID1,varID1)
-      taxisID1=vlistInqTaxis(vlistID1)
-      zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
-
-      ! Open the original data file
-      streamID2=streamOpenRead(ifile)
+      streamID2=streamOpenRead(outfile)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=ivar
+      varID2=0
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
+
+      ! Open the original data file
+      streamID1=streamOpenRead(ifile)
+      if(streamID1<0)then
+         write(*,*)cdiStringError(streamID1)
+         stop
+      end if
+      varID1=ivar
+      vlistID1=streamInqVlist(streamID1)
+      gridID1=vlistInqVarGrid(vlistID1,varID1)
+      taxisID1=vlistInqTaxis(vlistID1)
+      zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
 
       ! allocate and initialize arrays for cell statistics
       allocate(clarea(globnIDs))
@@ -170,8 +170,8 @@ module cellstatistics
         allocate(pdat(nx*ny))
 
         ! Read time step from input
-        call streamReadVar(streamID1,varID1,dat,nmiss2)
-        call streamReadVarSlice(streamID2,varID2,levelID,pdat,nmiss2)
+        call streamReadVar(streamID2,varID2,dat,nmiss2)
+        call streamReadVarSlice(streamID1,varID1,levelID,pdat,nmiss1)
 
         ! reashape to 2d; better for center of mass calculation
         allocate(dat2d(nx,ny),pdat2d(nx,ny))
@@ -182,8 +182,22 @@ module cellstatistics
         ! now loop dat2d and calculate statistics
         do y=1,ny
           do x=1,nx
-            if(dat2d(x,y)==-999.D0)cycle
-            if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny)touchb(INT(dat2d(x,y))) = .true.
+            if(dat2d(x,y)==missval2)cycle
+            ! this cell touches missing values?
+            if(x.ne.1)then
+              if(pdat2d(x-1,y)==missval1)touchb(INT(dat2d(x,y))) = .true.
+            end if
+            if(y.ne.1)then
+              if(pdat2d(x,y-1)==missval1)touchb(INT(dat2d(x,y))) = .true.
+            end if
+            if(x.ne.nx)then
+              if(pdat2d(x+1,y)==missval1)touchb(INT(dat2d(x,y))) = .true.
+            end if
+            if(y.ne.ny)then
+              if(pdat2d(x,y+1)==missval1)touchb(INT(dat2d(x,y))) = .true.
+            end if
+            ! this cell touches time or space boundaries?
+            if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny .OR. tsID==1 .OR. tsID==ntp-1)touchb(INT(dat2d(x,y))) = .true.
             ! cell area
             clarea(INT(dat2d(x,y))) = clarea(INT(dat2d(x,y))) + 1
             ! average intensity
