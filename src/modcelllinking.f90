@@ -139,7 +139,6 @@ module celllinking
               if(verbose)write(*,*)"BACKWARD::We have an overlap! cluster ",dat(i)," with ",pdat(i)
               k=dat(i)
               j=pdat(i)
-              write(*,*)k,j,minclIDloc(k),minclIDloc(j)
               ! backward linking
               links(k,j-minclIDloc(k))=.true.
               ! forward linking
