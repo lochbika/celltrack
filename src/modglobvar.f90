@@ -27,6 +27,7 @@ module globvar
   integer :: nruns                           ! number of iterations during mainstream detection
   integer :: alpha,beta                      ! weighting parameters for action choice rule in ACO path algorhitm
   integer :: rseed                           ! the seed for the random number generator
+  logical :: advcor                          ! switch for advection correction
 
   ! variables containing information about the domain
   real(kind=8) :: level,diflon,diflat
@@ -46,6 +47,10 @@ module globvar
   integer, allocatable :: nbw(:),nfw(:),minclIDloc(:),iclIDloc(:)
   logical, allocatable :: links(:,:)
   integer :: maxnIDs
+
+  ! variables for advection correction
+  character(len=800) :: vfile                ! filename for velocity fields
+  integer :: adviter,nadviter                ! the current and number of iteration of advection correction
 
   ! Variables used during tracking
   integer :: ntracks,ncleantr,maxtrlen

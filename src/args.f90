@@ -30,6 +30,7 @@ subroutine cliarguments
   verbose=.false.
   thres=0.D0
   outfile="cells.nc"
+  vfile="vfield.nc"
   ifile=""
   ivar=0
   levelID=0
@@ -40,6 +41,8 @@ subroutine cliarguments
   alpha=1
   beta=2
   rseed=-1
+  advcor=.false.
+  nadviter=5
 
   do while (arg < narg)
     arg=arg+1
@@ -95,6 +98,12 @@ subroutine cliarguments
       arg=arg+1
       call getarg(arg,argc)
       read(argc,*)beta
+    case ("-nadviter")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)nadviter
+    case ("-advcor")
+      advcor=.true.
 
     case DEFAULT
       call help(trim(command)//": ERROR: unknown argument: "//trim(argc))

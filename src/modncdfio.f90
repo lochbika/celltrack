@@ -17,7 +17,7 @@ module ncdfpars
 
   ! Variables for netCDF actions
   integer :: gridID1,taxisID1,vlistID1,varID1,streamID1,tsID,zaxisID1
-  integer :: gridID2,taxisID2,vlistID2,varID2,streamID2,zaxisID2
+  integer :: gridID2,taxisID2,vlistID2,varID2,streamID2,zaxisID2,vuID,vvID
   integer :: nmiss1,nmiss2
   real(kind=8) :: missval1,missval2
   character(len=1000) :: vunit,xunit,yunit,vname
