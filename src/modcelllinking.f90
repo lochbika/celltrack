@@ -143,10 +143,6 @@ module celllinking
               links(k,j-minclIDloc(k))=.true.
               ! forward linking
               links(j,k-minclIDloc(j))=.true.
-            else if(dat(i).ne.missval2 .AND. pdat(i)==missval2)then 
-              touchb(INT(dat(i))) = .true.  ! this cell links with missing values
-            else if(dat(i)==missval2 .AND. pdat(i).ne.missval2)then
-              touchb(INT(pdat(i))) = .true. ! this cell links with missing values
             end if
           end do
           deallocate(pdat)
