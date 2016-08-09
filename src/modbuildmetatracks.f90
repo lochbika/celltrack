@@ -200,10 +200,6 @@ module buildmetatracks
       close(unit=1)
       close(unit=2)
 
-      do i=1,ncon
-        if(trcon(i,1).ne.-1)write(*,*)trcon(i,:)
-      end do
-
       deallocate(trcon,conbuffer,metbuffer1,metbuffer2,metabuffer)
 
       write(*,*)"======================================="
