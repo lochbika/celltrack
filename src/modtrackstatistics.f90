@@ -236,6 +236,11 @@ module trackstatistics
       allocate(dat(nx*ny))
 
       do tsID=0,ntp-1
+        ! status to stdout
+        if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1)then
+          write(*,*)"Processing timestep: ",tsID+1
+        end if
+      
         ! Set time step for input and output
         status=streamInqTimestep(streamID2,tsID)
         status=streamDefTimestep(streamID1,tsID)
