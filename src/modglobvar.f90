@@ -28,6 +28,8 @@ module globvar
   integer :: alpha,beta                      ! weighting parameters for action choice rule in ACO path algorhitm
   integer :: rseed                           ! the seed for the random number generator
   logical :: advcor                          ! switch for advection correction
+  integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
+  integer :: tstep                           ! timestep of input data in seconds
 
   ! variables containing information about the domain
   real(kind=8) :: level,diflon,diflat
@@ -49,8 +51,12 @@ module globvar
   integer :: maxnIDs
 
   ! variables for advection correction
-  character(len=800) :: vfile                ! filename for velocity fields
-  integer :: adviter,nadviter                ! the current and number of iteration of advection correction
+  character(len=800) :: vfile                         ! basename for velocity fields
+  integer :: adviter,nadviter                         ! the current and number of iteration of advection correction
+  real(kind=8), allocatable :: uvfield2d(:,:),uvfield(:),vvfield2d(:,:),vvfield(:)   ! the velocity fields in 1d and 2d
+  integer :: vnx,vny
+  real(kind=8), allocatable :: vxvals(:),vyvals(:),vclx(:),vcly(:)
+  integer, allocatable :: vclxindex(:),vclyindex(:)   ! the indices of the neares gridpoints for each cell (x and y coord)
 
   ! Variables used during tracking
   integer :: ntracks,ncleantr,maxtrlen
@@ -74,6 +80,7 @@ module globvar
 
   ! auxiliary
   integer :: outstep,status,riostat
+  character(len=1000) :: filename
 
   ! random number
   real(kind=8) :: rnum

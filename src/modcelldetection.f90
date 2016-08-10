@@ -100,6 +100,7 @@ module celldetection
       write(*,'(A,1f12.2)')" DIF Y   : ",diflat
       write(*,'(A,1a12)')" Unit    : ",trim(yunit)
       write(*,'(A,1i12)')" NTSTEPS : ",ntp
+      write(*,'(A,1i12)')" TSTEP   : ",tstep
       write(*,'(A,1i12)')" NLEV    : ",nlev
       write(*,'(A,1f12.2)')" SELLEV  : ",level
       write(*,*)"---------"

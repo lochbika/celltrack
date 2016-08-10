@@ -43,6 +43,9 @@ subroutine cliarguments
   rseed=-1
   advcor=.false.
   nadviter=5
+  coarsex=10
+  coarsey=10
+  tstep=-1
 
   do while (arg < narg)
     arg=arg+1
@@ -102,6 +105,18 @@ subroutine cliarguments
       arg=arg+1
       call getarg(arg,argc)
       read(argc,*)nadviter
+    case ("-cx")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)coarsex
+    case ("-cy")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)coarsey
+    case ("-tstep")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)tstep
     case ("-advcor")
       advcor=.true.
 
@@ -114,5 +129,6 @@ subroutine cliarguments
 
   ! check if all necessary variables are set
   if(trim(ifile)=="")call help("No input file selected!")
+  if(tstep==-1 .AND. advcor)call help("Missing argument tstep... necessary if you want to do advection correction")
 
 end subroutine cliarguments
