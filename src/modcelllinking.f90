@@ -32,7 +32,6 @@ module celllinking
       real(kind=8), allocatable :: dat(:),pdat(:)          ! arrays for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! arrays for the advection correction
       real(kind=8), allocatable :: advcell(:,:)            ! temporary array for advected field of one cell
-      real(kind=8), allocatable :: extrcell(:,:)           ! temporary array for extracted field of one cell
       integer :: movex,movey                               ! the number of gridpoints to move a cell (x and y direction)
 
       write(*,*)"======================================="
@@ -182,8 +181,8 @@ module celllinking
             allocate(pdat2d(nx,ny))
             CALL reshapeT2d(pdat,nx,ny,pdat2d)
             do clID=1,globnIDs
-              if(tsclID(clID)==tsID-1)exit
-              if(tsclID(clID)==tsID-2 .AND. &
+              if(tsclID(clID)==tsID+1)exit
+              if(tsclID(clID)==tsID .AND. &
                 & uvfield2d(vclxindex(clID),vclyindex(clID)).ne.outmissval .AND. &
                 & vvfield2d(vclxindex(clID),vclyindex(clID)).ne.outmissval)then
                 allocate(advcell(nx,ny))
@@ -192,6 +191,7 @@ module celllinking
                 movey=NINT(vvfield2d(vclxindex(clID),vclyindex(clID))*tstep/diflat)
                 WHERE(pdat2d==clID)advcell=pdat2d
                 WHERE(pdat2d==clID)pdat2d=outmissval
+                if(verbose)write(*,*)"Moving cell ",clID," by ",movex,movey
                 ! move in x and y direction
                 if(movex>0) advcell((movex+1):nx,:)=advcell(1:(nx-movex),:)
                 if(movex<0) advcell(1:(nx-ABS(movex)),:)=advcell((ABS(movex)+1):nx,:)

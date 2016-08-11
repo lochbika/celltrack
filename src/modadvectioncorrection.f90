@@ -24,8 +24,6 @@ module advectioncorrection
       ! modules
       use globvar
       use ncdfpars
-      use celldetection
-      use cellstatistics
       use celllinking
       use linkstatistics
 
@@ -54,6 +52,26 @@ module advectioncorrection
       end do
       do y=1,vny
         vyvals(y)=(yvals(0)-diflat/2) + (diflat*coarsey*y) - (diflat*coarsey/2)
+      end do
+
+      ! find the nearest gridpoint on the velocity grid for all cells
+      do clID=1,globnIDs
+        mindist=HUGE(mindist)
+        do x=1,vnx
+          cdist=abs(vxvals(x)-(wclcmass(clID,1)*diflon+xvals(0)))
+          if(cdist<mindist)then
+            vclxindex(clID)=x
+            mindist=cdist
+          end if
+        end do
+        mindist=HUGE(mindist)
+        do y=1,vny
+          cdist=abs(vyvals(y)-(wclcmass(clID,2)*diflat+yvals(0)))
+          if(cdist<mindist)then
+            vclyindex(clID)=y
+            mindist=cdist
+          end if
+        end do
       end do
 
       do adviter=1,nadviter
@@ -117,26 +135,6 @@ module advectioncorrection
         ! Assign variables to dataset
         call streamDefVList(streamID2,vlistID2)
 
-        ! find the nearest gridpoint on the velocity grid for all cells
-        do clID=1,globnIDs
-          mindist=HUGE(mindist)
-          do x=1,vnx
-            cdist=abs(vxvals(x)-(wclcmass(clID,1)*diflon+xvals(0)))
-            if(cdist<mindist)then
-              vclxindex(clID)=x
-              mindist=cdist
-            end if
-          end do
-          mindist=HUGE(mindist)
-          do y=1,vny
-            cdist=abs(vyvals(y)-(wclcmass(clID,2)*diflat+yvals(0)))
-            if(cdist<mindist)then
-              vclyindex(clID)=y
-              mindist=cdist
-            end if
-          end do
-        end do
-
         ! now calculate each cells velocity
         vclx=outmissval
         vcly=outmissval
@@ -195,7 +193,7 @@ module advectioncorrection
 
         end do
 
-        ! deallocate all arrays to rerun the detection and statistics part
+        ! deallocate some arrays to rerun the linking part
         deallocate(links,minclIDloc,iclIDloc,nbw,nfw)
 
         ! close input and output

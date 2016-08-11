@@ -158,7 +158,13 @@ module celldetection
     
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
-    
+        
+        ! cycle if field contains only missing values
+        if(nmiss1==nx*ny)then
+          deallocate(dat)
+          cycle
+        end if
+        
         ! reshape array
         allocate(dat2d(nx,ny))
         CALL reshapeT2d(dat,nx,ny,dat2d)
