@@ -91,19 +91,18 @@ module advectioncorrection
         zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
         CALL zaxisDefLevels(zaxisID2, level)
         ! define variables
-        missval2=-999.D0
         vlistID2=vlistCreate()
         vuID=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
         CALL vlistDefVarName(vlistID2,vuID,"u")
         CALL vlistDefVarLongname(vlistID2,vuID,"derived wind speed in x direction")
         CALL vlistDefVarUnits(vlistID2,vuID,"m/s")
-        CALL vlistDefVarMissval(vlistID2,vuID,missval2)
+        CALL vlistDefVarMissval(vlistID2,vuID,outmissval)
         CALL vlistDefVarDatatype(vlistID2,vuID,DATATYPE_FLT64)
         vvID=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
         CALL vlistDefVarName(vlistID2,vvID,"v")
         CALL vlistDefVarLongname(vlistID2,vvID,"derived wind speed in y direction")
         CALL vlistDefVarUnits(vlistID2,vvID,"m/s")
-        CALL vlistDefVarMissval(vlistID2,vvID,missval2)
+        CALL vlistDefVarMissval(vlistID2,vvID,outmissval)
         CALL vlistDefVarDatatype(vlistID2,vvID,DATATYPE_FLT64)
         ! copy time axis from input
         taxisID2=vlistInqTaxis(vlistID1)
@@ -139,8 +138,8 @@ module advectioncorrection
         end do
 
         ! now calculate each cells velocity
-        vclx=-999.D0
-        vcly=-999.D0
+        vclx=outmissval
+        vcly=outmissval
         do clID=1,globnIDs
           if(tsclID(clID).ne.1 .AND. .NOT.touchb(clID))then
             if(nbw(clID)==1)then
@@ -168,18 +167,18 @@ module advectioncorrection
 
           do clID=1,globnIDs
             if(tsclID(clID)>tsID+1)exit
-            if(tsclID(clID)==tsID+1 .AND. vclx(clID).ne.-999.D0 .AND. vcly(clID).ne.-999.D0)then
+            if(tsclID(clID)==tsID+1 .AND. vclx(clID).ne.outmissval .AND. vcly(clID).ne.outmissval)then
               uvfield2d(vclxindex(clID),vclyindex(clID)) = uvfield2d(vclxindex(clID),vclyindex(clID)) + vclx(clID)
               vvfield2d(vclxindex(clID),vclyindex(clID)) = vvfield2d(vclxindex(clID),vclyindex(clID)) + vcly(clID)
               smpsize(vclxindex(clID),vclyindex(clID)) = smpsize(vclxindex(clID),vclyindex(clID)) + 1
             end if
           end do
 
-          ! average and set 0 sized gridpoints to missing value
+          ! average and set 0 sampled gridpoints to missing value
           WHERE(smpsize.ne.0)uvfield2d=uvfield2d/smpsize
           WHERE(smpsize.ne.0)vvfield2d=vvfield2d/smpsize
-          WHERE(smpsize==0)uvfield2d=-999.D0
-          WHERE(smpsize==0)vvfield2d=-999.D0
+          WHERE(smpsize==0)uvfield2d=outmissval
+          WHERE(smpsize==0)vvfield2d=outmissval
 
           ! reshape to 2D
           allocate(uvfield(vnx*vny),vvfield(vnx*vny))

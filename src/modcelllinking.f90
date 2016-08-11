@@ -112,6 +112,11 @@ module celllinking
       ! if we do advection correction... read the vfile now
       if(advcor .AND. adviter>1)then
         write(vfile,'(A7,I0.3,A3)')"vfield_",adviter-1,".nc"
+        
+        write(*,*)"======================================="
+        write(*,*)"=== Opening file with velocity fields ",TRIM(vfile)
+        write(*,*)"---------"
+        
         streamID3=streamOpenRead(TRIM(vfile))
         if(streamID3<0)then
            write(*,*)cdiStringError(streamID3)
@@ -123,6 +128,7 @@ module celllinking
         gridID3=vlistInqVarGrid(vlistID2,vuID)
         taxisID3=vlistInqTaxis(vlistID3)
         zaxisID3=vlistInqVarZaxis(vlistID3,vuID)
+        outmissval=vlistInqVarMissval(vlistID3,vuID)
       end if
 
       ! do the linking per time step
@@ -178,19 +184,19 @@ module celllinking
             do clID=1,globnIDs
               if(tsclID(clID)==tsID-1)exit
               if(tsclID(clID)==tsID-2 .AND. &
-                & uvfield2d(vclxindex(clID),vclyindex(clID)).ne.-999.D0 .AND. &
-                & vvfield2d(vclxindex(clID),vclyindex(clID)).ne.-999.D0)then
+                & uvfield2d(vclxindex(clID),vclyindex(clID)).ne.outmissval .AND. &
+                & vvfield2d(vclxindex(clID),vclyindex(clID)).ne.outmissval)then
                 allocate(advcell(nx,ny))
-                advcell=-999.D0
+                advcell=outmissval
                 movex=NINT(uvfield2d(vclxindex(clID),vclyindex(clID))*tstep/diflon)
                 movey=NINT(vvfield2d(vclxindex(clID),vclyindex(clID))*tstep/diflat)
                 WHERE(pdat2d==clID)advcell=pdat2d
-                WHERE(pdat2d==clID)pdat2d=-999.D0
+                WHERE(pdat2d==clID)pdat2d=outmissval
                 ! move in x and y direction
-                if(movex>0) advcell(movex:nx,:)=advcell(1:(nx-movex),:)
-                if(movex<0) advcell(1:(nx-ABS(movex)),:)=advcell(ABS(movex):nx,:)
-                if(movey>0) advcell(:,movey:ny)=advcell(:,1:(ny-movey))
-                if(movey<0) advcell(:,1:(ny-ABS(movey)))=advcell(:,ABS(movey):ny)
+                if(movex>0) advcell((movex+1):nx,:)=advcell(1:(nx-movex),:)
+                if(movex<0) advcell(1:(nx-ABS(movex)),:)=advcell((ABS(movex)+1):nx,:)
+                if(movey>0) advcell(:,(movey+1):ny)=advcell(:,1:(ny-movey))
+                if(movey<0) advcell(:,1:(ny-ABS(movey)))=advcell(:,(ABS(movey)+1):ny)
                 ! now save back to pdat
                 WHERE(advcell==clID)pdat2d=advcell
                 deallocate(advcell)
@@ -203,7 +209,7 @@ module celllinking
 
           ! now loop all gridpoints
           do i=1,nx*ny
-            if(dat(i).ne.missval2 .AND. pdat(i).ne.missval2)then
+            if(dat(i).ne.outmissval .AND. pdat(i).ne.outmissval)then
               if(verbose)write(*,*)"We have an overlap! cluster ",INT(dat(i))," with ",INT(pdat(i))
               k=dat(i)
               j=pdat(i)

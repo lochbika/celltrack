@@ -95,7 +95,7 @@ module cellstatistics
 
         ! assign time steps
         do i=1,nx*ny
-          if(dat(i).ne.missval2)then
+          if(dat(i).ne.outmissval)then
             if(tsclID(INT(dat(i)))==-1)tsclID(INT(dat(i)))=tsID+1
             if(verbose)write(*,*)"cluster: ",clIDs(INT(dat(i)))," is at timestep: ",tsclID(INT(dat(i)))
           end if
@@ -182,19 +182,19 @@ module cellstatistics
         ! now loop dat2d and calculate statistics
         do y=1,ny
           do x=1,nx
-            if(dat2d(x,y)==missval2)cycle
+            if(dat2d(x,y)==outmissval)cycle
             ! this cell touches missing values?
             if(x.ne.1)then
-              if(pdat2d(x-1,y)==missval1)touchb(INT(dat2d(x,y))) = .true.
+              if(pdat2d(x-1,y)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             if(y.ne.1)then
-              if(pdat2d(x,y-1)==missval1)touchb(INT(dat2d(x,y))) = .true.
+              if(pdat2d(x,y-1)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             if(x.ne.nx)then
-              if(pdat2d(x+1,y)==missval1)touchb(INT(dat2d(x,y))) = .true.
+              if(pdat2d(x+1,y)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             if(y.ne.ny)then
-              if(pdat2d(x,y+1)==missval1)touchb(INT(dat2d(x,y))) = .true.
+              if(pdat2d(x,y+1)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             ! this cell touches time or space boundaries?
             if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny .OR. tsID==1 .OR. tsID==ntp-1)touchb(INT(dat2d(x,y))) = .true.

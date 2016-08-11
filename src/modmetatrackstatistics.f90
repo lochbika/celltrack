@@ -200,7 +200,7 @@ module metatrackstatistics
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
-      missval2=vlistInqVarMissval(vlistID2,varID2)
+      outmissval=vlistInqVarMissval(vlistID2,varID2)
 
       !! open new nc file for results
       ! define grid
@@ -214,13 +214,12 @@ module metatrackstatistics
       zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID1, level)
       ! define variables
-      missval1=-999.D0
       vlistID1=vlistCreate()
       varID1=vlistDefVar(vlistID1,gridID1,zaxisID1,TIME_VARIABLE)
       CALL vlistDefVarName(vlistID1,varID1,"metaID")
       CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each meta track")
       CALL vlistDefVarUnits(vlistID1,varID1,"-")
-      CALL vlistDefVarMissval(vlistID1,varID1,nmiss1)
+      CALL vlistDefVarMissval(vlistID1,varID1,outmissval)
       CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
       ! copy time axis from input
       taxisID1=vlistInqTaxis(vlistID2)
@@ -257,13 +256,13 @@ module metatrackstatistics
         end if
 
         ! now loop dat and replace clIDs with metaIDs
-        pdat=missval1
+        pdat=outmissval
         do i=1,nx*ny
-          if(dat(i)==missval2)then
+          if(dat(i)==outmissval)then
             cycle
           end if
           if(clmeta(INT(dat(i)))==-1)then
-            pdat(i)=missval1
+            pdat(i)=outmissval
             cycle
           end if
           pdat(i)=clmeta(INT(dat(i)))
@@ -320,7 +319,7 @@ module metatrackstatistics
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
-      missval2=vlistInqVarMissval(vlistID2,varID2)
+      outmissval=vlistInqVarMissval(vlistID2,varID2)
 
 
       !! open new nc file for results
@@ -335,13 +334,12 @@ module metatrackstatistics
       zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID1, level)
       ! define variables
-      missval1=-999.D0
       vlistID1=vlistCreate()
       varID1=vlistDefVar(vlistID1,gridID1,zaxisID1,TIME_VARIABLE)
       CALL vlistDefVarName(vlistID1,varID1,"metaID")
       CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each meta track")
       CALL vlistDefVarUnits(vlistID1,varID1,"-")
-      CALL vlistDefVarMissval(vlistID1,varID1,missval1)
+      CALL vlistDefVarMissval(vlistID1,varID1,outmissval)
       CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
       ! copy time axis from input
       taxisID1=vlistInqTaxis(vlistID2)
@@ -378,13 +376,13 @@ module metatrackstatistics
         end if
 
         ! now loop dat and replace clIDs with metaIDs
-        pdat=missval1
+        pdat=outmissval
         do i=1,nx*ny
-          if(dat(i)==missval2)then
+          if(dat(i)==outmissval)then
             cycle
           end if
           if(clmetamstr(INT(dat(i)))==-1)then
-            pdat(i)=missval1
+            pdat(i)=outmissval
             cycle
           end if
           pdat(i)=clmetamstr(INT(dat(i)))
