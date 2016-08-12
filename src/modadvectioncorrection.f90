@@ -139,19 +139,17 @@ module advectioncorrection
         vclx=outmissval
         vcly=outmissval
         do clID=1,globnIDs
-          if(tsclID(clID).ne.1 .AND. .NOT.touchb(clID))then
-            if(nbw(clID)==1)then
-              ! find the cell which is connected backwards
-              do i=1,iclIDloc(clID)
-                if(links(clID,i))then
-                  selCL=i+minclIDloc(clID)
-                  exit
-                end if
-              end do
-              if(nfw(selCL)==1)then
-                vclx(clID)=(wclcmass(clID,1)-wclcmass(selCL,1))*diflon/tstep
-                vcly(clID)=(wclcmass(clID,2)-wclcmass(selCL,2))*diflat/tstep
+          if(tsclID(clID).ne.1 .AND. nbw(clID)==1)then
+            ! find the cell which is connected backwards
+            do i=1,iclIDloc(clID)
+              if(links(clID,i))then
+                selCL=i+minclIDloc(clID)
+                exit
               end if
+            end do
+            if(nfw(selCL)==1)then
+              vclx(clID)=(wclcmass(clID,1)-wclcmass(selCL,1))*diflon/tstep
+              vcly(clID)=(wclcmass(clID,2)-wclcmass(selCL,2))*diflat/tstep
             end if
           end if
         end do
