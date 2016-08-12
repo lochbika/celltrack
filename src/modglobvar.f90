@@ -16,7 +16,7 @@ module globvar
   implicit none
 
   ! command line options
-  character(len=800) :: ifile,outfile        ! input file name
+  character(len=800) :: ifile                ! input file name
   real(kind=8) :: thres                      ! threshold for cell detection
   real(kind=8) :: pherevap                   ! pheromone evaporation value
   logical :: verbose                         ! verbosity
@@ -81,6 +81,7 @@ module globvar
   ! auxiliary
   integer :: outstep,status,riostat
   character(len=1000) :: filename
+  character(len=800) :: outfile
 
   ! random number
   real(kind=8) :: rnum

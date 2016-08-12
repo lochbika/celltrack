@@ -191,11 +191,8 @@ module advectioncorrection
 
           ! now write to vfile
           status=streamDefTimestep(streamID2,tsID)
-          write(*,*)"write u"
           CALL streamWriteVar(streamID2,vuID,uvfield,nmiss2)
-          write(*,*)"write v"
           CALL streamWriteVar(streamID2,vvID,vvfield,nmiss2)
-          write(*,*)"write smpsize"
           CALL streamWriteVar(streamID2,ssizeID,smpsize,nmiss2)
 
           deallocate(uvfield,vvfield,smpsize)

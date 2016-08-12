@@ -51,18 +51,20 @@ module linkstatistics
           end do
         end if
       end do
-    
-      write(*,*)"======================================="
-      write(*,*)"=== write link statistics to file links_stats.txt ..."
-      write(*,*)"---------"
-    
-      ! write this to file
-      open(unit=1,file="links_stats.txt",action="write",status="replace")
-      write(1,*)"     clID       nbw       nfw"
-      do i=1,globnIDs
-        write(1,'(3i10)')clIDs(i),nbw(i),nfw(i)
-      end do
-      close(unit=1)
+
+      if(.NOT.advcor .OR. adviter>nadviter)then    
+        write(*,*)"======================================="
+        write(*,*)"=== write link statistics to file links_stats.txt ..."
+        write(*,*)"---------"
+      
+        ! write this to file
+        open(unit=1,file="links_stats.txt",action="write",status="replace")
+        write(1,*)"     clID       nbw       nfw"
+        do i=1,globnIDs
+          write(1,'(3i10)')clIDs(i),nbw(i),nfw(i)
+        end do
+        close(unit=1)
+      end if
       
       write(*,*)"======================================="
       write(*,*)"====== FINISHED LINK STATISTICS ======="

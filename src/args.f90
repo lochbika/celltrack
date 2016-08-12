@@ -29,8 +29,6 @@ subroutine cliarguments
   ! defaults
   verbose=.false.
   thres=0.D0
-  outfile="cells.nc"
-  vfile="vfield.nc"
   ifile=""
   ivar=0
   levelID=0
@@ -61,9 +59,6 @@ subroutine cliarguments
     case ("-i")
       arg=arg+1
       call getarg(arg,ifile)
-    case ("-o")
-      arg=arg+1
-      call getarg(arg,outfile)
     case ("-thres")
       arg=arg+1
       call getarg(arg,argc)
