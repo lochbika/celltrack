@@ -34,6 +34,10 @@ program celltrack
   outstep=50
   ! track buffer length
   maxtrlen=5000
+  ! current advection iteration 
+  adviter=0
+  ! name for the cells file
+  outfile="cells.nc"
 
   ! init the random seed if not specified with cli option
   if(rseed.eq.-1)then
