@@ -269,7 +269,7 @@ module trackstatistics
             if(tnums(j)==-1)exit
             do k=1,maxtrlen
               if(alltracks(tnums(j),k)==-1)exit
-              if(dat(i)==alltracks(tnums(j),k))dat(i)=tnums(j)
+              if(INT(dat(i))==alltracks(tnums(j),k))dat(i)=tnums(j)
             end do
           end do
         end do

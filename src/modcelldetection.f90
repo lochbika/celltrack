@@ -213,7 +213,7 @@ module celldetection
     subroutine clustering(data2d,startID,finID,numIDs,tcl,missval)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
-      use ncdfpars, only : inmissval,outmissval
+      use ncdfpars, only : outmissval
       
       implicit none
       integer, intent(in) :: startID
