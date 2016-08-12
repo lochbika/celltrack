@@ -33,7 +33,7 @@ module advectioncorrection
 
       ! variables and arrays
       integer :: selCL
-      integer, allocatable :: smpsize(:,:)   ! sample size for each gridpoint on the velocity field
+      real(kind=8), allocatable :: smpsize2d(:,:),smpsize(:)   ! sample size for each gridpoint on the velocity field
       real(kind=8) :: mindist,cdist
 
       write(*,*)"======================================="
@@ -122,6 +122,12 @@ module advectioncorrection
         CALL vlistDefVarUnits(vlistID2,vvID,"m/s")
         CALL vlistDefVarMissval(vlistID2,vvID,outmissval)
         CALL vlistDefVarDatatype(vlistID2,vvID,DATATYPE_FLT64)
+        ssizeID=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
+        CALL vlistDefVarName(vlistID2,ssizeID,"sample_size")
+        CALL vlistDefVarLongname(vlistID2,ssizeID,"number of cells in grid area")
+        CALL vlistDefVarUnits(vlistID2,ssizeID,"-")
+        CALL vlistDefVarMissval(vlistID2,ssizeID,outmissval)
+        CALL vlistDefVarDatatype(vlistID2,ssizeID,DATATYPE_INT32)
         ! copy time axis from input
         taxisID2=vlistInqTaxis(vlistID1)
         call vlistDefTaxis(vlistID2,taxisID2)
@@ -156,38 +162,43 @@ module advectioncorrection
 
         ! calculate average velocities on the grid for each time step
         do tsID=0,(ntp-1)
-          allocate(uvfield2d(vnx,vny),vvfield2d(vnx,vny),smpsize(vnx,vny))
+          allocate(uvfield2d(vnx,vny),vvfield2d(vnx,vny),smpsize2d(vnx,vny))
           uvfield2d=0
           vvfield2d=0
-          smpsize=0
+          smpsize2d=0
 
           do clID=1,globnIDs
             if(tsclID(clID)>tsID+1)exit
             if(tsclID(clID)==tsID+1 .AND. vclx(clID).ne.outmissval .AND. vcly(clID).ne.outmissval)then
               uvfield2d(vclxindex(clID),vclyindex(clID)) = uvfield2d(vclxindex(clID),vclyindex(clID)) + vclx(clID)
               vvfield2d(vclxindex(clID),vclyindex(clID)) = vvfield2d(vclxindex(clID),vclyindex(clID)) + vcly(clID)
-              smpsize(vclxindex(clID),vclyindex(clID)) = smpsize(vclxindex(clID),vclyindex(clID)) + 1
+              smpsize2d(vclxindex(clID),vclyindex(clID)) = smpsize2d(vclxindex(clID),vclyindex(clID)) + 1
             end if
           end do
 
           ! average and set 0 sampled gridpoints to missing value
-          WHERE(smpsize.ne.0)uvfield2d=uvfield2d/smpsize
-          WHERE(smpsize.ne.0)vvfield2d=vvfield2d/smpsize
-          WHERE(smpsize==0)uvfield2d=outmissval
-          WHERE(smpsize==0)vvfield2d=outmissval
+          WHERE(smpsize2d.ne.0)uvfield2d=uvfield2d/smpsize2d
+          WHERE(smpsize2d.ne.0)vvfield2d=vvfield2d/smpsize2d
+          WHERE(smpsize2d==0)uvfield2d=outmissval
+          WHERE(smpsize2d==0)vvfield2d=outmissval
 
           ! reshape to 2D
-          allocate(uvfield(vnx*vny),vvfield(vnx*vny))
+          allocate(uvfield(vnx*vny),vvfield(vnx*vny),smpsize(vnx*vny))
           CALL reshapeF2d(uvfield2d,vnx,vny,uvfield)
           CALL reshapeF2d(vvfield2d,vnx,vny,vvfield)
-          deallocate(uvfield2d,vvfield2d,smpsize)
+          CALL reshapeF2d(smpsize2d,vnx,vny,smpsize)
+          deallocate(uvfield2d,vvfield2d,smpsize2d)
 
           ! now write to vfile
           status=streamDefTimestep(streamID2,tsID)
+          write(*,*)"write u"
           CALL streamWriteVar(streamID2,vuID,uvfield,nmiss2)
+          write(*,*)"write v"
           CALL streamWriteVar(streamID2,vvID,vvfield,nmiss2)
+          write(*,*)"write smpsize"
+          CALL streamWriteVar(streamID2,ssizeID,smpsize,nmiss2)
 
-          deallocate(uvfield,vvfield)
+          deallocate(uvfield,vvfield,smpsize)
 
         end do
 
