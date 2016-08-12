@@ -78,7 +78,7 @@ module celldetection
       CALL vlistInqVarUnits(vlistID1,varID1,vunit)
       CALL gridInqXunits(gridID1,xunit)
       CALL gridInqYunits(gridID1,yunit)
-      missval1=vlistInqVarMissval(vlistID1,varID1)
+      inmissval=vlistInqVarMissval(vlistID1,varID1)
       call vlistInqVarName(vlistID1,varID1,vname)
     
       write(*,*)"======================================="
@@ -88,7 +88,7 @@ module celldetection
       write(*,*)"---------"
       write(*,'(A,1a12)')" VAR     : ",trim(vname)
       write(*,'(A,1a12)')" Unit    : ",trim(vunit)
-      write(*,'(A,1f12.2)')" MissVal : ",missval1
+      write(*,'(A,1f12.2)')" MissVal : ",inmissval
       write(*,'(A,1i12)')" NX      : ",nx
       write(*,'(A,1f12.2)')" MIN X   : ",xvals(0)
       write(*,'(A,1f12.2)')" MAX X   : ",xvals(nblon-1)
@@ -100,6 +100,7 @@ module celldetection
       write(*,'(A,1f12.2)')" DIF Y   : ",diflat
       write(*,'(A,1a12)')" Unit    : ",trim(yunit)
       write(*,'(A,1i12)')" NTSTEPS : ",ntp
+      write(*,'(A,1i12)')" TSTEP   : ",tstep
       write(*,'(A,1i12)')" NLEV    : ",nlev
       write(*,'(A,1f12.2)')" SELLEV  : ",level
       write(*,*)"---------"
@@ -121,13 +122,13 @@ module celldetection
       zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID2, level)
       ! define variables
-      missval2=-999.D0
+      outmissval=-999.D0
       vlistID2=vlistCreate()
       varID2=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
       CALL vlistDefVarName(vlistID2,varID2,"cellID")
       CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each cell")
       CALL vlistDefVarUnits(vlistID2,varID2,"-")
-      CALL vlistDefVarMissval(vlistID2,varID2,missval2)
+      CALL vlistDefVarMissval(vlistID2,varID2,outmissval)
       CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
       ! copy time axis from input
       taxisID2=vlistInqTaxis(vlistID1)
@@ -157,7 +158,13 @@ module celldetection
     
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
-    
+        
+        ! cycle if field contains only missing values
+        if(nmiss1==nx*ny)then
+          deallocate(dat)
+          cycle
+        end if
+        
         ! reshape array
         allocate(dat2d(nx,ny))
         CALL reshapeT2d(dat,nx,ny,dat2d)
@@ -166,7 +173,7 @@ module celldetection
         ! cluster the frame
         ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
         allocate(cl(nx,ny))
-        CALL clustering(dat2d,globID,globID,nIDs,cl,missval1)
+        CALL clustering(dat2d,globID,globID,nIDs,cl,inmissval)
         if(nIDs.ne.0)globID=globID+1
         globnIDs=globnIDs+nIDs
         deallocate(dat2d)
@@ -206,7 +213,7 @@ module celldetection
     subroutine clustering(data2d,startID,finID,numIDs,tcl,missval)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
-      use ncdfpars, only : missval1,missval2
+      use ncdfpars, only : outmissval
       
       implicit none
       integer, intent(in) :: startID
@@ -218,7 +225,7 @@ module celldetection
       logical :: mask(nx,ny)
     
       ! initialize variables and arrays
-      tcl=missval2
+      tcl=outmissval
       mask=.false.
       clID=startID
       numIDs=0

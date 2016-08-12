@@ -386,7 +386,6 @@ module mainstreamdetection
       a=init
       do
         ! add a to path
-        !write(*,*)a
         pcount=pcount+1
         path(pcount)=a
         ! search for possible connections at this cell
@@ -400,10 +399,6 @@ module mainstreamdetection
           end if
         end do
         ! there are no possible connections? exit this loop
-!        do l=1,ncons
-!          if(next(l)==-1)exit
-!          write(*,*)"next is: ",next(l)
-!        end do
         if(ALL(next==-1))exit
         !!! the random proportional rule
         ! calculate zeta

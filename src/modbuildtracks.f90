@@ -94,6 +94,12 @@ module buildtracks
           ! the following ifs are the conditions for ending a track
           if(nfw(k)==0)then
             trtype=trtype+8
+            ! backup if ...
+            if(nbw(k)>1 .AND. trtype==9)then
+              trtype=33
+              tp=tp-1
+              exit
+            end if
             exit
           else if(nbw(k)>1)then
             if(tp==1 .AND. trtype.ne.2)then
@@ -111,8 +117,6 @@ module buildtracks
             trtype=trtype+16
             exit
           end if
-          ! backup if ...
-          if(nbw(k)>1 .AND. trtype==9)trtype=33
           ! now walk through the tree of links
           do j=minclIDloc(k)+iclIDloc(k),minclIDloc(k)+1+maxnIDs
             if(links(k,j-minclIDloc(k)))then ! take the first cell which is a forward link

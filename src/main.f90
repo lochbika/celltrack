@@ -26,6 +26,7 @@ program celltrack
   use buildmetatracks
   use metatrackstatistics
   use mainstreamdetection
+  use advectioncorrection
 
   implicit none
 
@@ -73,6 +74,16 @@ program celltrack
 
   !=======================================
   !========= FINISHED STATISTICS =========
+  !=======================================
+
+  !=======================================
+  !===== START ADVECTION CORRECTION ======
+  !=======================================
+
+  if(advcor)CALL doadvectioncorrection()
+
+  !=======================================
+  !==== FINISHED ADVECTION CORRECTION ====
   !=======================================
 
   !=======================================
