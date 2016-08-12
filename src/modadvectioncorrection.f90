@@ -53,6 +53,20 @@ module advectioncorrection
       do y=1,vny
         vyvals(y)=(yvals(0)-diflat/2) + (diflat*coarsey*y) - (diflat*coarsey/2)
       end do
+      
+      write(*,*)"======================================="
+      write(*,*)"=== GRID FOR ADVECTION CORRECTION:"
+      write(*,'(A,1i12)')" NX      : ",vnx
+      write(*,'(A,1f12.2)')" MIN X   : ",vxvals(1)
+      write(*,'(A,1f12.2)')" MAX X   : ",vxvals(vnx)
+      write(*,'(A,1f12.2)')" DIF X   : ",(vxvals(1)-xvals(0))*2
+      write(*,'(A,1a12)')" Unit    : ",trim(xunit)
+      write(*,'(A,1i12)')" NX      : ",vny
+      write(*,'(A,1f12.2)')" MIN X   : ",vyvals(1)
+      write(*,'(A,1f12.2)')" MAX X   : ",vyvals(vny)
+      write(*,'(A,1f12.2)')" DIF X   : ",(vyvals(1)-yvals(0))*2
+      write(*,'(A,1a12)')" Unit    : ",trim(yunit)
+      write(*,*)"---------"
 
       ! find the nearest gridpoint on the velocity grid for all cells
       do clID=1,globnIDs
@@ -78,6 +92,7 @@ module advectioncorrection
 
         write(*,*)"======================================="
         write(*,*)"=== This is iteration ",adviter
+        write(*,*)"---------"
 
         ! now we do the linking and the statistics
         CALL linking()
@@ -131,6 +146,7 @@ module advectioncorrection
         ! copy time axis from input
         taxisID2=vlistInqTaxis(vlistID1)
         call vlistDefTaxis(vlistID2,taxisID2)
+       
         ! Open the dataset for writing
         write(vfile,'(A7,I0.3,A3)')"vfield_",adviter,".nc"
         streamID2=streamOpenWrite(TRIM(vfile),FILETYPE_NC)
@@ -138,6 +154,11 @@ module advectioncorrection
            write(*,*)cdiStringError(streamID2)
            stop
         end if
+        
+        write(*,*)"======================================="
+        write(*,*)"=== Calc velocity field and write to ",TRIM(vfile),"..."
+        write(*,*)"---------"
+
         ! Assign variables to dataset
         call streamDefVList(streamID2,vlistID2)
 
