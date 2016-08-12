@@ -181,9 +181,9 @@ module celllinking
             allocate(pdat2d(nx,ny))
             CALL reshapeT2d(pdat,nx,ny,pdat2d)
             do clID=1,globnIDs
+              ! no need to do that for cells with same and higher timesteps
               if(tsclID(clID)==tsID+1)exit
-              ! do not advect cells which touch the boundaries!!!!!!
-              if(touchb(clID))exit
+              ! do the following for cells thar occur one time step before
               if(tsclID(clID)==tsID .AND. &
                 & uvfield2d(vclxindex(clID),vclyindex(clID)).ne.outmissval .AND. &
                 & vvfield2d(vclxindex(clID),vclyindex(clID)).ne.outmissval)then

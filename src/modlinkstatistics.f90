@@ -25,8 +25,6 @@ module linkstatistics
      
       implicit none
       
-      integer, allocatable :: linksInt(:,:)
-    
       write(*,*)"======================================="
       write(*,*)"=========== LINK STATISTICS ==========="
       write(*,*)"======================================="
@@ -37,25 +35,21 @@ module linkstatistics
     
       ! allocate
       allocate(nbw(globnIDs),nfw(globnIDs))
-      allocate(linksInt(globnIDs,maxnIDs))
       nbw=0
       nfw=0
     
-      ! convert logical links to integer links
-      do i=1,globnIDs
-        do k=1,maxnIDs
-          if(links(i,k))then
-            linksInt(i,k)=1
-          else
-            linksInt(i,k)=0
-          end if
-        end do
-      end do
-    
       ! calc nbw/nfw
       do i=1,globnIDs
-        if(tsclID(i).ne.1 .AND. iclIDloc(i).ne.-1)nbw(i)=SUM(linksInt(i,1:iclIDloc(i)))
-        if(tsclID(i).ne.ntp .AND. iclIDloc(i).ne.-1)nfw(i)=SUM(linksInt(i,iclIDloc(i):maxnIDs))
+        if(tsclID(i).ne.1 .AND. iclIDloc(i).ne.-1)then
+          do k=1,iclIDloc(i)
+            if(links(i,k))nbw(i)=nbw(i)+1
+          end do
+        end if
+        if(tsclID(i).ne.ntp .AND. iclIDloc(i).ne.-1)then
+          do k=iclIDloc(i),maxnIDs
+            if(links(i,k))nfw(i)=nfw(i)+1
+          end do
+        end if
       end do
     
       write(*,*)"======================================="
@@ -69,7 +63,6 @@ module linkstatistics
         write(1,'(3i10)')clIDs(i),nbw(i),nfw(i)
       end do
       close(unit=1)
-      deallocate(linksInt)
       
       write(*,*)"======================================="
       write(*,*)"====== FINISHED LINK STATISTICS ======="
