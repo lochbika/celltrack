@@ -44,6 +44,8 @@ subroutine cliarguments
   coarsex=10
   coarsey=10
   tstep=-1
+  metanc=.false.
+  tracknc=.false.
 
   do while (arg < narg)
     arg=arg+1
@@ -114,6 +116,10 @@ subroutine cliarguments
       read(argc,*)tstep
     case ("-advcor")
       advcor=.true.
+    case ("-tracknc")
+      tracknc=.true.
+    case ("-metanc")
+      metanc=.true.
 
     case DEFAULT
       call help(trim(command)//": ERROR: unknown argument: "//trim(argc))

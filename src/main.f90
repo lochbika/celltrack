@@ -125,7 +125,7 @@ program celltrack
   !=======================================
 
   CALL calctrackstatistics()
-  CALL writetracks()
+  if(tracknc)CALL writetracks()
 
   !=======================================
   !====== FINISHED TRACK STATISTICS ======
@@ -146,7 +146,7 @@ program celltrack
   !=======================================
 
   CALL calcmetatrackstatistics()
-  CALL writemetatracks()
+  if(metanc)CALL writemetatracks()
 
   !=======================================
   !==== FINISHED META TRACK STATISTICS ===
@@ -157,7 +157,7 @@ program celltrack
   !=======================================
 
   CALL domainstreamdetection()
-  CALL writemetatracksmainstream()
+  if(metanc)CALL writemetatracksmainstream()
 
   !=======================================
   !==== FINISHED MAINSTREAM DETECTION ====
