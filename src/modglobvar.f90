@@ -28,6 +28,8 @@ module globvar
   integer :: alpha,beta                      ! weighting parameters for action choice rule in ACO path algorhitm
   integer :: rseed                           ! the seed for the random number generator
   logical :: advcor                          ! switch for advection correction
+  logical :: metanc                          ! switch for tracks netcdf output
+  logical :: tracknc                         ! switch for meta tracks netcdf output
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
 
