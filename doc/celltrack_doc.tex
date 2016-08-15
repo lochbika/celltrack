@@ -63,7 +63,7 @@ This part does the cell detection. Therefore celltrack iterates the two spatial 
 		\item different IDs: use the lowest ID for all grid points
 	\end{itemize}
 \end{itemize}
-This step is repeated for every time step. At the end of this step all detected cells have unique IDs. This procedure leads to the fact that a cell A with a higher (lower) ID than cell B occurs at the same time step or later (earlier).
+This step is repeated for all time steps. At the end of this step all detected cells have unique IDs. This procedure leads to the fact that a cell A with a higher (lower) ID than cell B occurs at the same time step or later (earlier).
 
 \subsection{The linking}
 In this part all cells are checked for forward and backward links (one time step) with other cells. The results are stored in a logical matrix which has the size $n * n$, where n is the number of detected cells. Each row/column belongs to a particular cell ID. For an example, see figure \ref{links}: If the linking matrix is true at row 4 and column 7, the cell with ID 4 has a forward link with cell 7.
@@ -79,6 +79,9 @@ Using the logical link matrix the tracking part is quite simple. For each row (w
 	\label{links}
 \end{figure}
 Figure \ref{links} shows a basic example of a link matrix. Based on this one can easily generate the corresponding topology tree which shows all cells and their relationships.
+
+\subsection{Advection correction}
+The most recent feature of celltrack is an iterative advection correction algorithm. Again, this follows \cite{moseley2013}. If switched on, celltrack will calculate a velocity field on a coarse grained grid using the differences in coordinates of the weighted centers of mass between linked cells. Only cells with exactly one forward/backward link are used. Depending on the chosen number of iterations this routine writes the velocity fields decomposed into x and y direction as well as the sample sizes into numbered NetCDF files. The file with the highest number i.e. the latest velocity fields are then used in the final linking process.
 
 \subsection{Meta tracks and mainstream detection}
 With increasing length and/or cell sizes it becomes more and more likely that a track ends with a split or merge into/with other track(s). Although, celltrack puts those snippets into the same category as type 9 tracks one could argue that a combination of such related segments forms a complete track as well. For this reason the term \textit{meta track} is introduced. Essentially, a meta track is a group of tracks of different types which are connected directly or through a chain of an arbitrary number of tracks.
@@ -182,7 +185,12 @@ To run celltrack the path to the cdi library must be in the environment, for exa
 \begin{verbatim}
 celltrack -i <filename> -var <int> -lev <int> -thres <float> \
           -nants <int> -nruns <int> -rho <float> \
-          -rseed <int> -o <file> -lout -v -h
+          -rseed <int> -o <file> -lout [-h -v]
+          
+celltrack -i <filename> -var <int> -lev <int> -thres <float> \
+          -nants <int> -nruns <int> -rho <float> \
+          -rseed <int> -o <file> -lout \
+          -advcor -nadviter <int> -cx <int> -cy <int> -tstep <int> [-h -v]
 \end{verbatim}
 
 \subsubsection*{Example}
@@ -191,7 +199,7 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
 \end{verbatim}
 
 \subsubsection*{Options}
-\begin{labeling}{-rseed }
+\begin{labeling}{-nadviter }
 	\item[-i] Input file name.
 	\item[-var] NetCDF/grib variable ID. Default is 0.
 	\item[-lev] NetCDF/grib level ID. Default is 0 i.e. the first variable.
@@ -202,6 +210,11 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
 	\item[-rseed] If set, the random number generator will use this seed.
 	\item[-o] Output file name. Default is 'cells.nc'.
     \item[-lout] Write the truncated logical links matrix to file cell\_links.txt.
+    \item[-advcor] If set, celltrack performs an advection correction.
+    \item[-nadviter] The number of iterations for advection correction. Default is 6.
+    \item[-cx] The divisor for the coarse graining of the grid (velocity fields, advection correction); x direction. A number of 2 would lead to a doubled grid spacing. 
+    \item[-cy] Same as -cx but for y direction.
+    \item[-tstep] The time step of the input file in seconds. Mandatory for advection correction!
 	\item[-v] Verbose output to stdout. Use with caution! Massively slows down code execution!
 	\item[-h] Show help.
 \end{labeling}
