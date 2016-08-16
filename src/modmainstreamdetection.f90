@@ -157,7 +157,7 @@ module mainstreamdetection
         allocate(pher(maxconlen))
         pher=-1
         allocate(paths(nants,maxconlen*2))
-        ! do this 10 times to determine more trustworthy initial pheromone values
+        ! do this for each ant to determine more trustworthy initial pheromone values
         isum=0 ! total average cost value
         do n=1,nants
           paths=-1
@@ -405,7 +405,12 @@ module mainstreamdetection
         zeta=0
         do i=1,tp
           tauil=pher(next(i))
-          etail=1/lens(next(i))
+          ! backup; if the distance between cells is 0
+          if(lens(next(i))==0.D0)then
+            etail=1/0.0000000001
+          else
+            etail=1/lens(next(i))
+          endif
           zeta=zeta+( tauil**alpha * etail**beta )
         end do
         ! calc tauij and etaij and the probability of decisions

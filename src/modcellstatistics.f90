@@ -197,7 +197,7 @@ module cellstatistics
               if(pdat2d(x,y+1)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             ! this cell touches time or space boundaries?
-            if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny .OR. tsID==1 .OR. tsID==ntp-1)touchb(INT(dat2d(x,y))) = .true.
+            if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny .OR. tsID==0 .OR. tsID==ntp-1)touchb(INT(dat2d(x,y))) = .true.
             ! cell area
             clarea(INT(dat2d(x,y))) = clarea(INT(dat2d(x,y))) + 1
             ! average intensity
