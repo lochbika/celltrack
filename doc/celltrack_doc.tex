@@ -185,11 +185,11 @@ To run celltrack the path to the cdi library must be in the environment, for exa
 \begin{verbatim}
 celltrack -i <filename> -var <int> -lev <int> -thres <float> \
           -nants <int> -nruns <int> -rho <float> \
-          -rseed <int> -o <file> -lout [-h -v]
+          -rseed <int> -lout [-h -v]
           
 celltrack -i <filename> -var <int> -lev <int> -thres <float> \
           -nants <int> -nruns <int> -rho <float> \
-          -rseed <int> -o <file> -lout \
+          -rseed <int> -lout \
           -advcor -nadviter <int> -cx <int> -cy <int> -tstep <int> [-h -v]
 \end{verbatim}
 
@@ -208,7 +208,6 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
 	\item[-nruns] Number of iterations for mainstream detection. Default is 300.
 	\item[-rho] Pheromone evaporation rate. Default is 0.5.
 	\item[-rseed] If set, the random number generator will use this seed.
-	\item[-o] Output file name. Default is 'cells.nc'.
     \item[-lout] Write the truncated logical links matrix to file cell\_links.txt.
     \item[-advcor] If set, celltrack performs an advection correction.
     \item[-nadviter] The number of iterations for advection correction. Default is 6.
