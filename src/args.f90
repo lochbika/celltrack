@@ -40,7 +40,7 @@ subroutine cliarguments
   beta=2
   rseed=-1
   advcor=.false.
-  nadviter=5
+  nadviter=6
   coarsex=10
   coarsey=10
   tstep=-1
