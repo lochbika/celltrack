@@ -101,7 +101,7 @@ module mainstreamdetection
         thismainstream=-1
         lastmainstream=-1
         numeqsol=0
-        
+
         ! which tracks are of type 17 and 33 -> init
         allocate(init(maxmetalen))
         init=-1
@@ -152,6 +152,8 @@ module mainstreamdetection
           intsum=sqrt( ( intsum - clpint(alltracks(allcon(i,k,2),1)) )**2 ) /intsum
           areasum=sqrt( ( areasum - clarea(alltracks(allcon(i,k,2),1)) )**2 ) / areasum
           eta(k)=intsum + areasum
+          ! backup; if the distance between cells is 0
+          if(eta(k)==0.D0)eta(k)=0.0000000000001
         end do
         ! initialize the pheromone tracks
         allocate(pher(maxconlen))
@@ -282,7 +284,7 @@ module mainstreamdetection
             end do
           end do
           deallocate(backw)
-          
+
           ! Do the following each run
           if(MOD(run,1)==0 .OR. run==nruns)then
             ! check if the current mainstream is different from the last ones
@@ -308,7 +310,7 @@ module mainstreamdetection
             end if
             lastmainstream=thismainstream
           end if
-          
+
           ! check the termination conditions
           if(numeqsol>10)then
             if(verbose)write(*,*)"Stagnation in solution construction: Mainstream didn't change since 10 iterations. Stop!"
@@ -329,7 +331,7 @@ module mainstreamdetection
         write(1,*)"   trackID1    trackID2        pher"
         do k=1,maxmetalen
           if(allcon(i,k,1)==-1)exit
-          write(1,'(2i12,1f12.2)')allcon(i,k,:),pher(k)
+          write(1,'(2i12,1f12.5)')allcon(i,k,:),pher(k)
         end do
 
         deallocate(init,quit,eta,pher,paths,thismainstream,lastmainstream)
@@ -400,37 +402,36 @@ module mainstreamdetection
         end do
         ! there are no possible connections? exit this loop
         if(ALL(next==-1))exit
-        !!! the random proportional rule
-        ! calculate zeta
-        zeta=0
-        do i=1,tp
-          tauil=pher(next(i))
-          ! backup; if the distance between cells is 0
-          if(lens(next(i))==0.D0)then
-            etail=1/0.0000000001
-          else
+        !!! the random proportional rule; but do it only if there are at least 2 possible choices
+        if(tp==1)then
+          a=next(tp)
+        else
+          ! calculate zeta
+          zeta=0
+          do i=1,tp
+            tauil=pher(next(i))
             etail=1/lens(next(i))
-          endif
-          zeta=zeta+( tauil**alpha * etail**beta )
-        end do
-        ! calc tauij and etaij and the probability of decisions
-        allocate(cprob(tp))
-        do i=1,tp
-          tauij=pher(next(i))
-          etaij=1/lens(next(i))
-          cprob(i)=( tauij**alpha * etaij**beta ) / zeta
-        end do
-        ! generate a random number
-        CALL RANDOM_NUMBER(rnum)
-        probsum=0
-        do i=1,tp
-          probsum=probsum+cprob(i)
-          if(rnum<=probsum)then
-            a=cons(next(i),2)
-            exit
-          end if
-        end do
-        deallocate(cprob)
+            zeta=zeta+( tauil**alpha * etail**beta )
+          end do
+          ! calc tauij and etaij and the probability of decisions
+          allocate(cprob(tp))
+          do i=1,tp
+            tauij=pher(next(i))
+            etaij=1/lens(next(i))
+            cprob(i)=( tauij**alpha * etaij**beta ) / zeta
+          end do
+          ! generate a random number
+          CALL RANDOM_NUMBER(rnum)
+          probsum=0
+          do i=1,tp
+            probsum=probsum+cprob(i)
+            if(rnum<=probsum)then
+              a=cons(next(i),2)
+              exit
+            end if
+          end do
+          deallocate(cprob)
+        end if
       end do
     end subroutine acoPath
 
