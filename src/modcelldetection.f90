@@ -165,6 +165,7 @@ module celldetection
         ! cycle if field contains only missing values; but write it to output
         if(nmiss1==nx*ny)then
           nmiss2=nmiss1
+          dat=outmissval
           CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
           deallocate(dat)
           cycle
