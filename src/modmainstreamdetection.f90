@@ -151,9 +151,12 @@ module mainstreamdetection
           end do
           intsum=sqrt( ( intsum - clpint(alltracks(allcon(i,k,2),1)) )**2 ) /intsum
           areasum=sqrt( ( areasum - clarea(alltracks(allcon(i,k,2),1)) )**2 ) / areasum
-          eta(k)=intsum + areasum
+          eta(k)=(intsum + areasum )/2
           ! backup; if the distance between cells is 0
-          if(eta(k)==0.D0)eta(k)=0.0000000000001
+          if(eta(k)==0.D0)then
+            if(verbose)write(*,*)"Warning: difference between cells is 0!!"
+            eta(k)=0.000001
+          end if
         end do
         ! initialize the pheromone tracks
         allocate(pher(maxconlen))
@@ -236,7 +239,10 @@ module mainstreamdetection
           end do
 
           ! pheromone evaporation
-          pher = (1-pherevap)*pher
+          do k=1,maxconlen
+            if(pher(k)==-1)exit
+            pher(k) = (1-pherevap)*pher(k)
+          end do
 
           ! pheromone update
           do ant=1,nants
@@ -325,13 +331,13 @@ module mainstreamdetection
         ! use the latest thismainstream to set the global mainstream for this meta track
         allmainstream(i,:)=thismainstream
 
-        ! write the connections with their pheromone values
+        ! write the connections with their pheromone values and distances
         ! write header meta_con_pher.txt
         write(1,'(1a4,1i12,1L4,1i4)')"### ",i,mnobounds(i)
-        write(1,*)"   trackID1    trackID2        pher"
+        write(1,*)"   trackID1    trackID2        pher        dist"
         do k=1,maxmetalen
           if(allcon(i,k,1)==-1)exit
-          write(1,'(2i12,1f12.5)')allcon(i,k,:),pher(k)
+          write(1,'(2i12,2f12.5)')allcon(i,k,:),pher(k),eta(k)
         end do
 
         deallocate(init,quit,eta,pher,paths,thismainstream,lastmainstream)
@@ -404,7 +410,7 @@ module mainstreamdetection
         if(ALL(next==-1))exit
         !!! the random proportional rule; but do it only if there are at least 2 possible choices
         if(tp==1)then
-          a=next(tp)
+          a=cons(next(tp),2)
         else
           ! calculate zeta
           zeta=0
