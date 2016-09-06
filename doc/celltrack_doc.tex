@@ -8,8 +8,8 @@
 \usepackage{natbib}
 
 \title{celltrack\\
-	A 2D cell tracking algorithm (for DALES output)\\ \medskip
-	v 0.2.beta}
+	A 2D cell tracking algorithm\\ \medskip
+	beta}
 \author{K. Lochbihler}
 
 \begin{document}
@@ -107,7 +107,7 @@ A very simple example for a construction graph of a meta track is depicted in fi
 	\item tr1 - tr3 - tr4	
 	\item tr1 - tr3 - tr5.
 \end{enumerate}
-To rank these candidate solutions by quality, celltrack calculates the average cost of a path by $\overline{C}=\frac{1}{m}\sum_{k=1}^{m}{c_{ij}^k}$ where $m$ is the number of nodes in this path and $c_{ij}^k=|\frac{A_i-A_j}{A_i}| + |\frac{P_i-P_j}{P_i}|$. $A$ and $P$ are area and peak intensity of the last cell of track $i$ and first cell of track $j$ at the $k\textendash th$ node of this path. Concerning the example in figure \ref{meta_track_con}a it is fairly easy to compute the cost for all paths and detect the one with the lowest cost value as mainstream. But, switching to the example in figure \ref{meta_track_con}b makes things more complicated. Although only two tracks were added to the construction graph, the number of candidate solutions increases from three to eight. But still, it is feasible to compute all solutions and chose the best. However, the assumption is that the number of possible solutions increases exponentially with the complexity of a meta track. Thus, it is necessary to introduce an optimization algorithm. ACO algorithms can reduce the computation time to find a reasonable solution to combinatorial problems. celltrack incorporates a simplified version of an ACO algorithm \citep{DorSta2004:book} to find a mainstream of a meta track at low computational cost. It consists of the following steps
+To rank these candidate solutions by quality, celltrack calculates the average cost of a path by $\overline{C}=\frac{1}{m}\sum_{k=1}^{m}{c_{ij}^k}$ where $m$ is the number of nodes in this path and $c_{ij}^k=\frac{1}{2}(|\frac{A_i-A_j}{A_i}| + |\frac{P_i-P_j}{P_i}|)$. $A$ and $P$ are area and peak intensity of the last cell of track $i$ and first cell of track $j$ at the $k\textendash th$ node of this path. Concerning the example in figure \ref{meta_track_con}a it is fairly easy to compute the cost for all paths and detect the one with the lowest cost value as mainstream. But, switching to the example in figure \ref{meta_track_con}b makes things more complicated. Although only two tracks were added to the construction graph, the number of candidate solutions increases from three to eight. But still, it is feasible to compute all solutions and chose the best. However, the assumption is that the number of possible solutions increases exponentially with the complexity of a meta track. Thus, it is necessary to introduce an optimization algorithm. ACO algorithms can reduce the computation time to find a reasonable solution to combinatorial problems. celltrack incorporates a simplified version of an ACO algorithm \citep{DorSta2004:book} to find a mainstream of a meta track at low computational cost. It consists of the following steps
 \begin{enumerate}
 	\item initialize the pheromone values of all arcs by $\tau_{ij}=m/\overline{C^{nn}}$, where $\overline{C^{nn}}$ is the cost value of a nearest-neighbor path of length $m$ (number of nodes) starting at a random initiation point
 	\item a certain number of artificial ants construct candidate solutions
