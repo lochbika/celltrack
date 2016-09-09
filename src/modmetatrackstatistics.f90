@@ -100,7 +100,7 @@ module metatrackstatistics
           if(allmeta(i,k)==-1)exit
           write(1,'(2i12,1f19.12,1i12,1f19.12,2i6)')allmeta(i,k),trtypes(allmeta(i,k)), &
           & trpint(allmeta(i,k)),trpinttime(allmeta(i,k)), &
-          & travint(allmeta(i,k)),tsclID(alltracks(i,1)),trdur(allmeta(i,k))
+          & travint(allmeta(i,k)),tsclID(alltracks(allmeta(i,k),1)),trdur(allmeta(i,k))
         end do
       end do
 

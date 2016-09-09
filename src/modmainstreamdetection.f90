@@ -354,7 +354,7 @@ module mainstreamdetection
           if(allmainstream(i,k)==-1)exit
           write(1,'(2i12,1f19.12,1i12,1f19.12,2i6)')allmainstream(i,k),trtypes(allmainstream(i,k)), &
           & trpint(allmainstream(i,k)),trpinttime(allmainstream(i,k)), &
-          & travint(allmainstream(i,k)),tsclID(allmainstream(i,k)),trdur(allmainstream(i,k))
+          & travint(allmainstream(i,k)),tsclID(alltracks(allmainstream(i,k),1)),trdur(allmainstream(i,k))
         end do
       end do
 
