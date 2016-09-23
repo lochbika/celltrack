@@ -73,12 +73,17 @@ module globvar
   integer :: nmeta,maxmetalen
   integer, allocatable :: allmeta(:,:),nkinds(:,:),allcon(:,:,:)
 
-  ! variables for track statistics and summary
+  ! variables for meta track statistics and summary
   logical, allocatable :: mnobounds(:)
-  integer, allocatable :: clmeta(:),metadur(:),clmetamstr(:)
-
+  integer, allocatable :: clmeta(:),metadur(:)
+  real(kind=8), allocatable :: metavalsum(:)
+  
   ! variables for meta track mainstream detection
   integer, allocatable :: allmainstream(:,:)
+
+  ! variables for meta track mainstream statistics
+  integer, allocatable :: clmetamstr(:),mstrdur(:)
+  real(kind=8), allocatable :: mstrvalfrac(:),mstrvalsum(:)
 
   ! auxiliary
   integer :: outstep,status,riostat

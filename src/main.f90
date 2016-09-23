@@ -27,6 +27,7 @@ program celltrack
   use metatrackstatistics
   use mainstreamdetection
   use advectioncorrection
+  use mainstreamstatistics
 
   implicit none
 
@@ -161,6 +162,16 @@ program celltrack
 
   !=======================================
   !==== FINISHED MAINSTREAM DETECTION ====
+  !=======================================
+
+  !=======================================
+  !======== MAINSTREAM STATISTICS ========
+  !=======================================
+
+  CALL calcmainstreamstatistics()
+
+  !=======================================
+  !==== FINISHED MAINSTREAM STATISTICS ===
   !=======================================
 
   write(*,*)"======================================="
