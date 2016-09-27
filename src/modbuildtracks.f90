@@ -52,7 +52,7 @@ module buildtracks
         nobound=.false.
         ! conditions for track initiation and track type
         skipID=.false.
-        if(tsclID(i)==1)skipID=.true.
+        !if(tsclID(i)==1)skipID=.true.
         if(nbw(i)==0)then
           trtype=trtype+1
         else if(nbw(i)>1)then

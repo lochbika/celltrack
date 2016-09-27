@@ -62,7 +62,7 @@ module buildmetatracks
           if(links(j,tp-minclIDloc(j)) .AND. i.ne.k)then
             trcon(l,1)=i
             trcon(l,2)=k
-            if(MOD(l,outstep)==0 .OR. l==1)then
+            if(MOD(l,outstep*2)==0 .OR. l==1)then
               write(*,*)"Found ",l," connections between tracks."
             end if
             l=l+1

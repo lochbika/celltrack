@@ -199,8 +199,8 @@ module celllinking
                 if(movex<0) advcell(1:(nx-ABS(movex)),:)=advcell((ABS(movex)+1):nx,:)
                 if(movey>0) advcell(:,(movey+1):ny)=advcell(:,1:(ny-movey))
                 if(movey<0) advcell(:,1:(ny-ABS(movey)))=advcell(:,(ABS(movey)+1):ny)
-                ! now save back to pdat
-                WHERE(advcell==clID)pdat2d=advcell
+                ! now save back to pdat if the advection didn't move the cell out of domain
+                if(ANY(advcell.ne.outmissval))WHERE(advcell==clID)pdat2d=advcell
                 deallocate(advcell)
               end if
             end do

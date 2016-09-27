@@ -27,6 +27,7 @@ program celltrack
   use metatrackstatistics
   use mainstreamdetection
   use advectioncorrection
+  use mainstreamstatistics
 
   implicit none
 
@@ -125,7 +126,7 @@ program celltrack
   !=======================================
 
   CALL calctrackstatistics()
-  CALL writetracks()
+  if(tracknc)CALL writetracks()
 
   !=======================================
   !====== FINISHED TRACK STATISTICS ======
@@ -146,7 +147,7 @@ program celltrack
   !=======================================
 
   CALL calcmetatrackstatistics()
-  CALL writemetatracks()
+  if(metanc)CALL writemetatracks()
 
   !=======================================
   !==== FINISHED META TRACK STATISTICS ===
@@ -157,10 +158,20 @@ program celltrack
   !=======================================
 
   CALL domainstreamdetection()
-  CALL writemetatracksmainstream()
+  if(metanc)CALL writemetatracksmainstream()
 
   !=======================================
   !==== FINISHED MAINSTREAM DETECTION ====
+  !=======================================
+
+  !=======================================
+  !======== MAINSTREAM STATISTICS ========
+  !=======================================
+
+  CALL calcmainstreamstatistics()
+
+  !=======================================
+  !==== FINISHED MAINSTREAM STATISTICS ===
   !=======================================
 
   write(*,*)"======================================="

@@ -28,6 +28,8 @@ module globvar
   integer :: alpha,beta                      ! weighting parameters for action choice rule in ACO path algorhitm
   integer :: rseed                           ! the seed for the random number generator
   logical :: advcor                          ! switch for advection correction
+  logical :: metanc                          ! switch for tracks netcdf output
+  logical :: tracknc                         ! switch for meta tracks netcdf output
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
 
@@ -71,12 +73,17 @@ module globvar
   integer :: nmeta,maxmetalen
   integer, allocatable :: allmeta(:,:),nkinds(:,:),allcon(:,:,:)
 
-  ! variables for track statistics and summary
+  ! variables for meta track statistics and summary
   logical, allocatable :: mnobounds(:)
-  integer, allocatable :: clmeta(:),metadur(:),clmetamstr(:)
-
+  integer, allocatable :: clmeta(:),metadur(:)
+  real(kind=8), allocatable :: metavalsum(:)
+  
   ! variables for meta track mainstream detection
   integer, allocatable :: allmainstream(:,:)
+
+  ! variables for meta track mainstream statistics
+  integer, allocatable :: clmetamstr(:),mstrdur(:)
+  real(kind=8), allocatable :: mstrvalfrac(:),mstrvalsum(:)
 
   ! auxiliary
   integer :: outstep,status,riostat

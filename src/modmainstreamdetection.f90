@@ -101,7 +101,7 @@ module mainstreamdetection
         thismainstream=-1
         lastmainstream=-1
         numeqsol=0
-        
+
         ! which tracks are of type 17 and 33 -> init
         allocate(init(maxmetalen))
         init=-1
@@ -151,13 +151,18 @@ module mainstreamdetection
           end do
           intsum=sqrt( ( intsum - clpint(alltracks(allcon(i,k,2),1)) )**2 ) /intsum
           areasum=sqrt( ( areasum - clarea(alltracks(allcon(i,k,2),1)) )**2 ) / areasum
-          eta(k)=intsum + areasum
+          eta(k)=(intsum + areasum )/2
+          ! backup; if the distance between cells is 0
+          if(eta(k)==0.D0)then
+            if(verbose)write(*,*)"Warning: difference between cells is 0!!"
+            eta(k)=0.000001
+          end if
         end do
         ! initialize the pheromone tracks
         allocate(pher(maxconlen))
         pher=-1
         allocate(paths(nants,maxconlen*2))
-        ! do this 10 times to determine more trustworthy initial pheromone values
+        ! do this for each ant to determine more trustworthy initial pheromone values
         isum=0 ! total average cost value
         do n=1,nants
           paths=-1
@@ -234,7 +239,10 @@ module mainstreamdetection
           end do
 
           ! pheromone evaporation
-          pher = (1-pherevap)*pher
+          do k=1,maxconlen
+            if(pher(k)==-1)exit
+            pher(k) = (1-pherevap)*pher(k)
+          end do
 
           ! pheromone update
           do ant=1,nants
@@ -282,7 +290,7 @@ module mainstreamdetection
             end do
           end do
           deallocate(backw)
-          
+
           ! Do the following each run
           if(MOD(run,1)==0 .OR. run==nruns)then
             ! check if the current mainstream is different from the last ones
@@ -308,7 +316,7 @@ module mainstreamdetection
             end if
             lastmainstream=thismainstream
           end if
-          
+
           ! check the termination conditions
           if(numeqsol>10)then
             if(verbose)write(*,*)"Stagnation in solution construction: Mainstream didn't change since 10 iterations. Stop!"
@@ -323,13 +331,13 @@ module mainstreamdetection
         ! use the latest thismainstream to set the global mainstream for this meta track
         allmainstream(i,:)=thismainstream
 
-        ! write the connections with their pheromone values
+        ! write the connections with their pheromone values and distances
         ! write header meta_con_pher.txt
         write(1,'(1a4,1i12,1L4,1i4)')"### ",i,mnobounds(i)
-        write(1,*)"   trackID1    trackID2        pher"
+        write(1,*)"   trackID1    trackID2        pher        dist"
         do k=1,maxmetalen
           if(allcon(i,k,1)==-1)exit
-          write(1,'(2i12,1f12.2)')allcon(i,k,:),pher(k)
+          write(1,'(2i12,2f12.5)')allcon(i,k,:),pher(k),eta(k)
         end do
 
         deallocate(init,quit,eta,pher,paths,thismainstream,lastmainstream)
@@ -346,7 +354,7 @@ module mainstreamdetection
           if(allmainstream(i,k)==-1)exit
           write(1,'(2i12,1f19.12,1i12,1f19.12,2i6)')allmainstream(i,k),trtypes(allmainstream(i,k)), &
           & trpint(allmainstream(i,k)),trpinttime(allmainstream(i,k)), &
-          & travint(allmainstream(i,k)),tsclID(allmainstream(i,k)),trdur(allmainstream(i,k))
+          & travint(allmainstream(i,k)),tsclID(alltracks(allmainstream(i,k),1)),trdur(allmainstream(i,k))
         end do
       end do
 
@@ -400,32 +408,36 @@ module mainstreamdetection
         end do
         ! there are no possible connections? exit this loop
         if(ALL(next==-1))exit
-        !!! the random proportional rule
-        ! calculate zeta
-        zeta=0
-        do i=1,tp
-          tauil=pher(next(i))
-          etail=1/lens(next(i))
-          zeta=zeta+( tauil**alpha * etail**beta )
-        end do
-        ! calc tauij and etaij and the probability of decisions
-        allocate(cprob(tp))
-        do i=1,tp
-          tauij=pher(next(i))
-          etaij=1/lens(next(i))
-          cprob(i)=( tauij**alpha * etaij**beta ) / zeta
-        end do
-        ! generate a random number
-        CALL RANDOM_NUMBER(rnum)
-        probsum=0
-        do i=1,tp
-          probsum=probsum+cprob(i)
-          if(rnum<=probsum)then
-            a=cons(next(i),2)
-            exit
-          end if
-        end do
-        deallocate(cprob)
+        !!! the random proportional rule; but do it only if there are at least 2 possible choices
+        if(tp==1)then
+          a=cons(next(tp),2)
+        else
+          ! calculate zeta
+          zeta=0
+          do i=1,tp
+            tauil=pher(next(i))
+            etail=1/lens(next(i))
+            zeta=zeta+( tauil**alpha * etail**beta )
+          end do
+          ! calc tauij and etaij and the probability of decisions
+          allocate(cprob(tp))
+          do i=1,tp
+            tauij=pher(next(i))
+            etaij=1/lens(next(i))
+            cprob(i)=( tauij**alpha * etaij**beta ) / zeta
+          end do
+          ! generate a random number
+          CALL RANDOM_NUMBER(rnum)
+          probsum=0
+          do i=1,tp
+            probsum=probsum+cprob(i)
+            if(rnum<=probsum)then
+              a=cons(next(i),2)
+              exit
+            end if
+          end do
+          deallocate(cprob)
+        end if
       end do
     end subroutine acoPath
 

@@ -61,10 +61,10 @@ module advectioncorrection
       write(*,'(A,1f12.2)')" MAX X   : ",vxvals(vnx)
       write(*,'(A,1f12.2)')" DIF X   : ",(vxvals(1)-xvals(0))*2
       write(*,'(A,1a12)')" Unit    : ",trim(xunit)
-      write(*,'(A,1i12)')" NX      : ",vny
-      write(*,'(A,1f12.2)')" MIN X   : ",vyvals(1)
-      write(*,'(A,1f12.2)')" MAX X   : ",vyvals(vny)
-      write(*,'(A,1f12.2)')" DIF X   : ",(vyvals(1)-yvals(0))*2
+      write(*,'(A,1i12)')" NY      : ",vny
+      write(*,'(A,1f12.2)')" MIN Y   : ",vyvals(1)
+      write(*,'(A,1f12.2)')" MAX Y   : ",vyvals(vny)
+      write(*,'(A,1f12.2)')" DIF Y   : ",(vyvals(1)-yvals(0))*2
       write(*,'(A,1a12)')" Unit    : ",trim(yunit)
       write(*,*)"---------"
 

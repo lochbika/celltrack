@@ -155,12 +155,18 @@ module celldetection
     
         ! Set time step for input file
         status=streamInqTimestep(streamID1,tsID)
-    
+
+        ! set time step for output file
+        status=streamDefTimestep(streamID2,tsID)
+
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
         
-        ! cycle if field contains only missing values
+        ! cycle if field contains only missing values; but write it to output
         if(nmiss1==nx*ny)then
+          nmiss2=nmiss1
+          dat=outmissval
+          CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
           deallocate(dat)
           cycle
         end if
@@ -182,9 +188,6 @@ module celldetection
         allocate(dat(nx*ny))
         CALL reshapeF2d(cl,nx,ny,dat)
         deallocate(cl)
-    
-        ! set time step for output file
-        status=streamDefTimestep(streamID2,tsID)
     
         ! write time step to output file
         nmiss2=nmiss1
