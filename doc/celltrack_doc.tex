@@ -81,9 +81,10 @@ Using the logical link matrix the tracking part is quite simple. For each row (w
 Figure \ref{links} shows a basic example of a link matrix. Based on this one can easily generate the corresponding topology tree which shows all cells and their relationships.
 
 \subsection{Advection correction}
-The most recent feature of celltrack is an iterative advection correction algorithm. Again, this follows \cite{moseley2013}. If switched on, celltrack will calculate a velocity field on a coarse grained grid using the differences in coordinates of the weighted centers of mass between linked cells. Only cells with exactly one forward/backward link are used. Depending on the chosen number of iterations this routine writes the velocity fields decomposed into x and y direction as well as the sample sizes into numbered NetCDF files. The file with the highest number i.e. the latest velocity fields are then used in the final linking process.
+The most recent feature of celltrack is an iterative advection correction algorithm. Again, this follows \cite{moseley2013}. If switched on, celltrack will calculate a velocity field on a coarse grained grid using the differences in coordinates of the weighted centers of mass between linked cells. Only cells with exactly one forward/backward link are used. Depending on the chosen number of iterations this routine writes the velocity fields decomposed into x and y direction as well as the sample sizes into numbered NetCDF files. The file with the highest number i.e. the latest velocity fields are then used in the final linking process. For the advection of cells the displacement is calculated and rounded to grid points.
 
 \subsection{Meta tracks and mainstream detection}
+\label{sec:aco}
 With increasing length and/or cell sizes it becomes more and more likely that a track ends with a split or merge into/with other track(s). Although, celltrack puts those snippets into the same category as type 9 tracks one could argue that a combination of such related segments forms a complete track as well. For this reason the term \textit{meta track} is introduced. Essentially, a meta track is a group of tracks of different types which are connected directly or through a chain of an arbitrary number of tracks.
 \begin{figure}[h]
 	\centering
@@ -214,6 +215,8 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
     \item[-cx] The divisor for the coarse graining of the grid (velocity fields, advection correction); x direction. A number of 2 would lead to a doubled grid spacing. 
     \item[-cy] Same as -cx but for y direction.
     \item[-tstep] The time step of the input file in seconds. Mandatory for advection correction!
+    \item[-tracknc] Output of tracks to netCDF.
+    \item[-metanc] Output of meta tracks to netCDF.
 	\item[-v] Verbose output to stdout. Use with caution! Massively slows down code execution!
 	\item[-h] Show help.
 \end{labeling}
@@ -254,7 +257,7 @@ This file contains some simple statistics about the detected cells. The columns 
 This file is rather intended for development and debugging. It contains the truncated logical link matrix. The rows represent cells which are the same like in cell\_stats.txt. Because the matrix is truncated each row contains only cells which appear at the same, one before and after time step of the corresponding row/cell. The first column mentions the point of truncation. The second column names the first ID in each row. With this information the complete $n*n$ matrix can be reconstructed. The third column contains the column number of each row/cell in the link matrix.
 
 \subsubsection{links\_stats.txt}
-This file contains the number of forward and backward links for each cell. The columns:
+This file contains the number of forward and backward links for each cell. The columns are:
 \begin{labeling}{clID}
 	\item[clID] The cell ID.
 	\item[nbw] The number of backward links.
@@ -264,7 +267,7 @@ This file contains the number of forward and backward links for each cell. The c
 
 \subsection{The tracks files}
 \subsubsection{tracks\_all.txt / tracks\_clean.txt}
-These files list tracks with an object-oriented structure. The first line of each block (beginning with \#\#\#) gives important information about the track. The first integer is the track ID. Then, a logical value tells if the track touches the boundaries of the domain. The last number is the track type as explained in figure \ref{trackinitterm}. Following the header, all cells of a track are listed. The only column is:
+These files list tracks with an object-oriented structure. The first line of each block (beginning with \#\#\#) gives important information about the track. The first integer is the track ID. Then, a logical value tells if the track is free of any boundary contact. The last number is the track type as explained in figure \ref{trackinitterm}. Following the header, all cells of a track are listed. The only column is:
 \begin{labeling}{clcmassX}
 	\item[clID] The cell ID.
 \end{labeling}
@@ -296,6 +299,49 @@ The summary files contain overall statistics for all tracks/tracks of type 9 whi
 	\item[avVal] The average value.	
 	\item[start] The time step at which a track starts.
 	\item[dur] The duration/life time.
+\end{labeling}
+
+\subsection{The meta tracks files}
+\subsubsection{meta\_all.txt}
+This file lists meta tracks with an object-oriented structure. The first line of each block (beginning with \#\#\#) gives important information about the meta track. The first integer is the meta track ID. Then, a logical value tells if the track is free of boundary contact. Following the header, all tracks of a meta track are listed. The only column is:
+\begin{labeling}{clcmassX}
+	\item[trackID] The track ID.
+\end{labeling}
+
+\subsubsection{meta\_summary.txt}
+This file contains summary statistics about the different track types in a meta track. The columns are
+\begin{labeling}{clcmassX}
+	\item[metaID] The ID of the meta track a mainstream belongs to.
+	\item[dur] The duration of the meta track in time steps (from first cell to last cell). 
+	\item[nXX] The number of track with a certain type (e.g. n10 for track type 10)
+\end{labeling}
+
+
+\subsubsection{meta\_mainstream.txt}
+Similar to the previous file this one lists all tracks of a meta track that are part of the mainstream. The logical value in the header of each block indicates whether the mainstream is free of boundary contact. The columns are the same as in tracks\_all\_summary.txt / tracks\_clean\_summary.txt.
+
+\subsubsection{meta\_stats.txt}
+Same as the previous file but containing all tracks of a meta track.
+
+\subsubsection{meta\_con.txt / meta\_con\_pher.txt}
+These files contain information about the connections between tracks within a meta track. The header of a block is the same as in meta\_stats.txt. The columns of meta\_con.txt are:
+\begin{labeling}{clcmassX}
+	\item[trackID1] First track of a pair of connected tracks.
+	\item[trackID2] Second track of a pair of connected tracks.
+\end{labeling}
+In meta\_con\_pher.txt there are two additional columns:
+\begin{labeling}{clcmassX}
+	\item[pher] The final pheromone value of this connection.
+	\item[dist] The distance between the connecting cells of the two tracks. See section \ref{sec:aco}.
+\end{labeling}
+
+\subsubsection{meta\_mainstream\_summary.txt}
+This file contains some summary statistics about the mainstream. The columns are:
+\begin{labeling}{clcmassX}
+	\item[metaID] The ID of the meta track a mainstream belongs to.
+	\item[dur] The duration of the mainstream in time steps.
+	\item[valSum] The total sum of the key variable (used for cell detection) for the mainstream.
+	\item[valFrac] The fraction of the key variable included in the mainstream (compared to the whole meta track).
 \end{labeling}
 
 \newpage
