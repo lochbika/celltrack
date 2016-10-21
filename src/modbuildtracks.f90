@@ -95,10 +95,9 @@ module buildtracks
           if(nfw(k)==0)then
             trtype=trtype+8
             ! backup if ...
-            if(nbw(k)>1 .AND. trtype==9)then
-              trtype=33
+            if(nbw(k)>1 .AND. tp>1)then
               tp=tp-1
-              exit
+              trtype=trtype-8+32
             end if
             exit
           else if(nbw(k)>1)then
