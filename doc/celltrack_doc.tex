@@ -249,7 +249,7 @@ This file contains some simple statistics about the detected cells. The columns 
 	\item[wclcmassY] The y coordinate of the weighted center of mass.
 	\item[peakVal] The maximum value.
 	\item[avVal] The average value.
-	\item[bound] TRUE if the cell touches the boundaries.
+	\item[touchb] TRUE if the cell touches the boundaries.
 \end{labeling}
 
 \subsection{The links files}
@@ -285,7 +285,7 @@ The structure of this files is the same as in tracks\_all.txt / tracks\_clean.tx
 	\item[wclcmassY] The y coordinate of the weighted center of mass.
 	\item[peakVal] The maximum value.
 	\item[avVal] The average value.
-	\item[bound] TRUE if the cell touches the boundaries.
+	\item[nobound] TRUE if all cells of this track are free of boundary contact.
 \end{labeling}
 The difference between the two files is that tracks\_clean\_stats.txt only lists tracks which are of type 9 and do not touch the boundaries during their lifetime.
 
@@ -313,7 +313,7 @@ This file contains summary statistics about the different track types in a meta 
 \begin{labeling}{clcmassX}
 	\item[metaID] The ID of the meta track a mainstream belongs to.
 	\item[dur] The duration of the meta track in time steps (from first cell to last cell). 
-	\item[nXX] The number of track with a certain type (e.g. n10 for track type 10)
+	\item[nXX] The number of tracks of a certain type (e.g. n10 for track type 10)
 \end{labeling}
 
 
@@ -321,7 +321,7 @@ This file contains summary statistics about the different track types in a meta 
 Similar to the previous file this one lists all tracks of a meta track that are part of the mainstream. The logical value in the header of each block indicates whether the mainstream is free of boundary contact. The columns are the same as in tracks\_all\_summary.txt / tracks\_clean\_summary.txt.
 
 \subsubsection{meta\_stats.txt}
-Same as the previous file but containing all tracks of a meta track.
+Same as the previous file but including all tracks of a meta track.
 
 \subsubsection{meta\_con.txt / meta\_con\_pher.txt}
 These files contain information about the connections between tracks within a meta track. The header of a block is the same as in meta\_stats.txt. The columns of meta\_con.txt are:
@@ -340,7 +340,8 @@ This file contains some summary statistics about the mainstream. The columns are
 \begin{labeling}{clcmassX}
 	\item[metaID] The ID of the meta track a mainstream belongs to.
 	\item[dur] The duration of the mainstream in time steps.
-	\item[valSum] The total sum of the key variable (used for cell detection) for the mainstream.
+	\item[MetaValSum] The total sum of the key variable (used for cell detection) for the whole meta track.
+    \item[MstrValSum] The total sum of the key variable (used for cell detection) for the mainstream.
 	\item[valFrac] The fraction of the key variable included in the mainstream (compared to the whole meta track).
 \end{labeling}
 
