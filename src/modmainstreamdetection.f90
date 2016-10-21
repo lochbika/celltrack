@@ -358,7 +358,7 @@ module mainstreamdetection
         end do
       end do
 
-      ! save to which meta track a cell belongs
+      ! save to which meta track mainstream a cell belongs
       allocate(clmetamstr(globnIDs))
       clmetamstr=-1
       do i=1,nmeta

@@ -150,7 +150,7 @@ module metatrackstatistics
             if(tsclID(alltracks(allmeta(i,k),j))>maxts)maxts=tsclID(alltracks(allmeta(i,k),j))
           end do
         end do
-        metadur(i)=maxts-mints+1
+        metadur(i)=maxts-(mints-1)
       end do
 
       open(unit=1,file="meta_summary.txt",action="write",status="replace")
