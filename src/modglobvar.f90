@@ -38,10 +38,11 @@ module globvar
   real(kind=8), allocatable :: xvals(:),yvals(:),levels(:)
   ! Variables for general information about dimensions of input/output fields
   integer :: nx,ny,ntp,nlev,nblon,nblat
+  integer, allocatable :: vdate(:),vtime(:)
 
   ! variables containing information about cells
   integer :: globnIDs
-  integer, allocatable :: clIDs(:),tsclID(:)
+  integer, allocatable :: clIDs(:),tsclID(:),cldate(:),cltime(:)
   logical, allocatable :: touchb(:)
   ! Variables used for cell statistics
   integer, allocatable :: clarea(:),wclarea(:)

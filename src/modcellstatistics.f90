@@ -68,9 +68,13 @@ module cellstatistics
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
 
       allocate(tsclID(globnIDs))
+      allocate(cldate(globnIDs))
+      allocate(cltime(globnIDs))
       tsclID=-1
       tp=1
       ltp=1
+      cldate=-1
+      cltime=-1
 
       do tsID=0,(ntp-1)
         if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1)then
@@ -96,8 +100,13 @@ module cellstatistics
         ! assign time steps
         do i=1,nx*ny
           if(dat(i).ne.outmissval)then
-            if(tsclID(INT(dat(i)))==-1)tsclID(INT(dat(i)))=tsID+1
+            if(tsclID(INT(dat(i)))==-1)then
+              tsclID(INT(dat(i)))=tsID+1
+              cldate(INT(dat(i)))=vdate(tsID+1)
+              cltime(INT(dat(i)))=vtime(tsID+1)
+            end if
             if(verbose)write(*,*)"cluster: ",clIDs(INT(dat(i)))," is at timestep: ",tsclID(INT(dat(i)))
+            if(verbose)write(*,*)cldate(INT(dat(i))),cltime(INT(dat(i)))
           end if
         end do
         deallocate(dat)
@@ -250,10 +259,11 @@ module cellstatistics
       ! write the stats to file
       open(unit=1,file="cell_stats.txt",action="write",status="replace")
       write(1,*)"     clID    tsclID    clarea       clcmassX"//&
-      &"       clcmassY      wclcmassX      wclcmassY            peakVal              avVal  touchb"
+      &"       clcmassY      wclcmassX      wclcmassY            peakVal"//&
+      &"              avVal  touchb      date(YYYYMMDD)        time(hhmmss)"
       do i=1,globnIDs
-        write(1,'(3i10,4f15.6,2f19.12,1L8)')clIDs(i),tsclID(i),clarea(i),clcmass(i,:), &
-          & wclcmass(i,:),clpint(i),clavint(i),touchb(i)
+        write(1,'(3i10,4f15.6,2f19.12,1L8,2i20.6)')clIDs(i),tsclID(i),clarea(i),clcmass(i,:), &
+          & wclcmass(i,:),clpint(i),clavint(i),touchb(i),cldate(i),cltime(i)
       end do
       close(unit=1)
 
