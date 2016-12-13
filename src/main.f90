@@ -132,47 +132,49 @@ program celltrack
   !====== FINISHED TRACK STATISTICS ======
   !=======================================
 
-  !=======================================
-  !======== BUILDING META TRACKS =========
-  !=======================================
-
-  CALL dobuildmetatracks()
-
-  !=======================================
-  !==== FINISHED BUILDING META TRACKS ====
-  !=======================================
-
-  !=======================================
-  !======== META TRACK STATISTICS ========
-  !=======================================
-
-  CALL calcmetatrackstatistics()
-  if(metanc)CALL writemetatracks()
-
-  !=======================================
-  !==== FINISHED META TRACK STATISTICS ===
-  !=======================================
-
-  !=======================================
-  !======== MAINSTREAM DETECTION =========
-  !=======================================
-
-  CALL domainstreamdetection()
-  if(metanc)CALL writemetatracksmainstream()
-
-  !=======================================
-  !==== FINISHED MAINSTREAM DETECTION ====
-  !=======================================
-
-  !=======================================
-  !======== MAINSTREAM STATISTICS ========
-  !=======================================
-
-  CALL calcmainstreamstatistics()
-
-  !=======================================
-  !==== FINISHED MAINSTREAM STATISTICS ===
-  !=======================================
+  if(.NOT.nometa)then
+    !=======================================
+    !======== BUILDING META TRACKS =========
+    !=======================================
+  
+    CALL dobuildmetatracks()
+  
+    !=======================================
+    !==== FINISHED BUILDING META TRACKS ====
+    !=======================================
+  
+    !=======================================
+    !======== META TRACK STATISTICS ========
+    !=======================================
+  
+    CALL calcmetatrackstatistics()
+    if(metanc)CALL writemetatracks()
+  
+    !=======================================
+    !==== FINISHED META TRACK STATISTICS ===
+    !=======================================
+  
+    !=======================================
+    !======== MAINSTREAM DETECTION =========
+    !=======================================
+  
+    CALL domainstreamdetection()
+    if(metanc)CALL writemetatracksmainstream()
+  
+    !=======================================
+    !==== FINISHED MAINSTREAM DETECTION ====
+    !=======================================
+  
+    !=======================================
+    !======== MAINSTREAM STATISTICS ========
+    !=======================================
+  
+    CALL calcmainstreamstatistics()
+  
+    !=======================================
+    !==== FINISHED MAINSTREAM STATISTICS ===
+    !=======================================
+  end if
 
   write(*,*)"======================================="
   write(*,*)"============ FINAL SUMMARY ============"
@@ -181,9 +183,13 @@ program celltrack
   write(*,*)"---------"
   write(*,*)"Cells                  : ",globnIDs
   write(*,*)"Clean tracks           : ",ncleantr
-  write(*,*)"Meta tracks            : ",nmeta
+  if(.NOT.nometa)write(*,*)"Meta tracks            : ",nmeta
   write(*,*)"---------"
-  write(*,*)"Total number of tracks : ",nmeta+ncleantr
+  if(.NOT.nometa)then
+    write(*,*)"Total number of tracks : ",nmeta+ncleantr
+  else
+    write(*,*)"Total number of tracks : ",ncleantr
+  end if
 
   write(*,*)"======================================="
   write(*,*)"================= EXIT ================"

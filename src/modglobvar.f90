@@ -30,6 +30,7 @@ module globvar
   logical :: advcor                          ! switch for advection correction
   logical :: metanc                          ! switch for tracks netcdf output
   logical :: tracknc                         ! switch for meta tracks netcdf output
+  logical :: nometa                          ! completely switch off meta track and mainstream routines
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
 
@@ -38,10 +39,11 @@ module globvar
   real(kind=8), allocatable :: xvals(:),yvals(:),levels(:)
   ! Variables for general information about dimensions of input/output fields
   integer :: nx,ny,ntp,nlev,nblon,nblat
+  integer, allocatable :: vdate(:),vtime(:)
 
   ! variables containing information about cells
   integer :: globnIDs
-  integer, allocatable :: clIDs(:),tsclID(:)
+  integer, allocatable :: clIDs(:),tsclID(:),cldate(:),cltime(:)
   logical, allocatable :: touchb(:)
   ! Variables used for cell statistics
   integer, allocatable :: clarea(:),wclarea(:)

@@ -46,6 +46,7 @@ subroutine cliarguments
   tstep=-1
   metanc=.false.
   tracknc=.false.
+  nometa=.false.
 
   do while (arg < narg)
     arg=arg+1
@@ -120,6 +121,8 @@ subroutine cliarguments
       tracknc=.true.
     case ("-metanc")
       metanc=.true.
+    case ("-nometa")
+      nometa=.true.
 
     case DEFAULT
       call help(trim(command)//": ERROR: unknown argument: "//trim(argc))

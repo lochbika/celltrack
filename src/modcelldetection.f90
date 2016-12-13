@@ -80,29 +80,41 @@ module celldetection
       CALL gridInqYunits(gridID1,yunit)
       inmissval=vlistInqVarMissval(vlistID1,varID1)
       call vlistInqVarName(vlistID1,varID1,vname)
-    
+      ! extract dates and times for all time steps
+      allocate(vdate(ntp))
+      allocate(vtime(ntp))
+      do tsID=0,(ntp-1)
+        ! Set time step for input file
+        status=streamInqTimestep(streamID1,tsID)
+        ! read date and time
+        vdate(tsID+1) = taxisInqVdate(taxisID1)
+        vtime(tsID+1) = taxisInqVtime(taxisID1)
+      end do
+      
       write(*,*)"======================================="
       write(*,*)"=== INPUT SUMMARY:"
       write(*,*)"---------"
       write(*,*)"Input   : ",trim(ifile)
       write(*,*)"---------"
-      write(*,'(A,1a12)')" VAR     : ",trim(vname)
-      write(*,'(A,1a12)')" Unit    : ",trim(vunit)
-      write(*,'(A,1f12.2)')" MissVal : ",inmissval
-      write(*,'(A,1i12)')" NX      : ",nx
-      write(*,'(A,1f12.2)')" MIN X   : ",xvals(0)
-      write(*,'(A,1f12.2)')" MAX X   : ",xvals(nblon-1)
-      write(*,'(A,1f12.2)')" DIF X   : ",diflon
-      write(*,'(A,1a12)')" Unit    : ",trim(xunit)
-      write(*,'(A,1i12)')" NY      : ",ny
-      write(*,'(A,1f12.2)')" MIN Y   : ",yvals(0)
-      write(*,'(A,1f12.2)')" MAX Y   : ",yvals(nblat-1)
-      write(*,'(A,1f12.2)')" DIF Y   : ",diflat
-      write(*,'(A,1a12)')" Unit    : ",trim(yunit)
-      write(*,'(A,1i12)')" NTSTEPS : ",ntp
-      write(*,'(A,1i12)')" TSTEP   : ",tstep
-      write(*,'(A,1i12)')" NLEV    : ",nlev
-      write(*,'(A,1f12.2)')" SELLEV  : ",level
+      write(*,'(A,1a12)')" VAR        : ",trim(vname)
+      write(*,'(A,1a12)')" Unit       : ",trim(vunit)
+      write(*,'(A,1f12.2)')" MissVal    : ",inmissval
+      write(*,'(A,1i12)')" NX         : ",nx
+      write(*,'(A,1f12.2)')" MIN X      : ",xvals(0)
+      write(*,'(A,1f12.2)')" MAX X      : ",xvals(nblon-1)
+      write(*,'(A,1f12.2)')" DIF X      : ",diflon
+      write(*,'(A,1a12)')" Unit       : ",trim(xunit)
+      write(*,'(A,1i12)')" NY         : ",ny
+      write(*,'(A,1f12.2)')" MIN Y      : ",yvals(0)
+      write(*,'(A,1f12.2)')" MAX Y      : ",yvals(nblat-1)
+      write(*,'(A,1f12.2)')" DIF Y      : ",diflat
+      write(*,'(A,1a12)')" Unit       : ",trim(yunit)
+      write(*,'(A,1i8,1i8.6)')" START DATE : ",vdate(1),vtime(1)
+      write(*,'(A,1i8,1I8.6)')" END DATE   : ",vdate(ntp),vtime(ntp)
+      write(*,'(A,1i12)')" NTSTEPS    : ",ntp
+      write(*,'(A,1i12)')" TSTEP      : ",tstep
+      write(*,'(A,1i12)')" NLEV       : ",nlev
+      write(*,'(A,1f12.2)')" SELLEV     : ",level
       write(*,*)"---------"
     
       write(*,*)"======================================="
