@@ -227,7 +227,7 @@ module celldetection
     
     subroutine clustering(data2d,startID,finID,numIDs,tcl,missval)
       
-      use globvar, only : clID,y,x,i,tp,nx,ny,thres
+      use globvar, only : clID,y,x,i,tp,nx,ny,thres,periodic
       use ncdfpars, only : outmissval
       
       implicit none
@@ -260,9 +260,22 @@ module celldetection
           do x=1,nx
             neighb=-999
             if(mask(x,y))then
-              ! gather neighbouring IDs; left,up
-              if(x.ne.1)  neighb(1)=tcl((x-1),y)
-              if(y.ne.1)  neighb(2)=tcl(x,(y-1))
+              ! gather neighbouring IDs; 1= left, 2= up
+              if(periodic)then
+                if(x.ne.1)then
+                  neighb(1)=tcl((x-1),y)
+                else
+                  neighb(1)=tcl(nx,y)
+                end if
+                if(y.ne.1)then
+                  neighb(2)=tcl(x,(y-1))
+                else
+                  neighb(2)=tcl(x,ny)
+                end if
+              else
+                if(x.ne.1)  neighb(1)=tcl((x-1),y)
+                if(y.ne.1)  neighb(2)=tcl(x,(y-1))
+              end if
               ! check if there is NO cluster around the current pixel; create new one
               if(ALL(neighb==-999))then
                 tcl(x,y)=clID
