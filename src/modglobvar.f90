@@ -23,7 +23,8 @@ module globvar
   logical :: lout                            ! switch for file output of the logical link matrix
   integer :: ivar                            ! netcdf ID of input variable
   integer :: levelID                         ! netcdf level ID of input variable
-  integer :: nants                           ! number of ant ie agents during mainstream detection
+  integer :: nants                           ! number of ants ie agents during mainstream detection
+  integer :: maxnants                        ! maximum number of ants
   integer :: nruns                           ! number of iterations during mainstream detection
   integer :: alpha,beta                      ! weighting parameters for action choice rule in ACO path algorhitm
   integer :: rseed                           ! the seed for the random number generator

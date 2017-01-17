@@ -134,6 +134,7 @@ module mainstreamdetection
             nants=k
           end do
           if(nants<5)nants=5
+          if(nants>maxnants .AND. maxnants.ne.-1)nants=maxnants
           if(verbose)write(*,*)"--- number of ants: ",nants
         else
           resetnants=.false.

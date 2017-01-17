@@ -33,6 +33,7 @@ subroutine cliarguments
   ivar=0
   levelID=0
   nants=-1
+  maxnants=-1
   nruns=300
   lout=.false.
   pherevap=0.5D0
@@ -78,6 +79,10 @@ subroutine cliarguments
       arg=arg+1
       call getarg(arg,argc)
       read(argc,*)nants
+    case ("-maxnants")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)maxnants
     case ("-nruns")
       arg=arg+1
       call getarg(arg,argc)
