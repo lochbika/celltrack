@@ -1,0 +1,45 @@
+!-------------------------------------------------------------------------------------------
+!  ######  ######## ##       ##       ######## ########     ###     ######  ##    ##
+! ##    ## ##       ##       ##          ##    ##     ##   ## ##   ##    ## ##   ##
+! ##       ##       ##       ##          ##    ##     ##  ##   ##  ##       ##  ##
+! ##       ######   ##       ##          ##    ########  ##     ## ##       #####
+! ##       ##       ##       ##          ##    ##   ##   ######### ##       ##  ##
+! ##    ## ##       ##       ##          ##    ##    ##  ##     ## ##    ## ##   ##
+!  ######  ######## ######## ########    ##    ##     ## ##     ##  ######  ##    ##
+!-------------------------------------------------------------------------------------------
+! This file is part of celltrack
+! Copyright: Kai Lochbihler (kai.lochbihler@knmi.nl)
+!
+! Any help will be appreciated :)
+!
+module advcellstatistics
+
+  use globvar
+
+  implicit none
+
+  contains
+    subroutine calcadvcellstatistics
+    
+      write(*,*)"======================================="
+      write(*,*)"=== writing stats to file cell_stats.txt ..."
+      write(*,*)"---------"
+
+      ! write the stats to file
+      open(unit=1,file="cell_stats.txt",action="write",status="replace")
+      write(1,*)"     clID    tsclID    clarea       clcmassX"//&
+      &"       clcmassY      wclcmassX      wclcmassY            peakVal"//&
+      &"              avVal  touchb      date(YYYYMMDD)        time(hhmmss)"
+      do i=1,globnIDs
+        write(1,'(3i10,4f15.6,2f19.12,1L8,2i20.6)')clIDs(i),tsclID(i),clarea(i),clcmass(i,:), &
+          & wclcmass(i,:),clpint(i),clavint(i),touchb(i),cldate(i),cltime(i)
+      end do
+      close(unit=1)
+
+      write(*,*)"======================================="
+      write(*,*)"========= FINISHED STATISTICS ========="
+      write(*,*)"======================================="
+    
+    end subroutine calcadvcellstatistics
+
+end module advcellstatistics
