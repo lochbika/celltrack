@@ -35,6 +35,7 @@ module advstats
       real(kind=8), allocatable :: dat(:),pdat(:)     ! array for reading float from nc
       real(kind=8), allocatable :: cellvalues(:,:)    ! holds all values of each cell
       integer, allocatable :: cellcounter(:)          ! current position for each cells grid points
+      real(kind=8) :: probs(22)
 
       write(*,*)"======================================="
       write(*,*)"===== ADDITIONAL CELL STATISTICS ======"
@@ -43,6 +44,9 @@ module advstats
       write(*,*)"======================================="
       write(*,*)"=== calculating percentiles for all cells ..."
       write(*,*)"---------"
+
+      ! prepare probabilities for quantiles
+      probs=(/0.05,0.10,0.15,0.20,0.25,0.30,0.35,0.40,0.45,0.50,0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,0.975,0.99,0.999/)
 
       !!!!!!!!!
       ! gather all cell values and calculate percentiles
@@ -99,55 +103,95 @@ module advstats
         call streamReadVarSlice(streamID1,varID1,levelID,pdat,nmiss1)
 
         ! now loop dat and gather each cells values
-        do y=1,ny
-          do x=1,nx
-            if(dat(x,y)==outmissval)cycle
-            cellvalues(INT(dat(x,y)),cellcounter(INT(dat(x,y))))=pdat(x,y)
-          end do
+        do k=1,nx*ny
+          if(dat(k)==outmissval)cycle
+          cellvalues( INT(dat(k)) , cellcounter(INT(dat(k))) )=pdat(k)
+          cellcounter(INT(dat(k)))=cellcounter(INT(dat(k)))+1
         end do
         deallocate(dat,pdat)
       end do
+      deallocate(cellcounter)
 
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
       
       ! now sort each cells values in ascending order
       do i=1,globnIDs
-        CALL QsortC(cellvalues(i,:))
+        CALL QsortC(cellvalues(i,1:clarea(i)))
       end do
+      
+      ! now calculate cell value percentiles
+      allocate(cellperc(globnIDs,24))
+      cellperc=0.D0
+      do i=1,globnIDs
+        cellperc(i,1)=MINVAL(cellvalues(i,1:clarea(i)))
+        cellperc(i,24)=MAXVAL(cellvalues(i,1:clarea(i)))
+        do p=1,22
+          CALL quantile(cellvalues(i,1:clarea(i)),probs(p),cellperc(i,p+1))
+        end do
+      end do      
 
       write(*,*)"======================================="
-      write(*,*)"=== Summary ..."
-      write(*,'(A,1i12)')" AVerage cell area(gridpoints):",SUM(clarea)/globnIDs
-      write(*,'(A,1i12)')" Minimum cell area(gridpoints):",MINVAL(clarea)
-      write(*,'(A,1i12)')" Maximum cell area(gridpoints):",MAXVAL(clarea)
-      write(*,'(A,1f12.6)')" TOtal average value          :",SUM(clavint)/globnIDs
-      write(*,'(A,1f12.6)')" Mininmum avergae value       :",MINVAL(clavint)
-      write(*,'(A,1f12.6)')" Maxinmum avergae value       :",MAXVAL(clavint)
-      write(*,'(A,1f12.6)')" AVerage peak value           :",SUM(clpint)/globnIDs
-      write(*,'(A,1f12.6)')" Mininmum peak value          :",MINVAL(clpint)
-      write(*,'(A,1f12.6)')" Maxinmum peak value          :",MAXVAL(clpint)
-      write(*,*)"---------"
-
-      write(*,*)"======================================="
-      write(*,*)"=== writing stats to file cell_stats.txt ..."
+      write(*,*)"=== writing stats to file cell_advstats_percentiles.txt ..."
       write(*,*)"---------"
 
       ! write the stats to file
-      open(unit=1,file="cell_stats.txt",action="write",status="replace")
-      write(1,*)"     clID    tsclID    clarea       clcmassX"//&
-      &"       clcmassY      wclcmassX      wclcmassY            peakVal"//&
-      &"              avVal  touchb      date(YYYYMMDD)        time(hhmmss)"
+      open(unit=1,file="cell_advstats_percentiles.txt",action="write",status="replace")
+      write(1,*)"     clID            MIN           0.05           0.10           0.15"//&
+      &"           0.20           0.25           0.30"//&
+      &"           0.35           0.40           0.45"//&
+      &"           0.50           0.55           0.60"//&
+      &"           0.65           0.70           0.75"//&
+      &"           0.80           0.85           0.90"//&
+      &"           0.95          0.975           0.99"//&
+      &"          0.999            MAX"
       do i=1,globnIDs
-        write(1,'(3i10,4f15.6,2f19.12,1L8,2i20.6)')clIDs(i),tsclID(i),clarea(i),clcmass(i,:), &
-          & wclcmass(i,:),clpint(i),clavint(i),touchb(i),cldate(i),cltime(i)
+        write(1,'(1i10,24f15.6)')clIDs(i),cellperc(i,:)
       end do
       close(unit=1)
+
+      deallocate(cellperc,cellvalues)
 
       write(*,*)"======================================="
       write(*,*)"=== FINISHED ADDITIONAL STATISTICS ===="
       write(*,*)"======================================="
 
     end subroutine calccellpercentiles
+    
+    subroutine quantile(x,prob,qu)
+      ! taken from: http://fortranwiki.org/fortran/show/Quartiles
+      implicit none
+      real(kind=8), intent(in)  :: x(:)
+      real(kind=8), intent(in)  :: prob
+      real(kind=8), intent(out) :: qu
+      
+      integer :: n,ib
+      real(kind=8) :: tol,a,b,c,diff
+      
+      n=SIZE(x)
+      tol=1.e-8
+
+      a=n*prob
+      CALL getgp(a,b,c)
+      
+      ib=int(c)
+     
+      diff=b-0.0D0
+      if(diff<=tol) then
+        qu=(x(ib+1)+x(ib))/2.0d0
+      else
+        qu=x(ib+1)
+      end if
+    end subroutine quantile
+    
+    subroutine getgp(a,b,c)
+      ! taken from: http://fortranwiki.org/fortran/show/Quartiles
+      implicit none
+      ! Subroutine to that returns the Right hand and Left hand side digits of a decimal number
+      real(kind=8) :: a,b,c
+      
+      b=mod(a,1.0d0)
+      c=a-b
+    end subroutine getgp
 
 end module advstats

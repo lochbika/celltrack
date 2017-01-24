@@ -30,7 +30,7 @@ private :: Partition
 contains
 
 recursive subroutine QsortC(A)
-  real, intent(in out), dimension(:) :: A
+  real(kind=8), intent(in out), dimension(:) :: A
   integer :: iq
 
   if(size(A) > 1) then
@@ -41,11 +41,11 @@ recursive subroutine QsortC(A)
 end subroutine QsortC
 
 subroutine Partition(A, marker)
-  real, intent(in out), dimension(:) :: A
+  real(kind=8), intent(in out), dimension(:) :: A
   integer, intent(out) :: marker
   integer :: i, j
-  real :: temp
-  real :: x      ! pivot point
+  real(kind=8) :: temp
+  real(kind=8) :: x      ! pivot point
   x = A(1)
   i= 0
   j= size(A) + 1

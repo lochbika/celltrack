@@ -19,6 +19,7 @@ program celltrack
   ! modules
   use celldetection
   use cellstatistics
+  use advstats
   use celllinking
   use linkstatistics
   use buildtracks
@@ -79,6 +80,16 @@ program celltrack
 
   !=======================================
   !========= FINISHED STATISTICS =========
+  !=======================================
+
+  !=======================================
+  !======== MORE  CELL STATISTICS ========
+  !=======================================
+
+  CALL calccellpercentiles()
+
+  !=======================================
+  !====== FINISHED MORE STATISTICS =======
   !=======================================
 
   !=======================================
