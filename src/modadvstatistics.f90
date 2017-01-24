@@ -36,6 +36,7 @@ module advstats
       real(kind=8), allocatable :: cellvalues(:,:)    ! holds all values of each cell
       integer, allocatable :: cellcounter(:)          ! current position for each cells grid points
       real(kind=8) :: probs(22)
+      integer :: fcellID,lcellID
 
       write(*,*)"======================================="
       write(*,*)"===== ADDITIONAL CELL STATISTICS ======"
@@ -76,11 +77,9 @@ module advstats
       taxisID1=vlistInqTaxis(vlistID1)
       zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
 
-      ! allocate and initialize arrays for cell statistics
-      allocate(cellvalues(globnIDs,MAXVAL(clarea)))
-      allocate(cellcounter(globnIDs))
-      cellvalues=-1
-      cellcounter=1
+      ! allocate array for cell percentiles
+      allocate(cellperc(globnIDs,24))
+      cellperc=0.D0
 
       do tsID=0,(ntp-1)
         if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1)then
@@ -102,34 +101,49 @@ module advstats
         call streamReadVar(streamID2,varID2,dat,nmiss2)
         call streamReadVarSlice(streamID1,varID1,levelID,pdat,nmiss1)
 
+        ! count number of cells in this time step
+        tp=0
+        do i=1,globnIDs
+          if(tsclID(i)==tsID+1)then
+            lcellID=i
+            tp=tp+1
+          end if
+        end do
+        fcellID=lcellID-tp+1
+
+        ! now allocate cellvalues for this time step
+        allocate(cellvalues(fcellID:lcellID,MAXVAL(clarea)))
+        cellvalues=-1
+        allocate(cellcounter(fcellID:lcellID))
+        cellcounter=1
+
         ! now loop dat and gather each cells values
         do k=1,nx*ny
           if(dat(k)==outmissval)cycle
           cellvalues( INT(dat(k)) , cellcounter(INT(dat(k))) )=pdat(k)
           cellcounter(INT(dat(k)))=cellcounter(INT(dat(k)))+1
         end do
-        deallocate(dat,pdat)
+
+        ! now sort each cells values in ascending order
+        do i=fcellID,lcellID
+          CALL QsortC(cellvalues(i,1:clarea(i)))
+        end do
+
+        ! now calculate cell value percentiles
+        do i=fcellID,lcellID
+          cellperc(i,1)=MINVAL(cellvalues(i,1:clarea(i)))
+          cellperc(i,24)=MAXVAL(cellvalues(i,1:clarea(i)))
+          do p=1,22
+            CALL quantile(cellvalues(i,1:clarea(i)),probs(p),cellperc(i,p+1))
+          end do
+        end do 
+
+        deallocate(dat,pdat,cellcounter,cellvalues)
+
       end do
-      deallocate(cellcounter)
 
       CALL streamClose(streamID1)
-      CALL streamClose(streamID2)
-      
-      ! now sort each cells values in ascending order
-      do i=1,globnIDs
-        CALL QsortC(cellvalues(i,1:clarea(i)))
-      end do
-      
-      ! now calculate cell value percentiles
-      allocate(cellperc(globnIDs,24))
-      cellperc=0.D0
-      do i=1,globnIDs
-        cellperc(i,1)=MINVAL(cellvalues(i,1:clarea(i)))
-        cellperc(i,24)=MAXVAL(cellvalues(i,1:clarea(i)))
-        do p=1,22
-          CALL quantile(cellvalues(i,1:clarea(i)),probs(p),cellperc(i,p+1))
-        end do
-      end do      
+      CALL streamClose(streamID2)    
 
       write(*,*)"======================================="
       write(*,*)"=== writing stats to file cell_advstats_percentiles.txt ..."
@@ -150,7 +164,7 @@ module advstats
       end do
       close(unit=1)
 
-      deallocate(cellperc,cellvalues)
+      deallocate(cellperc)
 
       write(*,*)"======================================="
       write(*,*)"=== FINISHED ADDITIONAL STATISTICS ===="
