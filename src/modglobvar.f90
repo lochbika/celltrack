@@ -47,7 +47,7 @@ module globvar
   integer, allocatable :: clIDs(:),tsclID(:),cldate(:),cltime(:)
   logical, allocatable :: touchb(:)
   ! Variables used for cell statistics
-  integer, allocatable :: clarea(:),wclarea(:)
+  integer, allocatable :: clarea(:)
   real(kind=8), allocatable :: clpint(:),clavint(:),clcmass(:,:),wclcmass(:,:)
 
   ! Variables for cell linking
