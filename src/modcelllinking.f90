@@ -206,10 +206,18 @@ module celllinking
                 end do
                 ! move in x and y direction
                 if(movex.ne.0)then
-                  preadvcell=EOSHIFT(preadvcell,SHIFT=movex,BOUNDARY=outmissval,DIM=1)
+                  if(periodic)then
+                    preadvcell=CSHIFT(preadvcell,SHIFT=movex,DIM=1)
+                  else
+                    preadvcell=EOSHIFT(preadvcell,SHIFT=movex,BOUNDARY=outmissval,DIM=1)
+                  end if
                 end if
                 if(movey.ne.0)then
-                  preadvcell=EOSHIFT(preadvcell,SHIFT=movey,BOUNDARY=outmissval,DIM=2)
+                  if(periodic)then
+                    preadvcell=CSHIFT(preadvcell,SHIFT=movey,DIM=1)
+                  else
+                    preadvcell=EOSHIFT(preadvcell,SHIFT=movey,BOUNDARY=outmissval,DIM=2)
+                  end if
                 end if
                 ! now copy the advected cells from this patch to advcell
                 do i=1,nx
