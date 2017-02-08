@@ -46,16 +46,16 @@ module advectioncorrection
       ! we can use the gathered information to coarse grain the grid and open a new dataset
       vnx=nx/coarsex
       vny=ny/coarsey
-      vxres=( (xvals(nx)+diflon/2) - (xvals(0)-diflon/2) ) / vnx
-      vyres=( (yvals(ny)+diflat/2) - (yvals(0)-diflat/2) ) / vnx
+      vxres=( (xvals(nx-1)+diflon/2) - (xvals(0)-diflon/2) ) / vnx
+      vyres=( (yvals(ny-1)+diflat/2) - (yvals(0)-diflat/2) ) / vnx
       allocate(vxvals(vnx),vyvals(vny))
       vxvals(1)= (xvals(0)-diflon/2) + (vxres/2)
       vyvals(1)= (yvals(0)-diflat/2) + (vyres/2)
       do x=2,vnx
-        vxvals(x)=vxvals(1) + x*vxres
+        vxvals(x)=vxvals(1) + (x-1)*vxres
       end do
       do y=2,vny
-        vyvals(y)=vyvals(1) + y*vyres
+        vyvals(y)=vyvals(1) + (y-1)*vyres
       end do
 
       write(*,*)"======================================="
@@ -63,12 +63,12 @@ module advectioncorrection
       write(*,'(A,1i12)')" NX      : ",vnx
       write(*,'(A,1f12.2)')" MIN X   : ",vxvals(1)
       write(*,'(A,1f12.2)')" MAX X   : ",vxvals(vnx)
-      write(*,'(A,1f12.2)')" DIF X   : ",(vxvals(1)-xvals(0))*2
+      write(*,'(A,1f12.2)')" DIF X   : ",vxres
       write(*,'(A,1a12)')" Unit    : ",trim(xunit)
       write(*,'(A,1i12)')" NY      : ",vny
       write(*,'(A,1f12.2)')" MIN Y   : ",vyvals(1)
       write(*,'(A,1f12.2)')" MAX Y   : ",vyvals(vny)
-      write(*,'(A,1f12.2)')" DIF Y   : ",(vyvals(1)-yvals(0))*2
+      write(*,'(A,1f12.2)')" DIF Y   : ",vyres
       write(*,'(A,1a12)')" Unit    : ",trim(yunit)
       write(*,*)"---------"
 
