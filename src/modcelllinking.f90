@@ -32,7 +32,6 @@ module celllinking
       real(kind=8), allocatable :: dat(:),pdat(:)          ! arrays for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! arrays for the advection correction
       real(kind=8), allocatable :: advcell(:,:)            ! temporary array for advected cells
-      real(kind=8), allocatable :: preadvcell(:,:)         ! temporary array for cells of patches
       integer :: movex,movey                               ! the number of gridpoints to move a cell (x and y direction)
 
       write(*,*)"======================================="
@@ -136,7 +135,6 @@ module celllinking
         if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1)then
           write(*,*)"Processing timestep: ",tsID+1
         end if
-
         ! Allocate arrays for data storage
         allocate(dat(nx*ny))
         if(advcor .AND. adviter>1)then
@@ -179,66 +177,73 @@ module celllinking
           ! ADVECTION CORRECTION: now advect previous timestep with velocity field
           if(advcor .AND. adviter>1)then
             ! reshape to 2d
-            allocate(pdat2d(nx,ny))
+            allocate(pdat2d(nx,ny),dat2d(nx,ny))
             CALL reshapeT2d(pdat,nx,ny,pdat2d)
+            CALL reshapeT2d(dat,nx,ny,dat2d)
             ! allocate temporary storage for advected cells
             allocate(advcell(nx,ny))
-            advcell=outmissval
-            allocate(preadvcell(nx,ny))
             ! move cells in each patch of velocity field
             do x=1,vnx
               do y=1,vny
-                ! cycle if no velocity data is available
-                if(uvfield2d(x,y)==outmissval .AND. vvfield2d(x,y)==outmissval)cycle
+                ! reset advcell
+                advcell=outmissval
                 ! calculate the number of grid points to move cells in that patch
                 ! movex/movey*(-1) because the shift function does it backwards
-                movex=NINT(uvfield2d(x,y)*tstep/diflon)*(-1)
-                movey=NINT(vvfield2d(x,y)*tstep/diflat)*(-1)
-                ! now reset preadvcell and copy cells inside this patch to it
-                preadvcell=outmissval
+                ! do not move if no velocity data is available
+                if(uvfield2d(x,y)==outmissval)then 
+                  movex=0
+                else
+                  movex=NINT(uvfield2d(x,y)*tstep/diflon)*(-1)
+                end if
+                if(vvfield2d(x,y)==outmissval)then
+                  movey=0
+                else
+                  movey=NINT(vvfield2d(x,y)*tstep/diflat)*(-1)
+                end if
+                ! copy cells from this patch
                 do i=1,nx
                   do k=1,ny
                     if(pdat2d(i,k)==outmissval)cycle
                     if(vclxindex(INT(pdat2d(i,k)))==x .AND. vclyindex(INT(pdat2d(i,k)))==y)then
-                      preadvcell(i,k)=pdat2d(i,k)
+                      advcell(i,k)=pdat2d(i,k)
                     end if
                   end do
                 end do
                 ! move in x and y direction
-                if(movex.ne.0)then
-                  preadvcell=EOSHIFT(preadvcell,SHIFT=movex,BOUNDARY=outmissval,DIM=1)
-                end if
-                if(movey.ne.0)then
-                  preadvcell=EOSHIFT(preadvcell,SHIFT=movey,BOUNDARY=outmissval,DIM=2)
-                end if
-                ! now copy the advected cells from this patch to advcell
+                if(movex.ne.0)advcell=EOSHIFT(advcell,SHIFT=movex,BOUNDARY=outmissval,DIM=2)
+                if(movey.ne.0)advcell=EOSHIFT(advcell,SHIFT=movey,BOUNDARY=outmissval,DIM=1)
+                ! do the linking for each patch seperately
+                ! now loop all gridpoints
                 do i=1,nx
                   do k=1,ny
-                    if(preadvcell(i,k)==outmissval)cycle
-                    if(vclxindex(INT(preadvcell(i,k)))==x .AND. vclyindex(INT(preadvcell(i,k)))==y)then
-                      advcell(i,k)=preadvcell(i,k)
+                    if(advcell(i,k).ne.outmissval .AND. dat2d(i,k).ne.outmissval)then
+                      if(verbose)write(*,*)"We have an overlap! cluster ",INT(advcell(i,k))," with ",INT(pdat2d(i,k))
+                      j=advcell(i,k)
+                      l=dat2d(i,k)
+                      ! backward linking
+                      links(l,j-minclIDloc(l))=.true.
+                      ! forward linking
+                      links(j,l-minclIDloc(j))=.true.
                     end if
                   end do
                 end do
               end do
             end do
-            ! now bring it back home
-            CALL reshapeF2d(advcell,nx,ny,pdat)
-            deallocate(pdat2d,preadvcell,advcell)
+            deallocate(pdat2d,dat2d,advcell)
+          else
+            ! now loop all gridpoints without advection correction
+            do i=1,nx*ny
+              if(dat(i).ne.outmissval .AND. pdat(i).ne.outmissval)then
+                if(verbose)write(*,*)"We have an overlap! cluster ",INT(dat(i))," with ",INT(pdat(i))
+                k=dat(i)
+                j=pdat(i)
+                ! backward linking
+                links(k,j-minclIDloc(k))=.true.
+                ! forward linking
+                links(j,k-minclIDloc(j))=.true.
+              end if
+            end do
           end if
-
-          ! now loop all gridpoints
-          do i=1,nx*ny
-            if(dat(i).ne.outmissval .AND. pdat(i).ne.outmissval)then
-              if(verbose)write(*,*)"We have an overlap! cluster ",INT(dat(i))," with ",INT(pdat(i))
-              k=dat(i)
-              j=pdat(i)
-              ! backward linking
-              links(k,j-minclIDloc(k))=.true.
-              ! forward linking
-              links(j,k-minclIDloc(j))=.true.
-            end if
-          end do
           deallocate(pdat)
         end if
         deallocate(dat)
