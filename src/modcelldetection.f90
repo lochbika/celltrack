@@ -192,6 +192,11 @@ module celldetection
         ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
         allocate(cl(nx,ny))
         CALL clustering(dat2d,globID,globID,nIDs,cl,inmissval)
+        ! periodic boundaries
+        if(nIDs.ne.0 .AND. periodic)then
+          globID=globID-nIDs+1
+          CALL mergeboundarycells(cl,globID,globID,nIDs,inmissval)
+        end if
         if(nIDs.ne.0)globID=globID+1
         globnIDs=globnIDs+nIDs
         deallocate(dat2d)
@@ -227,7 +232,7 @@ module celldetection
     
     subroutine clustering(data2d,startID,finID,numIDs,tcl,missval)
       
-      use globvar, only : clID,y,x,i,tp,nx,ny,thres,periodic
+      use globvar, only : clID,y,x,i,tp,nx,ny,thres
       use ncdfpars, only : outmissval
       
       implicit none
@@ -260,22 +265,9 @@ module celldetection
           do x=1,nx
             neighb=-999
             if(mask(x,y))then
-              ! gather neighbouring IDs; 1= left, 2= up
-              if(periodic)then
-                if(x.ne.1)then
-                  neighb(1)=tcl((x-1),y)
-                else
-                  neighb(1)=tcl(nx,y)
-                end if
-                if(y.ne.1)then
-                  neighb(2)=tcl(x,(y-1))
-                else
-                  neighb(2)=tcl(x,ny)
-                end if
-              else
-                if(x.ne.1)  neighb(1)=tcl((x-1),y)
-                if(y.ne.1)  neighb(2)=tcl(x,(y-1))
-              end if
+              ! gather neighbouring IDs; left,up
+              if(x.ne.1)  neighb(1)=tcl((x-1),y)
+              if(y.ne.1)  neighb(2)=tcl(x,(y-1))
               ! check if there is NO cluster around the current pixel; create new one
               if(ALL(neighb==-999))then
                 tcl(x,y)=clID
@@ -338,5 +330,88 @@ module celldetection
       ! return final cluster ID
       finID=clID
     end subroutine clustering
+
+    subroutine mergeboundarycells(data2d,startID,finID,numIDs,missval)
+      
+      use globvar, only : clID,y,x,i,tp,nx,ny,thres
+      use ncdfpars, only : outmissval
+      
+      implicit none
+      integer, intent(out) :: finID,numIDs,startID
+      integer, allocatable :: allIDs(:)
+      integer :: conx,cony,neighb(2)
+      real(kind=8), intent(in) :: missval
+      real(kind=8),intent(inout) :: data2d(nx,ny)
+    
+      ! initialize variables and arrays
+    
+      ! check in y direction if there are cells connected beyond boundaries
+      do y=1,ny
+        neighb=-999
+        ! gather neighbouring IDs
+        if(data2d(nx,y).ne.missval .AND. data2d(1,y).ne.missval)then
+          neighb(1)=data2d(nx,y) ! this is the ID of the current gridpoint
+          neighb(2)=data2d(1,y)  ! this is the ID of the neighbouring point over the edge of x
+          if(neighb(1).ne.neighb(2))then
+            ! now iterate the complete matrix and rename higher cluster ID to the lower ID
+            do cony=1,ny
+              do conx=1,nx
+                if(data2d(conx,cony)==MAXVAL(neighb))data2d(conx,cony)=MINVAL(neighb)
+              end do
+            end do
+            ! one cluster was deleted
+            numIDs=numIDs-1            
+          end if
+        end if
+      end do
+      ! check in x direction if there are cells connected beyond boundaries
+      do x=1,nx
+        neighb=-999
+        ! gather neighbouring IDs
+        if(data2d(x,ny).ne.missval .AND. data2d(x,1).ne.missval)then
+          neighb(1)=data2d(x,ny) ! this is the ID of the current gridpoint
+          neighb(2)=data2d(x,1)  ! this is the ID of the neighbouring point over the edge of y
+          if(neighb(1).ne.neighb(2))then
+            ! now iterate the complete matrix and rename higher cluster ID to the lower ID
+            do cony=1,ny
+              do conx=1,nx
+                if(data2d(conx,cony)==MAXVAL(neighb))data2d(conx,cony)=MINVAL(neighb)
+              end do
+            end do
+            ! one cluster was deleted
+            numIDs=numIDs-1            
+          end if
+        end if
+      end do
+      
+      ! gather IDs and rename to gapless ascending IDs
+      allocate(allIDs(numIDs))
+      allIDs=-999
+      tp=1
+      do y=1,ny
+        do x=1,nx
+          if(.NOT.ANY(allIDs==data2d(x,y)) .AND. data2d(x,y).ne.-999)then
+            allIDs(tp)=data2d(x,y)
+            tp=tp+1
+          end if
+        end do
+      end do
+  
+      clID=startID-1
+      do i=1,tp-1
+        clID=clID+1
+        do y=1,ny
+          do x=1,nx
+            if(data2d(x,y)==allIDs(i))then
+              data2d(x,y)=clID
+            end if
+          end do
+        end do
+      end do
+      deallocate(allIDs)
+        
+      ! return final cluster ID
+      finID=clID
+    end subroutine mergeboundarycells
 
 end module celldetection
