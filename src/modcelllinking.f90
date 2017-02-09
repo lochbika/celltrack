@@ -210,8 +210,8 @@ module celllinking
                   end do
                 end do
                 ! move in x and y direction
-                if(movex.ne.0)advcell=EOSHIFT(advcell,SHIFT=movex,BOUNDARY=outmissval,DIM=2)
-                if(movey.ne.0)advcell=EOSHIFT(advcell,SHIFT=movey,BOUNDARY=outmissval,DIM=1)
+                if(movex.ne.0)advcell=EOSHIFT(advcell,SHIFT=movex,BOUNDARY=outmissval,DIM=1)
+                if(movey.ne.0)advcell=EOSHIFT(advcell,SHIFT=movey,BOUNDARY=outmissval,DIM=2)
                 ! do the linking for each patch seperately
                 ! now loop all gridpoints
                 do i=1,nx

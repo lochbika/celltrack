@@ -83,9 +83,11 @@ module buildmetatracks
 
       ! what is the highest number of links between cells?
       if(MAXVAL(nfw)>MAXVAL(nbw))then
-        maxtrcons=MAXVAL(nfw)*MAXVAL(nfw)*MAXVAL(nfw)
+        !maxtrcons=MAXVAL(nfw)*MAXVAL(nfw)*MAXVAL(nfw)
+        maxtrcons=10000
       else
-        maxtrcons=MAXVAL(nbw)*MAXVAL(nbw)*MAXVAL(nbw)
+        !maxtrcons=MAXVAL(nbw)*MAXVAL(nbw)*MAXVAL(nbw)
+        maxtrcons=10000
       end if
 
       allocate(metabuffer(5000000),metbuffer1(maxtrcons),metbuffer2(maxtrcons))
