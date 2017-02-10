@@ -35,6 +35,7 @@ module advectioncorrection
       integer :: selCL
       real(kind=8), allocatable :: smpsize2d(:,:),smpsize(:)   ! sample size for each gridpoint on the velocity field
       real(kind=8) :: mindist,cdist,vxres,vyres
+      logical :: crossbx,crossby
 
       write(*,*)"======================================="
       write(*,*)"===== START ADVECTION CORRECTION ======"
@@ -181,8 +182,16 @@ module advectioncorrection
               end if
             end do
             if(nfw(selCL)==1)then
-              vclx(clID)=(wclcmass(clID,1)-wclcmass(selCL,1))*diflon/tstep
-              vcly(clID)=(wclcmass(clID,2)-wclcmass(selCL,2))*diflat/tstep
+              if(periodic)then
+                ! ok, now it's getting tricky because we don't know if selCL
+                ! crossed the boundaries to become clID. but we can use the
+                ! velocity in the gridbox for advcor to get the direction
+                ! selCL is moving
+                ! maybe later... for now: NO advection correction with PBC
+              else
+                vclx(clID)=(wclcmass(clID,1)-wclcmass(selCL,1))*diflon/tstep
+                vcly(clID)=(wclcmass(clID,2)-wclcmass(selCL,2))*diflat/tstep
+              end if
             end if
           end if
         end do
