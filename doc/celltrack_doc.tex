@@ -9,7 +9,7 @@
 
 \title{celltrack\\
 	A 2D cell tracking algorithm\\ \medskip
-	beta}
+	v0.2 beta}
 \author{K. Lochbihler}
 
 \begin{document}
@@ -46,7 +46,7 @@ Cells which have overlaps with only one cell from the previous and next time ste
 \end{itemize}
  A cell with the following properties ends a track:
 \begin{itemize}
-	\item there is no overlap with cells from the next time step
+	\item there is no overlap with cells in the next time step
 	\item merges with other cells in the next time step
 	\item splits into several cells in the next time step
 \end{itemize}
@@ -81,7 +81,7 @@ Using the logical link matrix the tracking part is quite simple. For each row (w
 Figure \ref{links} shows a basic example of a link matrix. Based on this one can easily generate the corresponding topology tree which shows all cells and their relationships.
 
 \subsection{Advection correction}
-The most recent feature of celltrack is an iterative advection correction algorithm. Again, this follows \cite{moseley2013}. If switched on, celltrack will calculate a velocity field on a coarse grained grid using the differences in coordinates of the weighted centers of mass between linked cells. Only cells with exactly one forward/backward link are used. Depending on the chosen number of iterations this routine writes the velocity fields decomposed into x and y direction as well as the sample sizes into numbered NetCDF files. The file with the highest number i.e. the latest velocity fields are then used in the final linking process. For the advection of cells the displacement is calculated and rounded to grid points.
+celltrack features an iterative advection correction algorithm. Again, this follows \cite{moseley2013}. If switched on, celltrack will calculate a velocity field on a coarse grained grid using the differences in coordinates of the weighted centers of mass between linked cells. Only cells with exactly one forward/backward link are used. Depending on the chosen number of iterations this routine writes the velocity fields decomposed into x and y direction as well as the sample sizes into numbered NetCDF files. The file with the highest number i.e. the latest velocity fields are then used in the final linking process. For the advection of cells the displacement is calculated and rounded to grid points.
 
 \subsection{Meta tracks and mainstream detection}
 \label{sec:aco}
@@ -92,7 +92,7 @@ With increasing length and/or cell sizes it becomes more and more likely that a 
 	\caption{A rather abstract visualization of a meta track. Colors indicate the peak rainfall intensity of a cell (mm/10min). The Size of the symbols is proportional to cell area. The arrows show the direction of a connection between two tracks. The time axis is in minutes.}
 	\label{meta_track}
 \end{figure}
-Figure \ref{meta_track} shows an example for a fairly large meta track. It consists of 52 tracks and has a lifetime of 88 minutes. Apart from a dominant \textit{mainstream} there are lots of small tributaries and tracks that split away. It is obvious that they have low cell sizes as well as intensities.
+Figure \ref{meta_track} shows an example for a fairly large meta track. It consists of 52 tracks and has a lifetime of 88 minutes. Apart from a dominant \textit{mainstream} there are lots of small tributaries and tracks that split away. It is obvious that they have small cell sizes as well as intensities.
 
 To separate the dominant mainstream from dead ends and tributaries, celltrack uses a metaheuristic approach called ant colony optimization (ACO) \citep{Dor1992:thesis}. \cite{DorSta2004:book} give an overview about theory and application of different ACO methods. ACO is inspired by the behavior of foraging ants which are able to find a minimum cost (length) path from a nest to a source of nurture through indirect communication. This is accomplished by modifications of the environment in form of pheromone deposit. To apply this principle to the problem of mainstream detection in meta tracks we have to rise our point of view to a more abstract level. As well as the possible paths from a nest to a source of nurture, a meta track can be seen as a network consisting of nodes and arcs. Using this notation a meta track can be translated into a construction graph where tracks are arcs and the connections between tracks are the nodes.
 \begin{figure}[h]
@@ -148,7 +148,7 @@ The following dependencies are mandatory to compile and run celltrack:
 \end{itemize}
 
 \subsection{configure and make}
-Beginning with version 0.2.beta cmake is used to configure and create the Makefiles. The following commands should do the job (run within the celltrack directory):
+This project uses cmake to configure and create the Makefiles. The following commands should do the job (run within the celltrack directory):
 \begin{verbatim}
 mkdir build
 cd build
@@ -200,12 +200,13 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
 \end{verbatim}
 
 \subsubsection*{Options}
-\begin{labeling}{-nadviter }
+\begin{labeling}{-maxnants}
 	\item[-i] Input file name.
 	\item[-var] NetCDF/grib variable ID. Default is 0.
 	\item[-lev] NetCDF/grib level ID. Default is 0 i.e. the first variable.
 	\item[-thres] All grid points with values greater than this are considered. Default is 0.
-	\item[-nants] Number of ants for mainstream detection. Default value is the number of nodes of a meta track.
+	\item[-nants] Number of ants/agents for mainstream detection. Default value is the number of nodes of a meta track.
+	\item[-maxnants] The maximum number of ants/agents for mainstream detection. Setting this value can be useful to avoid long computation times for large meta track. Nevertheless it may decrease the validity of the detected mainstream.
 	\item[-nruns] Number of iterations for mainstream detection. Default is 300.
 	\item[-rho] Pheromone evaporation rate. Default is 0.5.
 	\item[-rseed] If set, the random number generator will use this seed.
@@ -252,6 +253,15 @@ This file contains some simple statistics about the detected cells. The columns 
 	\item[touchb] TRUE if the cell touches the boundaries.
 \end{labeling}
 
+\subsubsection{cell\_advstats\_percentiles.txt}
+This file contains percentiles of the key variable within each cell. The columns are:
+\begin{labeling}{wclcmassX}
+	\item[clID] The cell ID.
+	\item[MIN] The minimum value.
+	\item[0.XX] Percentile of probability 0.XX.
+	\item[MAX] The maximum value
+\end{labeling}
+
 \subsection{The links files}
 \subsubsection{cell\_links.txt}
 This file is rather intended for development and debugging. It contains the truncated logical link matrix. The rows represent cells which are the same like in cell\_stats.txt. Because the matrix is truncated each row contains only cells which appear at the same, one before and after time step of the corresponding row/cell. The first column mentions the point of truncation. The second column names the first ID in each row. With this information the complete $n*n$ matrix can be reconstructed. The third column contains the column number of each row/cell in the link matrix.
@@ -266,6 +276,9 @@ This file contains the number of forward and backward links for each cell. The c
 \end{labeling}
 
 \subsection{The tracks files}
+\subsubsection{tracks.nc}
+This file is similar to cells.nc but with track IDs instead of cell IDs. The default file format is netCDF.
+
 \subsubsection{tracks\_all.txt / tracks\_clean.txt}
 These files list tracks with an object-oriented structure. The first line of each block (beginning with \#\#\#) gives important information about the track. The first integer is the track ID. Then, a logical value tells if the track is free of any boundary contact. The last number is the track type as explained in figure \ref{trackinitterm}. Following the header, all cells of a track are listed. The only column is:
 \begin{labeling}{clcmassX}
@@ -302,6 +315,12 @@ The summary files contain overall statistics for all tracks/tracks of type 9 whi
 \end{labeling}
 
 \subsection{The meta tracks files}
+\subsubsection{meta.nc}
+This file is similar to tracks.nc but with meta track IDs instead of track IDs. The default file format is netCDF.
+
+\subsubsection{meta\_mainstream.nc}
+This file is similar to meta.nc but contains only the mainstream of each meta track. The default file format is netCDF.
+
 \subsubsection{meta\_all.txt}
 This file lists meta tracks with an object-oriented structure. The first line of each block (beginning with \#\#\#) gives important information about the meta track. The first integer is the meta track ID. Then, a logical value tells if the track is free of boundary contact. Following the header, all tracks of a meta track are listed. The only column is:
 \begin{labeling}{clcmassX}
