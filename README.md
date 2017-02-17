@@ -9,7 +9,7 @@ Tag v0.2-beta can be considered as a first usable version with the following fea
  - iterative advection correction to account for displacement of cells with the mean wind field
  - support for splitting/merging tracks.
  - missing value support 
- - output of several statistics about cells and tracks
+ - output of summary statistics for cells and tracks
  
 See doc/celltrack_doc.pdf for installing/usage infos and more detailed explanations of how it works.
 
