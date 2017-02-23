@@ -53,7 +53,7 @@ module globvar
 
   ! Variables for cell linking
   integer, allocatable :: nbw(:),nfw(:),minclIDloc(:),iclIDloc(:)
-  logical, allocatable :: links(:,:)
+  logical, allocatable :: links(:,:),tsALLna(:)
   integer :: maxnIDs
 
   ! variables for advection correction

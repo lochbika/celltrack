@@ -167,6 +167,15 @@ module cellstatistics
           write(*,*)"Processing timestep: ",tsID+1,"/",ntp,"..."
         end if
 
+        ! if this time step has no values: set touchb to true for all cells in previous ts
+        ! do this also for cells in next time step
+        ! because it could be that this interrupts tracks in the middle of their life time
+        if(tsALLna(tsID+1))then
+          do i=1,globnIDs
+            if(tsclID(i)==tsID .OR. tsclID(i)==tsID+2)touchb(i)=.true.
+          end do
+        end if
+
         ! cycle if there are no cells in this time step
         if(.NOT.ANY(tsclID==tsID+1))cycle
 
