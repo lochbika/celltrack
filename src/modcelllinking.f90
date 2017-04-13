@@ -88,6 +88,19 @@ module celllinking
         minclIDloc(i)=i-((maxnIDs-1)/2)
         if(minclIDloc(i)<0)minclIDloc(i)=0
       end do
+      
+      ! now we need to find where in links 2nd dim is i; iclIDloc
+      allocate(iclIDloc(globnIDs))
+      iclIDloc=1
+      do i=1,globnIDs
+        do k=minclIDloc(i)+1,minclIDloc(i)+maxnIDs
+          if(clIDs(k)==clIDs(i))then
+            iclIDloc(i)=k-minclIDloc(i)
+            !write(*,*)iclIDloc(i),minclIDloc(i)
+            exit
+          end if
+        end do
+      end do
 
       ! if we do advection correction... read the vfile now
       if(advcor .AND. adviter>1)then
@@ -235,19 +248,6 @@ module celllinking
 
       CALL streamClose(streamID2)
       if(advcor .AND. adviter>1)CALL streamClose(streamID3)
-
-      ! now we need to find where in links 2nd dim is i; iclIDloc
-      allocate(iclIDloc(globnIDs))
-      iclIDloc=1
-      do i=1,globnIDs
-        do k=minclIDloc(i)+1,minclIDloc(i)+maxnIDs
-          if(clIDs(k)==clIDs(i))then
-            iclIDloc(i)=k-minclIDloc(i)
-            !write(*,*)iclIDloc(i),minclIDloc(i)
-            exit
-          end if
-        end do
-      end do
 
       if(lout .AND. adviter==nadviter+1)then
 
