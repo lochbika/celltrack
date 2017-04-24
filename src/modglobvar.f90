@@ -83,6 +83,7 @@ module globvar
   
   ! variables for meta track mainstream detection
   integer, allocatable :: allmainstream(:,:)
+  logical, allocatable :: mstrnobounds(:)
 
   ! variables for meta track mainstream statistics
   integer, allocatable :: clmetamstr(:),mstrdur(:)
