@@ -23,7 +23,8 @@ module globvar
   logical :: lout                            ! switch for file output of the logical link matrix
   integer :: ivar                            ! netcdf ID of input variable
   integer :: levelID                         ! netcdf level ID of input variable
-  integer :: nants                           ! number of ant ie agents during mainstream detection
+  integer :: nants                           ! number of ants ie agents during mainstream detection
+  integer :: maxnants                        ! maximum number of ants
   integer :: nruns                           ! number of iterations during mainstream detection
   integer :: alpha,beta                      ! weighting parameters for action choice rule in ACO path algorhitm
   integer :: rseed                           ! the seed for the random number generator
@@ -46,12 +47,12 @@ module globvar
   integer, allocatable :: clIDs(:),tsclID(:),cldate(:),cltime(:)
   logical, allocatable :: touchb(:)
   ! Variables used for cell statistics
-  integer, allocatable :: clarea(:),wclarea(:)
+  integer, allocatable :: clarea(:)
   real(kind=8), allocatable :: clpint(:),clavint(:),clcmass(:,:),wclcmass(:,:)
 
   ! Variables for cell linking
   integer, allocatable :: nbw(:),nfw(:),minclIDloc(:),iclIDloc(:)
-  logical, allocatable :: links(:,:)
+  logical, allocatable :: links(:,:),tsALLna(:)
   integer :: maxnIDs
 
   ! variables for advection correction
@@ -82,6 +83,7 @@ module globvar
   
   ! variables for meta track mainstream detection
   integer, allocatable :: allmainstream(:,:)
+  logical, allocatable :: mstrnobounds(:)
 
   ! variables for meta track mainstream statistics
   integer, allocatable :: clmetamstr(:),mstrdur(:)

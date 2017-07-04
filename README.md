@@ -1,10 +1,17 @@
 # celltrack
 celltrack is software that finds continuous cells in 2D fields and tracks them
-in time.
+in time. The primary use case is rain cell tracking.
 
-Branch v.01 can be considered as a first usable version with missing value support, a simple iterative advection correction and mainstream detection for splitting/merging tracks.
-
-See doc/celltrack_doc.pdf for installing and usage infos.
+Tag v0.2-beta can be considered as a first usable version with the following features:
+ - NetCDF support for input and output
+ - a 2D clustering algorithm to find continuous cells
+ - a linking procedure to establish connections in time between cells
+ - iterative advection correction to account for displacement of cells with the mean wind field
+ - support for splitting/merging tracks.
+ - missing value support 
+ - output of summary statistics for cells and tracks
+ 
+See doc/celltrack_doc.pdf for installing/usage infos and more detailed explanations of how it works.
 
 You will need the cdi library to compile and run celltrack: https://code.zmaw.de/projects/cdi/wiki
 

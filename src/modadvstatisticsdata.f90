@@ -12,15 +12,9 @@
 !
 ! Any help will be appreciated :)
 !
-subroutine help(message)
-
+module advstatsdata
   implicit none
 
-  character(len=*), intent(in) :: message
+  real(kind=8), allocatable :: cellperc(:,:)
 
-  write(*,*)trim(message)
-  write(*,*)"Usage: celltrack -i <filename> -var <int> -lev <int> &
-  &-thres <float> -nants <int> -nruns <int> &
-  &-rho <float> -rseed <int> -o <file> -lout -v -h"
-  stop
-end subroutine help
+end module advstatsdata

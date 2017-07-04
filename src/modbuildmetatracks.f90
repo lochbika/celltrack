@@ -56,10 +56,12 @@ module buildmetatracks
         end do
         ! get its number in links matrix
         j=alltracks(i,tp)
-        do k=i,ntracks
+        !write(*,*)"cl track 1:",j,tsclID(j)
+        do k=(i+1),ntracks
           tp=alltracks(k,1)
-          if(abs(tsclID(tp)-tsclID(j))>1)cycle
-          if(links(j,tp-minclIDloc(j)) .AND. i.ne.k)then
+          if(tsclID(tp)-tsclID(j).ne.1)cycle
+          !write(*,*)"cl track 2:",tp,tsclID(tp)
+          if(links(j,tp-minclIDloc(j)))then
             trcon(l,1)=i
             trcon(l,2)=k
             if(MOD(l,outstep*2)==0 .OR. l==1)then
@@ -83,9 +85,11 @@ module buildmetatracks
 
       ! what is the highest number of links between cells?
       if(MAXVAL(nfw)>MAXVAL(nbw))then
-        maxtrcons=MAXVAL(nfw)*MAXVAL(nfw)*MAXVAL(nfw)
+        !maxtrcons=MAXVAL(nfw)*MAXVAL(nfw)*MAXVAL(nfw)
+        maxtrcons=10000000
       else
-        maxtrcons=MAXVAL(nbw)*MAXVAL(nbw)*MAXVAL(nbw)
+        !maxtrcons=MAXVAL(nbw)*MAXVAL(nbw)*MAXVAL(nbw)
+        maxtrcons=10000000
       end if
 
       allocate(metabuffer(5000000),metbuffer1(maxtrcons),metbuffer2(maxtrcons))

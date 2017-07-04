@@ -40,12 +40,12 @@ module linkstatistics
     
       ! calc nbw/nfw
       do i=1,globnIDs
-        if(tsclID(i).ne.1 .AND. iclIDloc(i).ne.-1)then
+        if(tsclID(i).ne.1)then
           do k=1,iclIDloc(i)
             if(links(i,k))nbw(i)=nbw(i)+1
           end do
         end if
-        if(tsclID(i).ne.ntp .AND. iclIDloc(i).ne.-1)then
+        if(tsclID(i).ne.ntp)then
           do k=iclIDloc(i),maxnIDs
             if(links(i,k))nfw(i)=nfw(i)+1
           end do

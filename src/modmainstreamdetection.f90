@@ -46,6 +46,8 @@ module mainstreamdetection
       ! allocate mainstream
       allocate(allmainstream(nmeta,maxmetalen))
       allmainstream=-1
+      allocate(mstrnobounds(nmeta))
+      mstrnobounds=.true.
 
       ! read connections file
       CALL scan_trackfile("meta_con.txt",nmeta,maxconlen)
@@ -134,6 +136,7 @@ module mainstreamdetection
             nants=k
           end do
           if(nants<5)nants=5
+          if(nants>maxnants .AND. maxnants.ne.-1)nants=maxnants
           if(verbose)write(*,*)"--- number of ants: ",nants
         else
           resetnants=.false.
@@ -331,9 +334,15 @@ module mainstreamdetection
         ! use the latest thismainstream to set the global mainstream for this meta track
         allmainstream(i,:)=thismainstream
 
+        ! check the mainstream for cells that touch the boundaries
+        do k=1,maxmetalen
+          if(allmainstream(i,k)==-1)exit
+          if(.NOT.nobounds(allmainstream(i,k)))mstrnobounds(i)=.false.
+        end do
+        
         ! write the connections with their pheromone values and distances
         ! write header meta_con_pher.txt
-        write(1,'(1a4,1i12,1L4,1i4)')"### ",i,mnobounds(i)
+        write(1,'(1a4,1i12,1L4,1i4)')"### ",i,mstrnobounds(i)
         write(1,*)"   trackID1    trackID2        pher        dist"
         do k=1,maxmetalen
           if(allcon(i,k,1)==-1)exit
@@ -345,10 +354,11 @@ module mainstreamdetection
       end do
       close(unit=1)
 
+      ! write to meta_mainstream.txt
       open(unit=1,file="meta_mainstream.txt",action="write",status="replace")
       do i=1,nmeta
         ! write header meta_stats.txt
-        write(1,'(1a4,1i12,1L4,1i4)')"### ",i,mnobounds(i)
+        write(1,'(1a4,1i12,1L4,1i4)')"### ",i,mstrnobounds(i)
         write(1,*)"    trackID      trType            peakVal    pValtime              avVal start   dur"
         do k=1,maxmetalen
           if(allmainstream(i,k)==-1)exit

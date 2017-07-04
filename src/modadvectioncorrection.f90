@@ -34,7 +34,7 @@ module advectioncorrection
       ! variables and arrays
       integer :: selCL
       real(kind=8), allocatable :: smpsize2d(:,:),smpsize(:)   ! sample size for each gridpoint on the velocity field
-      real(kind=8) :: mindist,cdist
+      real(kind=8) :: mindist,cdist,vxres,vyres
 
       write(*,*)"======================================="
       write(*,*)"===== START ADVECTION CORRECTION ======"
@@ -46,29 +46,35 @@ module advectioncorrection
       ! we can use the gathered information to coarse grain the grid and open a new dataset
       vnx=nx/coarsex
       vny=ny/coarsey
+      vxres=( (xvals(nx-1)+diflon/2) - (xvals(0)-diflon/2) ) / vnx
+      vyres=( (yvals(ny-1)+diflat/2) - (yvals(0)-diflat/2) ) / vnx
       allocate(vxvals(vnx),vyvals(vny))
-      do x=1,vnx
-        vxvals(x)=(xvals(0)-diflon/2) + (diflon*coarsex*x) - (diflon*coarsex/2)
+      vxvals(1)= (xvals(0)-diflon/2) + (vxres/2)
+      vyvals(1)= (yvals(0)-diflat/2) + (vyres/2)
+      do x=2,vnx
+        vxvals(x)=vxvals(1) + (x-1)*vxres
       end do
-      do y=1,vny
-        vyvals(y)=(yvals(0)-diflat/2) + (diflat*coarsey*y) - (diflat*coarsey/2)
+      do y=2,vny
+        vyvals(y)=vyvals(1) + (y-1)*vyres
       end do
-      
+
       write(*,*)"======================================="
       write(*,*)"=== GRID FOR ADVECTION CORRECTION:"
       write(*,'(A,1i12)')" NX      : ",vnx
       write(*,'(A,1f12.2)')" MIN X   : ",vxvals(1)
       write(*,'(A,1f12.2)')" MAX X   : ",vxvals(vnx)
-      write(*,'(A,1f12.2)')" DIF X   : ",(vxvals(1)-xvals(0))*2
+      write(*,'(A,1f12.2)')" DIF X   : ",vxres
       write(*,'(A,1a12)')" Unit    : ",trim(xunit)
       write(*,'(A,1i12)')" NY      : ",vny
       write(*,'(A,1f12.2)')" MIN Y   : ",vyvals(1)
       write(*,'(A,1f12.2)')" MAX Y   : ",vyvals(vny)
-      write(*,'(A,1f12.2)')" DIF Y   : ",(vyvals(1)-yvals(0))*2
+      write(*,'(A,1f12.2)')" DIF Y   : ",vyres
       write(*,'(A,1a12)')" Unit    : ",trim(yunit)
       write(*,*)"---------"
 
       ! find the nearest gridpoint on the velocity grid for all cells
+      vclxindex=-1
+      vclyindex=-1
       do clID=1,globnIDs
         mindist=HUGE(mindist)
         do x=1,vnx
@@ -146,7 +152,7 @@ module advectioncorrection
         ! copy time axis from input
         taxisID2=vlistInqTaxis(vlistID1)
         call vlistDefTaxis(vlistID2,taxisID2)
-       
+
         ! Open the dataset for writing
         write(vfile,'(A7,I0.3,A3)')"vfield_",adviter,".nc"
         streamID2=streamOpenWrite(TRIM(vfile),FILETYPE_NC)
@@ -154,7 +160,7 @@ module advectioncorrection
            write(*,*)cdiStringError(streamID2)
            stop
         end if
-        
+
         write(*,*)"======================================="
         write(*,*)"=== Calc velocity field and write to ",TRIM(vfile),"..."
         write(*,*)"---------"
@@ -166,6 +172,7 @@ module advectioncorrection
         vclx=outmissval
         vcly=outmissval
         do clID=1,globnIDs
+          if(touchb(clID))cycle
           if(tsclID(clID).ne.1 .AND. nbw(clID)==1)then
             ! find the cell which is connected backwards
             do i=1,iclIDloc(clID)
@@ -230,7 +237,7 @@ module advectioncorrection
         CALL streamClose(streamID1)
 
       end do
-      
+
       ! set adviter that the latest vfield file will be used later
       adviter=nadviter+1
 

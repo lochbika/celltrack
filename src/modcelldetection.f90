@@ -153,7 +153,11 @@ module celldetection
       end if
       ! Assign variables to dataset
       call streamDefVList(streamID2,vlistID2)
-    
+      
+      ! save which time steps are completely filled with NA
+      allocate(tsALLna(ntp))
+      tsALLna=.false.
+
       ! Get data
       write(*,*)"======================================="
       write(*,*)"=== Find continous cells ..."
@@ -178,6 +182,7 @@ module celldetection
         if(nmiss1==nx*ny)then
           nmiss2=nmiss1
           dat=outmissval
+          tsALLna(tsID+1)=.true.
           CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
           deallocate(dat)
           cycle
