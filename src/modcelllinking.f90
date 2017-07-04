@@ -32,7 +32,8 @@ module celllinking
       real(kind=8), allocatable :: dat(:),pdat(:)          ! arrays for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! arrays for the advection correction
       real(kind=8), allocatable :: advcell(:,:)            ! temporary array for advected cells
-      integer :: movex,movey                               ! the number of gridpoints to move a cell (x and y direction)
+      integer                   :: movex,movey             ! the number of gridpoints to move a cell (x and y direction)
+      integer, allocatable      :: nCLts(:)
 
       write(*,*)"======================================="
       write(*,*)"=========== STARTED LINKING ==========="
@@ -58,19 +59,18 @@ module celllinking
 
       ! find th maximum number of cells per timestep
       ! to reduce 2nd dimension of the logical link matrix
+      allocate(nCLts(ntp))
+      nCLts=0
       maxnIDs=0
-      tp=0
-      k=0
       do i=1,globnIDs
-        j=tsclID(i)
-        if(j==k)tp=tp+1
-        if(j>k)then
-          if(maxnIDs<tp)maxnIDs=tp
-          k=j
-          tp=0
-        end if
+        nCLts(tsclID(i))=nCLts(tsclID(i))+1
       end do
-      maxnIDs=maxnIDs*3+5
+      maxnIDs=MAXVAL(nCLts)
+      if(MOD(REAL(maxnIDs*4+5),2.0D0)==0.D0)then
+        maxnIDs=maxnIDs*4+6
+      else
+        maxnIDs=maxnIDs*4+5
+      end if
 
       if(globnIDs>25000 .OR. maxnIDs>25000)then
         write(*,*)"=== This may use a lot of RAM! Will allocate: ",maxnIDs*globnIDs*4/1024/1024,"Mb"
@@ -81,31 +81,25 @@ module celllinking
       links=.false.
       ! allocate the vector for storing the minclIDs
       allocate(minclIDloc(globnIDs))
-      minclIDloc=-1
+      minclIDloc=0
 
       ! truncate the 2nd dim of the link matrix
       do i=1,globnIDs
-        tsID=tsclID(i)
-        if(tsID==1 .OR. i<(maxnIDs-5)/3)then
-          minclIDloc(i)=0
-        else
-          do k=1,i
-            if(tsclID(k)==tsID-1 .AND. tsclID(k)>1)then
-              minclIDloc(i)=k-1
-              exit
-            end if
-            ! backup: if there are no cells in the previous timestep
-            if(tsclID(k)==tsID .AND. tsclID(k)>1)then
-              minclIDloc(i)=k-1
-              exit
-            end if
-            ! backup: if there are no cells in the current timestep
-            if(tsclID(k)==tsID+1 .AND. tsclID(k)>1)then
-              minclIDloc(i)=-1
-              exit
-            end if
-          end do
-        end if
+        minclIDloc(i)=i-((maxnIDs-1)/2)
+        if(minclIDloc(i)<0)minclIDloc(i)=0
+      end do
+      
+      ! now we need to find where in links 2nd dim is i; iclIDloc
+      allocate(iclIDloc(globnIDs))
+      iclIDloc=1
+      do i=1,globnIDs
+        do k=minclIDloc(i)+1,minclIDloc(i)+maxnIDs
+          if(clIDs(k)==clIDs(i))then
+            iclIDloc(i)=k-minclIDloc(i)
+            !write(*,*)iclIDloc(i),minclIDloc(i)
+            exit
+          end if
+        end do
       end do
 
       ! if we do advection correction... read the vfile now
@@ -259,21 +253,6 @@ module celllinking
 
       CALL streamClose(streamID2)
       if(advcor .AND. adviter>1)CALL streamClose(streamID3)
-
-      ! now we need to find where in links 2nd dim is i; iclIDloc
-      allocate(iclIDloc(globnIDs))
-      iclIDloc=-1
-      do i=1,globnIDs
-        if(tsclID(i).ne.0 .AND. minclIDloc(i).ne.-1)then
-          do k=minclIDloc(i)+1,minclIDloc(i)+maxnIDs+1
-            if(k>globnIDs)exit
-            if(clIDs(k)==clIDs(i))then
-              iclIDloc(i)=k-minclIDloc(i)
-              exit
-            end if
-          end do
-        end if
-      end do
 
       if(lout .AND. adviter==nadviter+1)then
 

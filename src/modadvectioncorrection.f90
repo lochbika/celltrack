@@ -173,6 +173,7 @@ module advectioncorrection
         vclx=outmissval
         vcly=outmissval
         do clID=1,globnIDs
+          if(touchb(clID))cycle
           if(tsclID(clID).ne.1 .AND. nbw(clID)==1)then
             ! find the cell which is connected backwards
             do i=1,iclIDloc(clID)

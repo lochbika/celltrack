@@ -17,12 +17,10 @@ if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
   # gfortran
   set (CMAKE_Fortran_FLAGS_RELEASE "-funroll-loops -fforce-addr -O3")
   set (CMAKE_Fortran_FLAGS_DEBUG   "-fbounds-check -fbacktrace -Wall -Wextra -ggdb -fcheck=all")
-else (Fortran_COMPILER_NAME MATCHES "gfortran.*")
   message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
-  message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
-  set (CMAKE_Fortran_FLAGS_RELEASE "-funroll-loops -fforce-addr -O3")
-  set (CMAKE_Fortran_FLAGS_DEBUG   "-fbounds-check -fbacktrace -Wall -Wextra -ggdb -fcheck=all")
-endif (Fortran_COMPILER_NAME MATCHES "gfortran.*")
+else ()
+  message (FATAL_ERROR "Compiler gfortran not found! Stop!")
+endif ()
 
 FIND_PATH(CDI_INCLUDE
   NAMES
