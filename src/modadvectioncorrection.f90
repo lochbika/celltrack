@@ -35,6 +35,8 @@ module advectioncorrection
       integer :: selCL
       real(kind=8), allocatable :: smpsize2d(:,:),smpsize(:)   ! sample size for each gridpoint on the velocity field
       real(kind=8) :: mindist,cdist,vxres,vyres
+      real(kind=8) :: distxo,distyo ! the direct distance if cells do not cross boundaries
+      real(kind=8) :: distxp,distyp ! the distance between if cells crossed boundaries
 
       write(*,*)"======================================="
       write(*,*)"===== START ADVECTION CORRECTION ======"
@@ -182,8 +184,53 @@ module advectioncorrection
               end if
             end do
             if(nfw(selCL)==1)then
-              vclx(clID)=(wclcmass(clID,1)-wclcmass(selCL,1))*diflon/tstep
-              vcly(clID)=(wclcmass(clID,2)-wclcmass(selCL,2))*diflat/tstep
+              if(verbose)write(*,*)"Calculating distance and velocity between cell ",clID," and ",selCL
+              if(periodic)then
+                ! ok, now it's getting tricky because we don't know whether selCL
+                ! crossed the boundaries to become clID.
+                ! At this step I calculate two kinds of distances between the two cells
+                ! 1. the direct distance: wclcmass(clID,1)-wclcmass(selCL,1)
+                !    this assumes selCL did not cross the boundaries
+                ! 2. the distance between clID and the projection of selCL
+                !    this assumes that selCL crossed the boundaries
+                distxo=wclcmass(clID,1)-wclcmass(selCL,1) ! 1 in x direction
+                distyo=wclcmass(clID,2)-wclcmass(selCL,2) ! 1 in y direction
+                ! 2 in x direction
+                if(wclcmass(clID,1)>=wclcmass(selCL,1))then
+                  distxp=wclcmass(clID,1)-wclcmass(selCL,1)+nx
+                else
+                  distxp=wclcmass(clID,1)+nx-wclcmass(selCL,1)
+                end if
+                ! 2 in y direction
+                if(wclcmass(clID,2)>=wclcmass(selCL,2))then
+                  distyp=wclcmass(clID,2)-wclcmass(selCL,2)+ny
+                else
+                  distyp=wclcmass(clID,2)+ny-wclcmass(selCL,2)
+                end if
+                if(verbose)write(*,*)"distances are x,y"
+                if(verbose)write(*,*)"  ",distxo,distyo
+                if(verbose)write(*,*)"projected distances are x,y"
+                if(verbose)write(*,*)"  ",distxp,distyp
+                if( abs(distxo) .gt. abs(distxp) )then
+                  ! this means the cell crossed the boundaries
+                  vclx(clID)=distxp*diflon/tstep
+                  if(verbose)write(*,*)"Cell ",clID," crosses the x boundary"
+                else
+                  ! no boundary crossing: just do the normal calculation
+                  vclx(clID)=distxo*diflon/tstep
+                end if
+                if( abs(distyo) .gt. abs(distyp) )then
+                  ! this means the cell crossed the boundaries
+                  vcly(clID)=distyp*diflat/tstep
+                  if(verbose)write(*,*)"Cell ",clID," crosses the y boundary"
+                else
+                  ! no boundary crossing: just do the normal calculation
+                  vcly(clID)=distyo*diflat/tstep
+                end if
+              else
+                vclx(clID)=(wclcmass(clID,1)-wclcmass(selCL,1))*diflon/tstep
+                vcly(clID)=(wclcmass(clID,2)-wclcmass(selCL,2))*diflat/tstep
+              end if
             end if
           end if
         end do
@@ -198,6 +245,11 @@ module advectioncorrection
           do clID=1,globnIDs
             if(tsclID(clID)>tsID+1)exit
             if(tsclID(clID)==tsID+1 .AND. vclx(clID).ne.outmissval .AND. vcly(clID).ne.outmissval)then
+              if(sqrt(vclx(clID)**2 + vcly(clID)**2)>maxvel)then
+                if(verbose)write(*,*)"Skipping cell ",clID," because it has a really high velocity: ", &
+                 & sqrt(vclx(clID)**2 + vcly(clID)**2)
+                cycle ! cycle if this cell has a unrealistically high velocity
+              end if
               uvfield2d(vclxindex(clID),vclyindex(clID)) = uvfield2d(vclxindex(clID),vclyindex(clID)) + vclx(clID)
               vvfield2d(vclxindex(clID),vclyindex(clID)) = vvfield2d(vclxindex(clID),vclyindex(clID)) + vcly(clID)
               smpsize2d(vclxindex(clID),vclyindex(clID)) = smpsize2d(vclxindex(clID),vclyindex(clID)) + 1

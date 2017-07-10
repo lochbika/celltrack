@@ -204,14 +204,19 @@ module celllinking
                   end do
                 end do
                 ! move in x and y direction
-                if(movex.ne.0)advcell=EOSHIFT(advcell,SHIFT=movex,BOUNDARY=outmissval,DIM=1)
-                if(movey.ne.0)advcell=EOSHIFT(advcell,SHIFT=movey,BOUNDARY=outmissval,DIM=2)
+                if(periodic)then
+                  if(movex.ne.0)advcell=CSHIFT(advcell,SHIFT=movex,DIM=1)
+                  if(movey.ne.0)advcell=CSHIFT(advcell,SHIFT=movey,DIM=2)
+                else
+                  if(movex.ne.0)advcell=EOSHIFT(advcell,SHIFT=movex,BOUNDARY=outmissval,DIM=1)
+                  if(movey.ne.0)advcell=EOSHIFT(advcell,SHIFT=movey,BOUNDARY=outmissval,DIM=2)
+                end if
                 ! do the linking for each patch seperately
                 ! now loop all gridpoints
                 do i=1,nx
                   do k=1,ny
                     if(advcell(i,k).ne.outmissval .AND. dat2d(i,k).ne.outmissval)then
-                      if(verbose)write(*,*)"We have an overlap! cluster ",INT(advcell(i,k))," with ",INT(pdat2d(i,k))
+                      if(verbose)write(*,*)"We have an overlap! cluster ",INT(advcell(i,k))," with ",INT(dat2d(i,k))
                       j=advcell(i,k)
                       l=dat2d(i,k)
                       ! backward linking
