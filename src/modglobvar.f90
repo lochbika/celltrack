@@ -63,6 +63,7 @@ module globvar
   integer :: vnx,vny
   real(kind=8), allocatable :: vxvals(:),vyvals(:),vclx(:),vcly(:)
   integer, allocatable :: vclxindex(:),vclyindex(:)   ! the indices of the neares gridpoints for each cell (x and y coord)
+  real(kind=8) :: maxvel ! define a maximum velocity for cells
 
   ! Variables used during tracking
   integer :: ntracks,ncleantr,maxtrlen

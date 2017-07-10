@@ -216,7 +216,7 @@ module celllinking
                 do i=1,nx
                   do k=1,ny
                     if(advcell(i,k).ne.outmissval .AND. dat2d(i,k).ne.outmissval)then
-                      if(verbose)write(*,*)"We have an overlap! cluster ",INT(advcell(i,k))," with ",INT(pdat2d(i,k))
+                      if(verbose)write(*,*)"We have an overlap! cluster ",INT(advcell(i,k))," with ",INT(dat2d(i,k))
                       j=advcell(i,k)
                       l=dat2d(i,k)
                       ! backward linking
