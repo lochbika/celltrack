@@ -9,7 +9,7 @@
 
 \title{celltrack\\
 	A 2D cell tracking algorithm\\ \medskip
-	v0.2 beta}
+	v0.3 beta}
 \author{K. Lochbihler}
 
 \begin{document}
@@ -82,6 +82,9 @@ Figure \ref{links} shows a basic example of a link matrix. Based on this one can
 
 \subsection{Advection correction}
 celltrack features an iterative advection correction algorithm. Again, this follows \cite{moseley2013}. If switched on, celltrack will calculate a velocity field on a coarse grained grid using the differences in coordinates of the weighted centers of mass between linked cells. Only cells with exactly one forward/backward link are used. Depending on the chosen number of iterations this routine writes the velocity fields decomposed into x and y direction as well as the sample sizes into numbered NetCDF files. The file with the highest number i.e. the latest velocity fields are then used in the final linking process. For the advection of cells the displacement is calculated and rounded to grid points.
+
+\subsection{Periodic boundary conditions}
+Sometimes, it is useful to consider the boundaries of a domain as periodic, for instance, if one wants to apply celltrack to model output. For this reason, celltrack features periodic boundary conditions. If switched on, celltrack recognizes if a cell crosses the boundaries during the cell detection and advection correction. This means, that cells of the same track can exit the domain on one side and re-enter on the other side. Without this option a new track is initiated at each boundary crossing.
 
 \subsection{Meta tracks and mainstream detection}
 \label{sec:aco}
@@ -213,6 +216,9 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
     \item[-lout] Write the truncated logical links matrix to file cell\_links.txt.
     \item[-advcor] If set, celltrack performs an advection correction.
     \item[-nadviter] The number of iterations for advection correction. Default is 6.
+    \item[-maxv] The maximum allowed velocity of cells. This prevents that errors in the advection correction (unrealistically high velocities) are taken into account. Default is 50 distance units/per second.
+    \item[-nometa] Completely switch off all meta track routines.
+    \item[-perbound] Switch on periodic boundary conditions.
     \item[-cx] The divisor for the coarse graining of the grid (velocity fields, advection correction); x direction. A number of 2 would lead to a doubled grid spacing. 
     \item[-cy] Same as -cx but for y direction.
     \item[-tstep] The time step of the input file in seconds. Mandatory for advection correction!
