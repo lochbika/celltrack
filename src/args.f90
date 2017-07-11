@@ -48,6 +48,8 @@ subroutine cliarguments
   metanc=.false.
   tracknc=.false.
   nometa=.false.
+  periodic=.false.
+  maxvel=50
 
   do while (arg < narg)
     arg=arg+1
@@ -128,6 +130,12 @@ subroutine cliarguments
       metanc=.true.
     case ("-nometa")
       nometa=.true.
+    case ("-perbound")
+      periodic=.true.
+    case ("-maxv")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)maxvel
 
     case DEFAULT
       call help(trim(command)//": ERROR: unknown argument: "//trim(argc))
