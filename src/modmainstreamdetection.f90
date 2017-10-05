@@ -157,7 +157,7 @@ module mainstreamdetection
           eta(k)=(intsum + areasum )/2
           ! backup; if the distance between cells is 0
           if(eta(k)==0.D0)then
-            if(verbose)write(*,*)"Warning: difference between cells is 0!!"
+            if(verbose)write(*,*)"--- Warning: difference between cells is 0!!"
             eta(k)=0.000001
           end if
         end do
@@ -204,12 +204,17 @@ module mainstreamdetection
 
         ! now release the ants ;)
         do run=1,nruns
-
+          
+          ! give some information about this run
+          if(verbose)write(*,*)"--- This is run: ",run
+          
           ! allocate the backwards marker
           allocate(backw(nants))
           backw=.false.
 
           do ant=1,nants
+
+            if(verbose)write(*,*)"----- Ant ",ant," is running..."
 
             ! get a random init position
             CALL RANDOM_NUMBER(rnum)
@@ -217,6 +222,7 @@ module mainstreamdetection
             ! check if tp is either in the init or quit range and set qi to init resp. quit
             allocate(qicon(maxconlen,2))
             if(tp>ninit)then
+              if(verbose)write(*,*)"----- ... backwards"
               allocate(qi(nquit))
               qi=quit(1:nquit)
               tp=tp-ninit
@@ -228,6 +234,7 @@ module mainstreamdetection
                 qicon(k,2)=allcon(i,k,1)
               end do
             else
+              if(verbose)write(*,*)"----- ... forward"
               allocate(qi(ninit))
               qi=init(1:ninit)
               qicon=allcon(i,:,:)
@@ -242,12 +249,14 @@ module mainstreamdetection
           end do
 
           ! pheromone evaporation
+          if(verbose)write(*,*)"----- performing pheromone evaporation"
           do k=1,maxconlen
             if(pher(k)==-1)exit
             pher(k) = (1-pherevap)*pher(k)
           end do
 
           ! pheromone update
+          if(verbose)write(*,*)"----- performing pheromone update"
           do ant=1,nants
 
             ! calculate the cost (sum of eta) of each ants path
@@ -296,6 +305,7 @@ module mainstreamdetection
 
           ! Do the following each run
           if(MOD(run,1)==0 .OR. run==nruns)then
+            if(verbose)write(*,*)"----- checking for stagnation criteria"
             ! check if the current mainstream is different from the last ones
             ! generate the solution: chose the init with the highest pheromone trail and do nn path with the inverse pheromone values
             wsum=0
@@ -322,12 +332,12 @@ module mainstreamdetection
 
           ! check the termination conditions
           if(numeqsol>10)then
-            if(verbose)write(*,*)"Stagnation in solution construction: Mainstream didn't change since 10 iterations. Stop!"
+            if(verbose)write(*,*)"----- Stagnation in solution construction: Mainstream didn't change since 10 iterations. Stop!"
             exit
           end if
           if(run==nruns)then
             ! only notify if in verbose mode; the loop will stop after this anyway
-            if(verbose)write(*,*)"Maximum number of runs reached. Stop!"
+            if(verbose)write(*,*)"----- Maximum number of runs reached. Stop!"
           end if
         end do
 
