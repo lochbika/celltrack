@@ -27,7 +27,7 @@ module mainstreamdetection
 
       integer :: ant,run,maxconlen,numeqsol
       integer, allocatable :: init(:),quit(:),qi(:),ninit,nquit
-      integer, allocatable :: paths(:,:),qicon(:,:)
+      integer, allocatable :: paths(:,:),pathsi(:,:),qicon(:,:)
       integer, allocatable :: thismainstream(:),lastmainstream(:)
       real(kind=8),allocatable :: eta(:),pher(:)
       logical,allocatable :: backw(:)
@@ -165,10 +165,13 @@ module mainstreamdetection
         allocate(pher(maxconlen))
         pher=-1
         allocate(paths(nants,maxconlen*2))
+        allocate(pathsi(nants,maxconlen*2))
         ! do this for each ant to determine more trustworthy initial pheromone values
         isum=0 ! total average cost value
         do n=1,nants
+          if(verbose)write(*,*)"--- creating random nearest neighbour path for ant ",n
           paths=-1
+          pathsi=-1
           ! use a random init and do a nn track; temporarely use paths to store it
           CALL RANDOM_NUMBER(rnum)
           tp=1 + FLOOR( rnum * ninit )
@@ -184,6 +187,7 @@ module mainstreamdetection
               if(allcon(i,j,1)==paths(1,k) .AND. allcon(i,j,2)==paths(1,k+1))then
                 wsum=wsum+eta(j)
                 tp=tp+1
+                exit
               end if
             end do
           end do
@@ -242,7 +246,7 @@ module mainstreamdetection
             end if
 
             ! construct a path
-            CALL acoPath(qi(tp),qicon,maxconlen,eta,pher,paths(ant,:))
+            CALL acoPath(qi(tp),qicon,maxconlen,eta,pher,paths(ant,:),pathsi(ant,:))
 
             ! deallocate qicon,qi
             deallocate(qicon,qi)
@@ -264,41 +268,17 @@ module mainstreamdetection
             tp=0
             do k=1,(maxconlen*2) !path
               if(paths(ant,k)==-1)exit
-              do j=1,maxconlen !connections
-                if(allcon(i,j,1)==-1)exit
-                if(backw(ant))then
-                  if(allcon(i,j,2)==paths(ant,k) .AND. allcon(i,j,1)==paths(ant,k+1))then
-                    wsum=wsum+eta(j)
-                    tp=tp+1
-                  end if
-                else
-                  if(allcon(i,j,1)==paths(ant,k) .AND. allcon(i,j,2)==paths(ant,k+1))then
-                    wsum=wsum+eta(j)
-                    tp=tp+1
-                  end if
-                end if
-              end do
+                wsum=wsum+eta(pathsi(ant,k))
+                tp=tp+1
             end do
 
             ! average by number of nodes
             wsum=wsum/tp
 
             ! update the pheromone path
-            do k=1,maxconlen ! connections
-              if(allcon(i,k,1)==-1)exit
-              ! search a path for this connection
-              do j=1,(maxconlen*2)
-                if(paths(ant,j)==-1)exit
-                if(backw(ant))then
-                  if(allcon(i,k,2)==paths(ant,j) .AND. allcon(i,k,1)==paths(ant,j+1))then
-                    pher(k)=pher(k)+1/wsum
-                  end if
-                else
-                  if(allcon(i,k,1)==paths(ant,j) .AND. allcon(i,k,2)==paths(ant,j+1))then
-                    pher(k)=pher(k)+1/wsum
-                  end if
-                end if
-              end do
+            do k=1,(maxconlen*2) !path
+              if(paths(ant,k)==-1)exit
+              pher(pathsi(ant,k))=pher(pathsi(ant,k))+1/wsum
             end do
           end do
           deallocate(backw)
@@ -359,7 +339,7 @@ module mainstreamdetection
           write(1,'(2i12,2f12.5)')allcon(i,k,:),pher(k),eta(k)
         end do
 
-        deallocate(init,quit,eta,pher,paths,thismainstream,lastmainstream)
+        deallocate(init,quit,eta,pher,paths,pathsi,thismainstream,lastmainstream)
         if(resetnants)nants=-1
       end do
       close(unit=1)
@@ -397,25 +377,34 @@ module mainstreamdetection
 
     end subroutine domainstreamdetection
 
-    subroutine acoPath(init,cons,ncons,lens,pher,path)
+    subroutine acoPath(init,cons,ncons,lens,pher,path,pathi)
 
       use globvar, only: alpha,beta
 
       implicit none
 
-      integer,intent(out) :: path(ncons*2)
+      integer,intent(out) :: path(ncons*2),pathi(ncons*2)
       integer,intent(in)  :: cons(ncons,2),ncons,init
-      integer :: a,next(500),pcount,i,tp
+      integer :: a,ai,next(500),pcount,i,tp
       real(kind=8),intent(in) :: pher(ncons),lens(ncons)
       real(kind=8) :: tauij,etaij,tauil,etail,zeta,rnum,probsum
       real(kind=8),allocatable :: cprob(:)
 
       pcount=0
       a=init
+      do i=1,ncons
+        if(cons(i,1)==-1)exit
+        if(cons(i,1)==init)then
+          ai=i
+          exit
+        end if
+      end do
+
       do
         ! add a to path
         pcount=pcount+1
         path(pcount)=a
+        pathi(pcount)=ai
         ! search for possible connections at this cell
         tp=0 ! number of possible connections
         next=-1
@@ -431,6 +420,7 @@ module mainstreamdetection
         !!! the random proportional rule; but do it only if there are at least 2 possible choices
         if(tp==1)then
           a=cons(next(tp),2)
+          ai=next(tp)
         else
           ! calculate zeta
           zeta=0
@@ -453,6 +443,7 @@ module mainstreamdetection
             probsum=probsum+cprob(i)
             if(rnum<=probsum)then
               a=cons(next(i),2)
+              ai=next(i)
               exit
             end if
           end do
