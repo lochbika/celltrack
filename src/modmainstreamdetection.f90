@@ -181,7 +181,7 @@ module mainstreamdetection
           wsum=0
           tp=0
           do k=1,(maxconlen*2) !path
-            if(paths(1,k)==-1)exit
+            if(pathsi(1,k)==-1)exit
               wsum=wsum+eta(pathsi(1,k))
               tp=tp+1
           end do
@@ -262,7 +262,7 @@ module mainstreamdetection
             wsum=0
             tp=0
             do k=1,(maxconlen*2) !path
-              if(paths(ant,k)==-1)exit
+              if(pathsi(ant,k)==-1)exit
                 wsum=wsum+eta(pathsi(ant,k))
                 tp=tp+1
             end do
@@ -272,7 +272,7 @@ module mainstreamdetection
 
             ! update the pheromone path
             do k=1,(maxconlen*2) !path
-              if(paths(ant,k)==-1)exit
+              if(pathsi(ant,k)==-1)exit
               pher(pathsi(ant,k))=pher(pathsi(ant,k))+1/wsum
             end do
           end do
@@ -387,19 +387,15 @@ module mainstreamdetection
 
       pcount=0
       a=init
-      do i=1,ncons
-        if(cons(i,1)==-1)exit
-        if(cons(i,1)==init)then
-          ai=i
-          exit
-        end if
-      end do
+      ai=-1
 
       do
         ! add a to path
         pcount=pcount+1
         path(pcount)=a
-        pathi(pcount)=ai
+        ! if we do the next step already in the firs iteration
+        ! the first connection occurs twice in pathi
+        if(pcount>1)pathi(pcount-1)=ai 
         ! search for possible connections at this cell
         tp=0 ! number of possible connections
         next=-1
@@ -464,19 +460,15 @@ module mainstreamdetection
 
       pcount=0
       a=init
-      do i=1,ncons
-        if(cons(i,1)==-1)exit
-        if(cons(i,1)==init)then
-          ai=i
-          exit
-        end if
-      end do
+      ai=-1
       
       do
         ! add a to path
         pcount=pcount+1
         path(pcount)=a
-        pathi(pcount)=ai
+        ! if we do the next step already in the firs iteration
+        ! the first connection occurs twice in pathi
+        if(pcount>1)pathi(pcount-1)=ai 
         ! search for possible connections at this cell
         tp=0
         next=-1
