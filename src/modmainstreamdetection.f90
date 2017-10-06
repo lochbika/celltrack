@@ -172,24 +172,18 @@ module mainstreamdetection
           if(verbose)write(*,*)"--- creating random nearest neighbour path for ant ",n
           paths=-1
           pathsi=-1
-          ! use a random init and do a nn track; temporarely use paths to store it
+          ! use a random init and do a nn track; temporarely use paths and pathsi to store it
           CALL RANDOM_NUMBER(rnum)
           tp=1 + FLOOR( rnum * ninit )
           ! construct a nn path
-          CALL nnPath(init(tp),allcon(i,:,:),maxconlen,eta,paths(1,:))
+          CALL nnPath(init(tp),allcon(i,:,:),maxconlen,eta,paths(1,:),pathsi(1,:))
           ! calculate the average cost (sum of eta) of this random path
           wsum=0
           tp=0
           do k=1,(maxconlen*2) !path
             if(paths(1,k)==-1)exit
-            do j=1,maxconlen !connections
-              if(allcon(i,j,1)==-1)exit
-              if(allcon(i,j,1)==paths(1,k) .AND. allcon(i,j,2)==paths(1,k+1))then
-                wsum=wsum+eta(j)
-                tp=tp+1
-                exit
-              end if
-            end do
+              wsum=wsum+eta(pathsi(1,k))
+              tp=tp+1
           end do
           ! average
           wsum=wsum/tp
@@ -200,6 +194,7 @@ module mainstreamdetection
         wsum=isum/nants
         ! reset paths
         paths=-1
+        pathsi=-1
         ! update the pheromone trails with
         do k=1,maxconlen !pher
           if(allcon(i,k,1)==-1)exit
@@ -301,7 +296,7 @@ module mainstreamdetection
             end do
             ! nn path
             thismainstream=-1
-            CALL nnPath(allcon(i,tp,1),allcon(i,:,:),maxconlen,1/pher,thismainstream(:))
+            CALL nnPath(allcon(i,tp,1),allcon(i,:,:),maxconlen,1/pher,thismainstream(:),pathsi(1,:))
             if(ALL(thismainstream==lastmainstream))then
               numeqsol=numeqsol+1
             else
@@ -452,27 +447,36 @@ module mainstreamdetection
       end do
     end subroutine acoPath
 
-    subroutine nnPath(init,cons,ncons,lens,path)
+    subroutine nnPath(init,cons,ncons,lens,path,pathi)
       !! if lens contains differences this algorithm will find a nearest neighbour path
       !! if lens contains absolute values this is a local minimum cost algorithm
 
       implicit none
 
-      integer,intent(out) :: path(ncons*2)
+      integer,intent(out) :: path(ncons*2),pathi(ncons*2)
       integer,intent(in)  :: cons(ncons,2),ncons,init
 
       real(kind=8),intent(in) :: lens(ncons)
 
       real(kind=8) :: clen
 
-      integer :: i,tp,a,next(500),pcount
+      integer :: i,ai,tp,a,next(500),pcount
 
       pcount=0
       a=init
+      do i=1,ncons
+        if(cons(i,1)==-1)exit
+        if(cons(i,1)==init)then
+          ai=i
+          exit
+        end if
+      end do
+      
       do
         ! add a to path
         pcount=pcount+1
         path(pcount)=a
+        pathi(pcount)=ai
         ! search for possible connections at this cell
         tp=0
         next=-1
@@ -492,6 +496,7 @@ module mainstreamdetection
           if(lens(next(i))<clen)then
             clen=lens(next(i))
             a=cons(next(i),2)
+            ai=next(i)
           end if
         end do
       end do
