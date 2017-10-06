@@ -128,14 +128,10 @@ module mainstreamdetection
           end if
         end do
         nquit=tp
-        ! if not set, set the number of ants equal to the number of connections
+        ! if not set, set the number of ants equal to the (ninit + nquit)*2
         if(nants.eq.-1)then
           resetnants=.true.
-          do k=1,maxconlen
-            if(allcon(i,k,1)==-1)exit
-            nants=k
-          end do
-          if(nants<5)nants=5
+          nants=(ninit+nquit)*2
           if(nants>maxnants .AND. maxnants.ne.-1)nants=maxnants
           if(verbose)write(*,*)"--- number of ants: ",nants
         else
