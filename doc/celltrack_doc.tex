@@ -224,6 +224,7 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
     \item[-tstep] The time step of the input file in seconds. Mandatory for advection correction!
     \item[-tracknc] Output of tracks to netCDF.
     \item[-metanc] Output of meta tracks to netCDF.
+    \item[-minarea] The minimum area of a cluster in grid points. Smaller clusters will be omitted. Default is 0.
 	\item[-v] Verbose output to stdout. Use with caution! Massively slows down code execution!
 	\item[-h] Show help.
 \end{labeling}
