@@ -365,7 +365,7 @@ module celldetection
                 if(data2d(conx,cony)==MAXVAL(neighb))data2d(conx,cony)=MINVAL(neighb)
               end do
             end do
-            write(*,*)"y Cluster # ",MAXVAL(neighb)," replaced  by",MINVAL(neighb)
+            if(verbose)write(*,*)"y Cluster # ",MAXVAL(neighb)," replaced  by",MINVAL(neighb)
             ! one cluster was deleted
             numIDs=numIDs-1            
           end if
@@ -385,7 +385,7 @@ module celldetection
                 if(data2d(conx,cony)==MAXVAL(neighb))data2d(conx,cony)=MINVAL(neighb)
               end do
             end do
-            write(*,*)"x Cluster # ",MAXVAL(neighb)," replaced  by",MINVAL(neighb)
+            if(verbose)write(*,*)"x Cluster # ",MAXVAL(neighb)," replaced  by",MINVAL(neighb)
             ! one cluster was deleted
             numIDs=numIDs-1            
           end if
