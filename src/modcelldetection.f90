@@ -200,7 +200,7 @@ module celldetection
         ! periodic boundaries
         if(nIDs.ne.0 .AND. periodic)then
           globID=globID-nIDs+1
-          CALL mergeboundarycells(cl,globID,globID,nIDs,inmissval)
+          CALL mergeboundarycells(cl,globID,globID,nIDs,outmissval)
         end if
         if(nIDs.ne.0)globID=globID+1
         globnIDs=globnIDs+nIDs
@@ -339,10 +339,11 @@ module celldetection
     subroutine mergeboundarycells(data2d,startID,finID,numIDs,missval)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
-      use ncdfpars, only : outmissval
       
       implicit none
-      integer, intent(out) :: finID,numIDs,startID
+      integer, intent(in) :: startID
+      integer, intent(inout) :: numIDs
+      integer, intent(out) :: finID
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
       real(kind=8), intent(in) :: missval
@@ -364,6 +365,7 @@ module celldetection
                 if(data2d(conx,cony)==MAXVAL(neighb))data2d(conx,cony)=MINVAL(neighb)
               end do
             end do
+            write(*,*)"y Cluster # ",MAXVAL(neighb)," replaced  by",MINVAL(neighb)
             ! one cluster was deleted
             numIDs=numIDs-1            
           end if
@@ -383,6 +385,7 @@ module celldetection
                 if(data2d(conx,cony)==MAXVAL(neighb))data2d(conx,cony)=MINVAL(neighb)
               end do
             end do
+            write(*,*)"x Cluster # ",MAXVAL(neighb)," replaced  by",MINVAL(neighb)
             ! one cluster was deleted
             numIDs=numIDs-1            
           end if
