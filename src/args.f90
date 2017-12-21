@@ -50,6 +50,7 @@ subroutine cliarguments
   nometa=.false.
   periodic=.false.
   maxvel=50
+  minarea=0
 
   do while (arg < narg)
     arg=arg+1
@@ -136,6 +137,10 @@ subroutine cliarguments
       arg=arg+1
       call getarg(arg,argc)
       read(argc,*)maxvel
+    case ("-minarea")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)minarea
 
     case DEFAULT
       call help(trim(command)//": ERROR: unknown argument: "//trim(argc))

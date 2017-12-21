@@ -35,6 +35,7 @@ module globvar
   logical :: periodic                        ! switch for periodic boundaries in input fields
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
+  integer :: minarea                         ! minimum area for clusters in grid points
 
   ! variables containing information about the domain
   real(kind=8) :: level,diflon,diflat
