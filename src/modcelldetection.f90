@@ -197,24 +197,26 @@ module celldetection
         ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
         allocate(cl(nx,ny))
         CALL clustering(dat2d,globID,globID,nIDs,cl,inmissval)
-        write(*,*)"clustering: Found ",nIDs," Cells"
+        !write(*,*)"clustering: Found ",nIDs," Cells"
+        !write(*,*)nIDs,globnIDs,globID
         ! periodic boundaries
         if(nIDs>0 .AND. periodic)then
-          globID=(globID-nIDs)+1
-          if(globID<1)globID=1
+          globID=globID+1-nIDs
           CALL mergeboundarycells(cl,globID,globID,nIDs,outmissval)
-          write(*,*)"perbound: Found ",nIDs," Cells"
+          !write(*,*)"perbound: Found ",nIDs," Cells"
+          !write(*,*)nIDs,globnIDs,globID
         end if
         ! delete small clusters/cells
         if(nIDs>0 .AND. minarea>0)then
-          globID=(globID-nIDs)+1
-          if(globID<1)globID=1
+          globID=globID+1-nIDs
           CALL delsmallcells(cl,globID,globID,nIDs,outmissval)
-          write(*,*)"dellsmall: Found ",nIDs," Cells"
+          !write(*,*)"dellsmall: Found ",nIDs," Cells"
+          !write(*,*)nIDs,globnIDs,globID
         end if
-        if(nIDs>0)globID=globID+1
+        if(nIDs.ne.0)globID=globID+1
         globnIDs=globnIDs+nIDs
         deallocate(dat2d)
+        !write(*,*)nIDs,globnIDs,globID
     
         ! reshape array for writing to nc
         allocate(dat(nx*ny))
@@ -321,7 +323,7 @@ module celldetection
           tp=1
           do y=1,ny
             do x=1,nx
-              if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.-999)then
+              if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.missval)then
                 allIDs(tp)=tcl(x,y)
                 tp=tp+1
               end if
@@ -441,7 +443,7 @@ module celldetection
       integer, intent(inout) :: numIDs
       integer, intent(out) :: finID
       integer, allocatable :: allIDs(:)
-      integer :: conx,cony,neighb(2),area(startID:(startID+numIDs-1))
+      integer :: conx,cony,neighb(2),area(numIDs)
       real(kind=8), intent(in) :: missval
       real(kind=8),intent(inout) :: data2d(nx,ny)
     
@@ -449,17 +451,20 @@ module celldetection
       area=0
       do x=1,nx
         do y=1,ny
-          if(data2d(x,y).ne.missval)area(INT(data2d(x,y))) = area(INT(data2d(x,y))) + 1
+          if(data2d(x,y).ne.missval)then
+          !write(*,*)data2d(x,y),x,y
+          area(INT(data2d(x,y))+1-startID) = area(INT(data2d(x,y))+1-startID) + 1
+          end if
         end do
       end do
       
       ! delete clusters with area smaller than minarea
-      do i=startID,(startID+numIDs-1)
+      do i=1,numIDs
         if(area(i)<minarea)then
           ! now iterate the complete matrix and delete that cluser
           do y=1,ny
             do x=1,nx
-              if(data2d(x,y)==i)data2d(x,y)=missval
+              if(INT(data2d(x,y))+1-startID==i)data2d(x,y)=missval
             end do
           end do
           ! one cluster was deleted
@@ -468,34 +473,39 @@ module celldetection
         end if
       end do
       
-      ! gather IDs and rename to gapless ascending IDs
-      allocate(allIDs(numIDs))
-      allIDs=-999
-      tp=1
-      do y=1,ny
-        do x=1,nx
-          if(.NOT.ANY(allIDs==data2d(x,y)) .AND. data2d(x,y).ne.missval)then
-            allIDs(tp)=data2d(x,y)
-            tp=tp+1
-          end if
-        end do
-      end do
-  
-      clID=startID-1
-      do i=1,tp-1
-        clID=clID+1
+      if(numIDs>0)then ! otherwise all clusters were deleted!
+        ! gather IDs and rename to gapless ascending IDs
+        allocate(allIDs(numIDs))
+        allIDs=-999
+        tp=1
         do y=1,ny
           do x=1,nx
-            if(data2d(x,y)==allIDs(i))then
-              data2d(x,y)=clID
+            if(.NOT.ANY(allIDs==data2d(x,y)) .AND. data2d(x,y).ne.missval)then
+              allIDs(tp)=data2d(x,y)
+              tp=tp+1
             end if
           end do
         end do
-      end do
-      deallocate(allIDs)
+    
+        clID=startID-1
+        do i=1,tp-1
+          clID=clID+1
+          do y=1,ny
+            do x=1,nx
+              if(data2d(x,y)==allIDs(i))then
+                data2d(x,y)=clID
+              end if
+            end do
+          end do
+        end do
+        deallocate(allIDs)
         
-      ! return final cluster ID
-      finID=clID
+        ! return final cluster ID
+        finID=clID
+        else
+        finID=startID
+      end if
+    
     end subroutine delsmallcells
 
 end module celldetection
