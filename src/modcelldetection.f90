@@ -458,20 +458,22 @@ module celldetection
         end do
       end do
       
-      ! delete clusters with area smaller than minarea
+      ! how many clusters will be deleted?
       do i=1,numIDs
-        if(area(i)<minarea)then
-          ! now iterate the complete matrix and delete that cluser
-          do y=1,ny
-            do x=1,nx
-              if(INT(data2d(x,y))+1-startID==i)data2d(x,y)=missval
-            end do
-          end do
-          ! one cluster was deleted
-          if(verbose)write(*,*)"Cluster # ",i," deleted"
-          numIDs=numIDs-1 
-        end if
+        if(area(i)<minarea)numIDs=numIDs-1 
       end do
+      
+      ! delete clusters with area smaller than minarea
+      do y=1,ny
+        do x=1,nx
+          if(data2d(x,y).ne.missval)then
+            if(area(INT(data2d(x,y))+1-startID)<minarea)then
+              data2d(x,y)=missval
+              if(verbose)write(*,*)"Cluster # ",i," deleted"
+            end if
+          end if
+        end do
+      end do      
       
       if(numIDs>0)then ! otherwise all clusters were deleted!
         ! gather IDs and rename to gapless ascending IDs
@@ -502,7 +504,7 @@ module celldetection
         
         ! return final cluster ID
         finID=clID
-        else
+      else
         finID=startID
       end if
     
