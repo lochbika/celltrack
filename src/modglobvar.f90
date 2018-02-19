@@ -39,7 +39,7 @@ module globvar
 
   ! variables containing information about the domain
   real(kind=8) :: level,diflon,diflat
-  real(kind=8), allocatable :: xvals(:),yvals(:),levels(:)
+  real(kind=8), allocatable :: xvals(:),yvals(:)!,levels(:)
   ! Variables for general information about dimensions of input/output fields
   integer :: nx,ny,ntp,nlev,nblon,nblat
   integer, allocatable :: vdate(:),vtime(:)

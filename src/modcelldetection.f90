@@ -68,8 +68,8 @@ module celldetection
       allocate(yvals(0:ny-1))
       if(verbose)write(*,*)"Arrays for grid values successfully allocated!"
       nlev=zaxisInqSize(zaxisID1)
-      allocate(levels(1:nlev))
-      call zaxisInqLevels(zaxisID1,levels)
+      !allocate(levels(1:nlev))
+      !call zaxisInqLevels(zaxisID1,levels)
       nblon=gridInqXvals(gridID1,xvals)
       nblat=gridInqYvals(gridID1,yvals)
       diflon=(xvals(nx-1)-xvals(0))/(nblon-1)
