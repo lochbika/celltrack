@@ -1,0 +1,33 @@
+# Maintainer: Kai Lochbihler <lochbihl at knmi dot nl>
+
+pkgname=celltrack
+pkgver=0.4
+pkgrel=2
+pkgdesc='Iterative rain cell tracking with advection correction'
+url='https://kaigogs.crabdance.com/kai/celltrack'
+license=('custom')
+arch=('i686' 'x86_64')
+depends=('cdi')
+makedepends=('cmake' 'gcc-fortran')
+optdepends=()
+source=($pkgname-$pkgver.tar.gz)
+md5sums=('ba20d7784119e93087d21420e7624cf5')
+
+prepare() {
+  cd $pkgname
+  [[ -d build ]] || mkdir build
+}
+
+build() {
+  cd $pkgname/build
+  cmake .. -DCMAKE_INSTALL_PREFIX=/usr
+  make
+}
+
+package() {
+  cd $pkgname/build
+  make DESTDIR="$pkgdir" install
+
+  cd "$srcdir/$pkgname"
+  install -Dm644 doc/celltrack_doc.pdf "$pkgdir/usr/share/doc/celltrack/userguide.pdf"
+}
