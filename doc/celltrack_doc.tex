@@ -166,7 +166,9 @@ Remember that this most likely requires root privileges. For a custum path run c
 \begin{verbatim}
 cmake .. -DCMAKE_INSTALL_PREFIX=/custom/path
 \end{verbatim}
-If the cdi include and library are not in your environment variables you can run cmake with the following options
+\subsection{Troubleshooting}
+\subsubsection{cdi includes or library not found}
+If the cdi include and library are not in your environment variables you can run cmake with the following options to specify the paths explicitly
 \begin{verbatim}
 cmake .. -DCDI_INCLUDE=/path/to/include/dir/ \
   -DCDI_LIB=/path/to/lib/dir/libcdi.so
@@ -183,7 +185,13 @@ then run
 cmake ..
 make
 \end{verbatim}
-To run celltrack the path to the cdi library must be in the environment, for example using the LD\_LIBRARY\_PATH variable on Linux platforms.
+To run celltrack, the path to the cdi library must be in the environment, for example using the LD\_LIBRARY\_PATH variable on Linux platforms.
+
+\subsubsection{Problems with finding gfortran}
+As this project needs GNU gfortran to compile, the gfortran executable must be detected by cmake. Otherwise cmake reports an error and aborts the configuration process. If this happens and you are sure that gfortran is installed you can force the fortran compiler with
+\begin{verbatim}
+cmake -DCMAKE_Fortran_COMPILER=gfortran ..
+\end{verbatim}
 
 \section{Usage}
 \begin{verbatim}
