@@ -198,7 +198,6 @@ module trackstatistics
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
-      outmissval=vlistInqVarMissval(vlistID2,varID2)
 
       !! open new nc file for results
       ! define grid
@@ -217,7 +216,7 @@ module trackstatistics
       CALL vlistDefVarName(vlistID1,varID1,"trackID")
       CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each track")
       CALL vlistDefVarUnits(vlistID1,varID1,"-")
-      CALL vlistDefVarMissval(vlistID1,varID1,outmissval)
+      CALL vlistDefVarMissval(vlistID1,varID1,inmissval)
       CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
       ! copy time axis from input
       taxisID1=vlistInqTaxis(vlistID2)
@@ -264,7 +263,7 @@ module trackstatistics
 
         ! now loop dat and replace clIDs with trIDs
         do i=1,nx*ny
-          if(dat(i)==outmissval)cycle
+          if(dat(i)==inmissval)cycle
           do j=1,5000
             if(tnums(j)==-1)exit
             do k=1,maxtrlen

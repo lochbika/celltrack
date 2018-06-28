@@ -99,7 +99,7 @@ module cellstatistics
 
         ! assign time steps
         do i=1,nx*ny
-          if(dat(i).ne.outmissval)then
+          if(dat(i).ne.inmissval)then
             if(tsclID(INT(dat(i)))==-1)then
               tsclID(INT(dat(i)))=tsID+1
               cldate(INT(dat(i)))=vdate(tsID+1)
@@ -200,7 +200,7 @@ module cellstatistics
         ! now loop dat2d and calculate statistics
         do y=1,ny
           do x=1,nx
-            if(dat2d(x,y)==outmissval)cycle
+            if(dat2d(x,y)==inmissval)cycle
             ! this cell touches missing values?
             if(x.ne.1)then
               if(pdat2d(x-1,y)==inmissval)touchb(INT(dat2d(x,y))) = .true.

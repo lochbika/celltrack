@@ -137,19 +137,19 @@ module advectioncorrection
         CALL vlistDefVarName(vlistID2,vuID,"u")
         CALL vlistDefVarLongname(vlistID2,vuID,"derived wind speed in x direction")
         CALL vlistDefVarUnits(vlistID2,vuID,"m/s")
-        CALL vlistDefVarMissval(vlistID2,vuID,outmissval)
+        CALL vlistDefVarMissval(vlistID2,vuID,inmissval)
         CALL vlistDefVarDatatype(vlistID2,vuID,DATATYPE_FLT64)
         vvID=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
         CALL vlistDefVarName(vlistID2,vvID,"v")
         CALL vlistDefVarLongname(vlistID2,vvID,"derived wind speed in y direction")
         CALL vlistDefVarUnits(vlistID2,vvID,"m/s")
-        CALL vlistDefVarMissval(vlistID2,vvID,outmissval)
+        CALL vlistDefVarMissval(vlistID2,vvID,inmissval)
         CALL vlistDefVarDatatype(vlistID2,vvID,DATATYPE_FLT64)
         ssizeID=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
         CALL vlistDefVarName(vlistID2,ssizeID,"sample_size")
         CALL vlistDefVarLongname(vlistID2,ssizeID,"number of cells in grid area")
         CALL vlistDefVarUnits(vlistID2,ssizeID,"-")
-        CALL vlistDefVarMissval(vlistID2,ssizeID,outmissval)
+        CALL vlistDefVarMissval(vlistID2,ssizeID,inmissval)
         CALL vlistDefVarDatatype(vlistID2,ssizeID,DATATYPE_INT32)
         ! copy time axis from input
         taxisID2=vlistInqTaxis(vlistID1)
@@ -171,8 +171,8 @@ module advectioncorrection
         call streamDefVList(streamID2,vlistID2)
 
         ! now calculate each cells velocity
-        vclx=outmissval
-        vcly=outmissval
+        vclx=inmissval
+        vcly=inmissval
         do clID=1,globnIDs
           if(touchb(clID))cycle
           if(tsclID(clID).ne.1 .AND. nbw(clID)==1)then
@@ -244,7 +244,7 @@ module advectioncorrection
 
           do clID=1,globnIDs
             if(tsclID(clID)>tsID+1)exit
-            if(tsclID(clID)==tsID+1 .AND. vclx(clID).ne.outmissval .AND. vcly(clID).ne.outmissval)then
+            if(tsclID(clID)==tsID+1 .AND. vclx(clID).ne.inmissval .AND. vcly(clID).ne.inmissval)then
               if(sqrt(vclx(clID)**2 + vcly(clID)**2)>maxvel)then
                 if(verbose)write(*,*)"Skipping cell ",clID," because it has a really high velocity: ", &
                  & sqrt(vclx(clID)**2 + vcly(clID)**2)
@@ -259,8 +259,8 @@ module advectioncorrection
           ! average and set 0 sampled gridpoints to missing value
           WHERE(smpsize2d.ne.0)uvfield2d=uvfield2d/smpsize2d
           WHERE(smpsize2d.ne.0)vvfield2d=vvfield2d/smpsize2d
-          WHERE(smpsize2d==0)uvfield2d=outmissval
-          WHERE(smpsize2d==0)vvfield2d=outmissval
+          WHERE(smpsize2d==0)uvfield2d=inmissval
+          WHERE(smpsize2d==0)vvfield2d=inmissval
 
           ! reshape to 2D
           allocate(uvfield(vnx*vny),vvfield(vnx*vny),smpsize(vnx*vny))
