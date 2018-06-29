@@ -2,9 +2,9 @@
 
 pkgname=celltrack
 pkgver=0.4
-pkgrel=2
+pkgrel=3
 pkgdesc='Iterative rain cell tracking with advection correction'
-url='https://kaigogs.crabdance.com/kai/celltrack'
+url='https://git.kailua.nl/kai/celltrack'
 license=('custom')
 arch=('i686' 'x86_64')
 depends=('cdi')
