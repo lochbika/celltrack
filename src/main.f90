@@ -40,6 +40,8 @@ program celltrack
   adviter=0
   ! name for the cells file
   outfile="cells.nc"
+  ! name for the buffer file
+  bffile="cells_buffer.nc"
 
   ! init the random seed if not specified with cli option
   if(rseed.eq.-1)then

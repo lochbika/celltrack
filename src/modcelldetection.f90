@@ -153,13 +153,58 @@ module celldetection
       ! Assign variables to dataset
       call streamDefVList(streamID2,vlistID2)
       
+      if(buffer>0)then
+
+        write(*,*)"======================================="
+        write(*,*)"=== CREATING OUTPUT ..."
+        write(*,*)"Output  :     ",trim(bffile)
+        write(*,*)"---------"
+      
+        !! open new nc file for results
+        ! define grid
+        gridID3=gridCreate(GRID_GENERIC, nx*ny)
+        CALL gridDefXsize(gridID3,nx)
+        CALL gridDefYsize(gridID3,ny)
+        CALL gridDefXvals(gridID3,xvals)
+        CALL gridDefYvals(gridID3,yvals)
+        CALL gridDefXunits(gridID3,TRIM(xunit))
+        CALL gridDefYunits(gridID3,TRIM(yunit))
+        zaxisID3=zaxisCreate(ZAXIS_GENERIC, 1)
+        CALL zaxisDefLevels(zaxisID3, level)
+        ! define variables
+        vlistID3=vlistCreate()
+        varID3=vlistDefVar(vlistID3,gridID3,zaxisID3,TIME_VARIABLE)
+        CALL vlistDefVarName(vlistID3,varID3,"bfarea")
+        CALL vlistDefVarLongname(vlistID3,varID3,"buffered area around cells; 1=true, 0=false")
+        CALL vlistDefVarUnits(vlistID3,varID3,"-")
+        CALL vlistDefVarMissval(vlistID3,varID3,inmissval)
+        CALL vlistDefVarDatatype(vlistID3,varID3,DATATYPE_INT32)
+        ! copy time axis from input
+        taxisID3=vlistInqTaxis(vlistID1)
+        call vlistDefTaxis(vlistID3,taxisID3)
+        ! Open the dataset for writing
+        streamID3=streamOpenWrite(trim(bffile),FILETYPE_NC)
+        if(streamID3<0)then
+           write(*,*)cdiStringError(streamID3)
+           stop
+        end if
+        ! Assign variables to dataset
+        call streamDefVList(streamID3,vlistID3)
+        
+      end if
+      
       ! save which time steps are completely filled with NA
       allocate(tsALLna(ntp))
       tsALLna=.false.
 
       ! Get data
-      write(*,*)"======================================="
-      write(*,*)"=== Find continous cells ..."
+      if(buffer==0)then
+        write(*,*)"======================================="
+        write(*,*)"=== Find continous cells ..."
+      else
+        write(*,*)"======================================="
+        write(*,*)"=== Find continous cells and calculate buffers ..."        
+      end if
       do tsID=0,(ntp-1)
         if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1 .OR. verbose)then
           write(*,*)"Processing timestep: ",tsID+1,"/",ntp,"..."
@@ -173,6 +218,9 @@ module celldetection
 
         ! set time step for output file
         status=streamDefTimestep(streamID2,tsID)
+        if(buffer>0)then
+          status=streamDefTimestep(streamID3,tsID)
+        end if
 
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
@@ -183,6 +231,10 @@ module celldetection
           dat=inmissval
           tsALLna(tsID+1)=.true.
           CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
+          if(buffer>0)then
+            nmiss3=nmiss1
+            CALL streamWriteVar(streamID3,varID3,dat,nmiss3)
+          end if
           deallocate(dat)
           cycle
         end if
@@ -216,16 +268,32 @@ module celldetection
         globnIDs=globnIDs+nIDs
         deallocate(dat2d)
         !write(*,*)nIDs,globnIDs,globID
-    
-        ! reshape array for writing to nc
+        
+        ! buffer around remaining cells
+        if(buffer>0)then
+          allocate(bfmask(nx,ny))
+          CALL distCellEdge(cl,bfmask)
+        end if
+        
+        ! cells: reshape array and write to nc
         allocate(dat(nx*ny))
         CALL reshapeF2d(cl,nx,ny,dat)
         deallocate(cl)
-    
-        ! write time step to output file
         nmiss2=nmiss1
         CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
         deallocate(dat)
+
+        ! cells: reshape array and write to nc
+        if(buffer>0)then
+          allocate(dat(nx*ny))
+          CALL reshapeF2d(bfmask,nx,ny,dat)
+          deallocate(bfmask)
+          nmiss3=(nx*ny)-sum(dat)
+          CALL streamWriteVar(streamID3,varID3,dat,nmiss3)
+          deallocate(dat)
+        end if
+        
+        
       end do
     
       ! close input and output
@@ -233,6 +301,12 @@ module celldetection
       CALL vlistDestroy(vlistID2)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
+      if(buffer>0)then
+        CALL gridDestroy(gridID3)
+        CALL vlistDestroy(vlistID3)
+        CALL streamClose(streamID3)
+      end if
+
     
       write(*,*)"======================================="
       write(*,*)"=== Summary ..."
@@ -517,5 +591,187 @@ module celldetection
       end if
     
     end subroutine delsmallcells
+    
+    subroutine distCellEdge(data2d,mask)
+
+      use globvar, only : periodic,y,x,i,tp,nx,ny,buffer
+
+      implicit none
+      ! input
+      real(kind=8), intent(in) :: data2d(nx,ny) ! the input 2D field; we expect the field with cellIDs
+      ! output
+      real(kind=8), intent(out):: mask(nx,ny)   ! output: integer field; 1 if grid point is in buffer, else 0
+      ! logical masks
+      logical                  :: prcmsk(nx,ny) ! logical field; true if value > thres
+      logical                  :: edgmsk(nx,ny) ! logical field; true if grid point is cell edge
+      ! etc.
+      integer                  :: nedg          ! number of points with edges and prc
+      integer,allocatable      :: coorde(:,:)   ! coordinates of edge points
+      real(kind=8)             :: dist,mindist,distxo,distxp
+      real(kind=8)             :: distyo,distyp,distx,disty
+      real(kind=8)             :: tcl(nx,ny)    ! field holding the distances
+          
+      ! initialize variables and arrays
+      tcl=0.0
+      prcmsk=.false.
+      edgmsk=.false.
+      mask=0
+    
+      ! mask values higher than threshold
+      do y=1,ny
+        do x=1,nx
+          if(data2d(x,y)>0)prcmsk(x,y)=.true.
+        end do
+      end do
+    
+      ! mask cell edges
+      do y=1,ny
+        do x=1,nx
+          if(prcmsk(x,y))then
+            if(x.ne.1)then
+              if(.NOT.prcmsk(x-1,y))edgmsk(x,y)=.true.
+            else
+              edgmsk(x,y)=.true.
+            end if
+            if(y.ne.1)then
+              if(.NOT.prcmsk(x,y-1))edgmsk(x,y)=.true.
+            else
+              edgmsk(x,y)=.true.
+            end if
+            if(x.ne.nx)then
+              if(.NOT.prcmsk(x+1,y))edgmsk(x,y)=.true.
+            else
+              edgmsk(x,y)=.true.
+            end if
+            if(y.ne.ny)then
+              if(.NOT.prcmsk(x,y+1))edgmsk(x,y)=.true.
+            else
+              edgmsk(x,y)=.true.
+            end if
+          end if
+        end do
+      end do
+    
+      ! accound for periodic boundaries
+      if(periodic)then
+        do x=1,nx
+          if(prcmsk(x,1))then
+            if(.NOT.prcmsk(x,ny))edgmsk(x,1)=.true.
+          end if
+          if(prcmsk(x,ny))then
+            if(.NOT.prcmsk(x,1))edgmsk(x,ny)=.true.
+          end if
+        end do
+        do y=1,ny
+          if(prcmsk(1,y))then
+            if(.NOT.prcmsk(nx,y))edgmsk(1,y)=.true.
+          end if
+          if(prcmsk(nx,y))then
+            if(.NOT.prcmsk(1,y))edgmsk(nx,y)=.true.
+          end if
+        end do
+      end if
+    
+      ! count number of edge points
+      nedg=0
+      do y=1,ny
+        do x=1,nx
+          if(edgmsk(x,y))nedg=nedg+1
+        end do
+      end do
+    
+      ! create vectorized version of the coordinates of edge points
+      allocate(coorde(nedg,2))
+      tp=1
+      do y=1,ny
+        do x=1,nx
+          if(edgmsk(x,y))then
+            coorde(tp,1)=x
+            coorde(tp,2)=y
+            tp=tp+1
+          end if
+        end do
+      end do
+    
+      ! find the closest edge point for each grid point
+      do y=1,ny
+        do x=1,nx
+          if(.NOT.edgmsk(x,y))then
+            ! calculate distances to edge points and find shortest
+            mindist=huge(mindist)
+            do i=1,nedg
+              if(periodic)then
+                ! ok, now it's getting tricky because we don't know whether selCL
+                ! crossed the boundaries to become clID.
+                ! At this step I calculate two kinds of distances between the two cells
+                ! 1. the direct distance
+                !    this assumes selCL did not cross the boundaries
+                ! 2. the distance between clID and the projection of selCL
+                !    this assumes that selCL crossed the boundaries
+    
+                ! clID=grid point
+                ! selCL=edge point
+    
+                distxo=x-coorde(i,1) ! 1 in x direction
+                distyo=y-coorde(i,2) ! 1 in y direction
+                ! 2 in x direction
+                if(x>=coorde(i,1))then
+                  distxp=x-(coorde(i,1)+nx)
+                else
+                  distxp=(x+nx)-coorde(i,1)
+                end if
+                ! 2 in y direction
+                if(y>=coorde(i,2))then
+                  distyp=y-(coorde(i,2)+ny)
+                else
+                  distyp=(y+ny)-coorde(i,2)
+                end if
+                if( abs(distxo) .gt. abs(distxp) )then
+                  ! this means the cell crossed the boundaries
+                  distx=distxp
+                else
+                  ! no boundary crossing: just do the normal calculation
+                  distx=distxo
+                end if
+                if( abs(distyo) .gt. abs(distyp) )then
+                  ! this means the cell crossed the boundaries
+                  disty=distyp
+                else
+                  ! no boundary crossing: just do the normal calculation
+                  disty=distyo
+                end if
+              else
+                distx=x-coorde(i,1)
+                disty=y-coorde(i,2)
+              end if
+              ! calculate the final distance between this pair
+              dist = sqrt(distx**2 + disty**2)
+              if(dist<mindist)mindist=dist
+              ! if the distance is 1 we found our closest point; shorter than 1 is not possible
+              if(mindist.eq.1)exit
+            end do
+            if(prcmsk(x,y))then
+              tcl(x,y)=mindist*(-1)
+            else
+              tcl(x,y)=mindist
+            end if
+          else
+            tcl(x,y)=0.0D0
+          end if
+        end do
+      end do
+
+      deallocate(coorde)
+      
+      ! mask points within a certain distance
+      do y=1,ny
+        do x=1,nx
+          if(tcl(x,y)<=buffer)then
+            mask(x,y)=1
+          end if
+        end do
+      end do
+        
+    end subroutine distCellEdge
 
 end module celldetection

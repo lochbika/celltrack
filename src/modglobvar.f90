@@ -36,6 +36,7 @@ module globvar
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
   integer :: minarea                         ! minimum area for clusters in grid points
+  integer :: buffer                          ! buffer around clusters in grid points
 
   ! variables containing information about the domain
   real(kind=8) :: level,diflon,diflat
@@ -56,6 +57,9 @@ module globvar
   integer, allocatable :: nbw(:),nfw(:),minclIDloc(:),iclIDloc(:)
   logical, allocatable :: links(:,:),tsALLna(:)
   integer :: maxnIDs
+  
+  ! Variables for buffering around cells
+  real(kind=8), allocatable :: bfmask(:,:)
 
   ! variables for advection correction
   character(len=800) :: vfile                         ! basename for velocity fields
@@ -96,6 +100,7 @@ module globvar
   integer :: outstep,status,riostat
   character(len=1000) :: filename
   character(len=800) :: outfile
+  character(len=800) :: bffile
 
   ! random number
   real(kind=8) :: rnum
