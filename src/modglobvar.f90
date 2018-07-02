@@ -59,7 +59,12 @@ module globvar
   integer :: maxnIDs
   
   ! Variables for buffering around cells
+  integer :: bglobnIDs
   real(kind=8), allocatable :: bfmask(:,:)
+  integer, allocatable :: bclIDs(:),btsclID(:),bcldate(:),bcltime(:)
+  logical, allocatable :: btouchb(:)
+  integer, allocatable :: bclarea(:)
+  real(kind=8), allocatable :: bclpint(:),bclavint(:),bclcmass(:,:),bwclcmass(:,:)
 
   ! variables for advection correction
   character(len=800) :: vfile                         ! basename for velocity fields
@@ -100,7 +105,7 @@ module globvar
   integer :: outstep,status,riostat
   character(len=1000) :: filename
   character(len=800) :: outfile
-  character(len=800) :: bffile
+  character(len=800) :: bffile,bfclfile
 
   ! random number
   real(kind=8) :: rnum
