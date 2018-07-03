@@ -248,6 +248,8 @@ module cellstatistics
         wclcmass(i,1)=wclcmass(i,1)/wsum(i)
         wclcmass(i,2)=wclcmass(i,2)/wsum(i)
       end do
+      
+      deallocate(wsum)
 
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)

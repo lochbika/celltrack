@@ -63,7 +63,7 @@ module globvar
   real(kind=8), allocatable :: bfmask(:,:)
   integer, allocatable :: bclIDs(:),btsclID(:),bcldate(:),bcltime(:)
   logical, allocatable :: btouchb(:)
-  integer, allocatable :: bclarea(:)
+  integer, allocatable :: bclarea(:),bclforcl(:)
   real(kind=8), allocatable :: bclpint(:),bclavint(:),bclcmass(:,:),bwclcmass(:,:)
 
   ! variables for advection correction
