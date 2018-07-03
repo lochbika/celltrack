@@ -29,6 +29,7 @@ program celltrack
   use mainstreamdetection
   use advectioncorrection
   use mainstreamstatistics
+  use cellshape
 
   implicit none
 
@@ -77,6 +78,8 @@ program celltrack
   !=======================================
 
   CALL calccellstatistics()
+  
+  CALL calccellshape()
 
   !=======================================
   !========= FINISHED STATISTICS =========
