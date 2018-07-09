@@ -35,6 +35,9 @@ module cellshape
       real(kind=8), allocatable  :: axisLen(:,:)
       real(kind=8), allocatable  :: rot(:)           ! rotation angles in radians
 
+      real(kind=8) :: distxo,distyo ! the direct distance if cells do not cross boundaries
+      real(kind=8) :: distxp,distyp ! the distance between if cells touch boundaries
+
       integer :: minclID,maxclID,maxarea
       real(kind=8) :: maxLen
       real(kind=8), allocatable  :: tmpcoords(:,:)
@@ -114,7 +117,7 @@ module cellshape
         allocate(dat2d(nx,ny))
         CALL reshapeT2d(dat,nx,ny,dat2d)
         deallocate(dat)
-
+        
         ! assign coordinates
         do x=1,nx
           do y=1,ny
@@ -126,12 +129,58 @@ module cellshape
           end do
         end do
         deallocate(dat2d)
-
+        
         ! center each cell on the center of mass
+        ! if cell touches domain boundaries and we have periodic boundary conditions
+        ! -> use the shorter distance like in modadvectioncorrection
         do clID=minclID,maxclID
           do i=1,cellcnt(clID)
-            coords(clID,i,1)=coords(clID,i,1)-clcmass(clID,1)
-            coords(clID,i,2)=coords(clID,i,2)-clcmass(clID,2)
+            if(periodic)then
+                ! ok, now it's getting tricky because we don't know whether the cell
+                ! wraps around the boundaries.
+                ! At this step I calculate two kinds of distances
+                ! 1. the direct distance
+                !    this assumes the center of mass and the grid point are not across boundaries 
+                ! 2. the distance between center of mass and the projection of the grid point
+                !    this assumes that both points are closer across boundaries
+                distxo=coords(clID,i,1)-clcmass(clID,1) ! 1 in x dir
+                distyo=coords(clID,i,2)-clcmass(clID,2) ! 1 in y dir
+                ! 2 in x direction
+                if(clcmass(clID,1)>=coords(clID,i,1))then
+                  distxp=coords(clID,i,1)+nx-clcmass(clID,1)
+                else
+                  distxp=(clcmass(clID,1)+nx-coords(clID,i,1))*(-1.0D0)
+                end if
+                ! 2 in y direction
+                if(clcmass(clID,2)>=coords(clID,i,2))then
+                  distyp=coords(clID,i,2)+ny-clcmass(clID,2)
+                else
+                  distyp=(clcmass(clID,2)+ny-coords(clID,i,2))*(-1.0D0)
+                end if
+                if(verbose)write(*,*)"distances are x,y"
+                if(verbose)write(*,*)"  ",distxo,distyo
+                if(verbose)write(*,*)"projected distances are x,y"
+                if(verbose)write(*,*)"  ",distxp,distyp
+                if( abs(distxo) .gt. abs(distxp) )then
+                  ! this means both points are closer across boundaries
+                  coords(clID,i,1)=distxp
+                  if(verbose)write(*,*)"Cell ",clID," crosses the x boundary"
+                else
+                  ! no boundary wrapping: just do the normal calculation
+                  coords(clID,i,1)=distxo
+                end if
+                if( abs(distyo) .gt. abs(distyp) )then
+                  ! this means both points are closer across boundaries
+                  coords(clID,i,2)=distyp
+                  if(verbose)write(*,*)"Cell ",clID," crosses the y boundary"
+                else
+                  ! no boundary wrapping: just do the normal calculation
+                  coords(clID,i,2)=distyo
+                end if
+            else
+              coords(clID,i,1)=coords(clID,i,1)-clcmass(clID,1)
+              coords(clID,i,2)=coords(clID,i,2)-clcmass(clID,2)
+            end if
           end do
         end do
 
