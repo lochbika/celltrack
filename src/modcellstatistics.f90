@@ -32,6 +32,16 @@ module cellstatistics
       real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! array for doing the clustering
 
+      real(kind=8), allocatable :: coords(:,:,:)     ! array for holding all cells coordinates
+      real(kind=8), allocatable :: ints(:,:)         ! array for holding all cells coordinates
+      integer, allocatable :: cellcnt(:)             ! array for holding a counter for each cell
+
+      logical :: clbnd ! true if a cell touches domain boundaries
+      logical :: projx,projy ! shall we project points across a boundary
+      integer :: nrupbndx,nrupbndy ! how many grid points are closer to the upper boundaries
+
+      integer :: minclID,maxclID,maxarea
+
       real(kind=8), allocatable :: wsum(:)
 
       write(*,*)"======================================="
@@ -115,7 +125,7 @@ module cellstatistics
       CALL streamClose(streamID2)
 
       write(*,*)"======================================="
-      write(*,*)"=== calculating area, (weighted) center of mass, peak and average values ..."
+      write(*,*)"=== calculating area, peak and average values ..."
       write(*,*)"---------"
 
       !!!!!!!!!
@@ -191,7 +201,7 @@ module cellstatistics
         call streamReadVar(streamID2,varID2,dat,nmiss2)
         call streamReadVarSlice(streamID1,varID1,levelID,pdat,nmiss1)
 
-        ! reashape to 2d; better for center of mass calculation
+        ! reashape to 2d
         allocate(dat2d(nx,ny),pdat2d(nx,ny))
         CALL reshapeT2d(dat,nx,ny,dat2d)
         CALL reshapeT2d(pdat,nx,ny,pdat2d)
@@ -219,22 +229,192 @@ module cellstatistics
               if(tsID==0 .OR. tsID==ntp-1)touchb(INT(dat2d(x,y))) = .true.
             else
               if(y==1 .OR. x==1 .OR. x==nx .OR. y==ny .OR. tsID==0 .OR. tsID==ntp-1)touchb(INT(dat2d(x,y))) = .true.
-            end if 
+            end if
             ! cell area
             clarea(INT(dat2d(x,y))) = clarea(INT(dat2d(x,y))) + 1
             ! average intensity
             clavint(INT(dat2d(x,y))) = clavint(INT(dat2d(x,y))) + pdat2d(x,y)
             ! peak intensity
             if(clpint(INT(dat2d(x,y)))<pdat2d(x,y))clpint(INT(dat2d(x,y))) = pdat2d(x,y)
-            ! centers of masses
-            clcmass(INT(dat2d(x,y)),1) = clcmass(INT(dat2d(x,y)),1) + x
-            clcmass(INT(dat2d(x,y)),2) = clcmass(INT(dat2d(x,y)),2) + y
-            wclcmass(INT(dat2d(x,y)),1) = wclcmass(INT(dat2d(x,y)),1) + x * pdat2d(x,y)
-            wclcmass(INT(dat2d(x,y)),2) = wclcmass(INT(dat2d(x,y)),2) + y * pdat2d(x,y)
-            wsum(INT(dat2d(x,y))) = wsum(INT(dat2d(x,y))) + pdat2d(x,y)
           end do
         end do
         deallocate(dat2d,pdat2d)
+
+      end do
+
+      write(*,*)"======================================="
+      write(*,*)"=== calculating (weighted) center of mass ..."
+      write(*,*)"---------"
+
+      do tsID=0,(ntp-1)
+        if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1)then
+          write(*,*)"Processing timestep: ",tsID+1,"/",ntp,"..."
+        end if
+
+        ! cycle if there are no cells in this time step
+        if(.NOT.ANY(tsclID==tsID+1))cycle
+
+        ! Set time step for input files
+        status=streamInqTimestep(streamID1,tsID)
+        status=streamInqTimestep(streamID2,tsID)
+
+        ! Allocate arrays for data storage
+        allocate(dat(nx*ny))
+        allocate(pdat(nx*ny))
+
+        ! Read time step from input
+        call streamReadVar(streamID2,varID2,dat,nmiss2)
+        call streamReadVarSlice(streamID1,varID1,levelID,pdat,nmiss1)
+
+        ! reashape to 2d; better for center of mass calculation
+        allocate(dat2d(nx,ny),pdat2d(nx,ny))
+        CALL reshapeT2d(dat,nx,ny,dat2d)
+        CALL reshapeT2d(pdat,nx,ny,pdat2d)
+        deallocate(dat,pdat)
+
+        ! how many cells are in this time step?
+        tp=0
+        minclID=huge(minclID)
+        maxclID=0
+        maxarea=0
+        do clID=1,globnIDs
+          if(tsclID(clID)==tsID+1)then
+            tp=tp+1
+            if(clID<minclID)minclID=clID
+            if(clID>maxclID)maxclID=clID
+            if(clarea(clID)>maxarea)maxarea=clarea(clID)
+          end if
+        end do
+
+        ! allocate array for coordinates for all gridpoints of cells in this tstep
+        allocate(coords(minclID:maxclID,maxarea,2))
+        allocate(cellcnt(minclID:maxclID))
+        allocate(ints(minclID:maxclID,maxarea))
+        coords=-1
+        cellcnt=0
+        ints=0
+
+        ! now loop dat2d and calculate statistics
+        do y=1,ny
+          do x=1,nx
+            if(dat2d(x,y)==inmissval)cycle
+            ! assign coordinates for center of mass calculation later on
+            ! save intensities to calculate weighted center of mass
+            cellcnt(INT(dat2d(x,y)))=cellcnt(INT(dat2d(x,y)))+1
+            coords(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))),1)=x
+            coords(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))),2)=y
+            ints(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))))=pdat2d(x,y)
+          end do
+        end do
+        deallocate(dat2d,pdat2d)
+
+        ! calculate center of masses
+        if(periodic)then
+          do clID=minclID,maxclID
+            !first, find out if any grid point is at the boundary
+            clbnd=.false.
+            projx=.false.
+            projy=.false.
+            do i=1,cellcnt(clID)
+              if(coords(clID,i,1)==1 .OR. coords(clID,i,1)==nx .OR. &
+                 & coords(clID,i,2)==1 .OR. coords(clID,i,2)==ny)then
+                clbnd=.true.
+                exit
+              end if
+            end do
+            do i=1,cellcnt(clID)
+              if(coords(clID,i,1)==1 .OR. coords(clID,i,1)==nx)projx=.true.
+              if(coords(clID,i,2)==1 .OR. coords(clID,i,2)==ny)projy=.true.
+              if(projx .AND. projy)exit
+            end do
+            ! if that's the case count how many are closer to the upper boundary
+            if(clbnd)then
+              nrupbndx=0
+              nrupbndy=0
+              ! x direction
+              if(projx)then
+                do i=1,cellcnt(clID)
+                  if(coords(clID,i,1)>(nx/2))then
+                    nrupbndx=nrupbndx+1
+                  end if
+                end do
+                ! check at which boundary we want to project; x=1 or x=nx
+                if((nrupbndx)>(clarea(clID)/2))then ! project at nx
+                  if(verbose)write(*,*)"projecting cell",clID,"at nx with ",nrupbndx,"of",clarea(clID),"points"
+                  do i=1,cellcnt(clID)
+                    if(coords(clID,i,1)<(nx/2))then
+                      coords(clID,i,1)=coords(clID,i,1)+nx
+                    end if
+                  end do                  
+                else ! project at x=1
+                  if(verbose)write(*,*)"projecting cell",clID,"at x=1 with ",clarea(clID)-nrupbndx,"of",clarea(clID),"points"
+                  do i=1,cellcnt(clID)
+                    if(coords(clID,i,1)>=(nx/2))then
+                      coords(clID,i,1)=1-(nx-coords(clID,i,1))
+                    end if
+                  end do                   
+                end if
+              end if
+              ! y direction
+              if(projy)then
+                do i=1,cellcnt(clID)
+                  if(coords(clID,i,2)>(ny/2))then
+                    nrupbndy=nrupbndy+1
+                  end if
+                end do
+                ! check at which boundary we want to project; y=1 or y=ny
+                if((nrupbndy)>(clarea(clID)/2))then ! project at ny
+                  if(verbose)write(*,*)"projecting cell",clID,"at ny with ",nrupbndy,"of",clarea(clID),"points"
+                  do i=1,cellcnt(clID)
+                    if(coords(clID,i,2)<(ny/2))then
+                      coords(clID,i,2)=coords(clID,i,2)+ny
+                    end if
+                  end do                  
+                else ! project at y=1
+                  if(verbose)write(*,*)"projecting cell",clID,"at y=1 with ",clarea(clID)-nrupbndy,"of",clarea(clID),"points"
+                  do i=1,cellcnt(clID)
+                    if(coords(clID,i,2)>=(ny/2))then
+                      coords(clID,i,2)=1-(ny-coords(clID,i,2))
+                    end if
+                  end do                   
+                end if
+              end if
+              ! now calculate center of mass
+              do i=1,cellcnt(clID)
+                ! center of masses
+                clcmass(clID,1) = clcmass(clID,1) + coords(clID,i,1)
+                clcmass(clID,2) = clcmass(clID,2) + coords(clID,i,2)
+                wclcmass(clID,1) = wclcmass(clID,1) + coords(clID,i,1) * ints(clID,i)
+                wclcmass(clID,2) = wclcmass(clID,2) + coords(clID,i,2) * ints(clID,i)
+                wsum(clID) = wsum(clID) + ints(clID,i)
+              end do              
+            else ! if no gridpoint is at the boundaries, just do it the normal way
+              do i=1,cellcnt(clID)
+                ! normal center of masses
+                clcmass(clID,1) = clcmass(clID,1) + coords(clID,i,1)
+                clcmass(clID,2) = clcmass(clID,2) + coords(clID,i,2)
+                wclcmass(clID,1) = wclcmass(clID,1) + coords(clID,i,1) * ints(clID,i)
+                wclcmass(clID,2) = wclcmass(clID,2) + coords(clID,i,2) * ints(clID,i)
+                wsum(clID) = wsum(clID) + ints(clID,i)
+              end do
+            end if
+          end do
+        else ! no periodic boundaries
+          do clID=minclID,maxclID
+            do i=1,cellcnt(clID)
+              ! normal center of masses
+              clcmass(clID,1) = clcmass(clID,1) + coords(clID,i,1)
+              clcmass(clID,2) = clcmass(clID,2) + coords(clID,i,2)
+              wclcmass(clID,1) = wclcmass(clID,1) + coords(clID,i,1) * ints(clID,i)
+              wclcmass(clID,2) = wclcmass(clID,2) + coords(clID,i,2) * ints(clID,i)
+              wsum(clID) = wsum(clID) + ints(clID,i)
+            end do
+          end do
+        end if
+        deallocate(coords)
+        deallocate(cellcnt)
+        deallocate(ints)
+
       end do
 
       ! divide by area
@@ -247,6 +427,15 @@ module cellstatistics
         ! weighted center of mass
         wclcmass(i,1)=wclcmass(i,1)/wsum(i)
         wclcmass(i,2)=wclcmass(i,2)/wsum(i)
+        ! bring projected center of mass back into the domain
+        if(clcmass(i,1)>nx)clcmass(i,1)=clcmass(i,1)-nx
+        if(clcmass(i,1)<1)clcmass(i,1)=nx-abs(clcmass(i,1))
+        if(clcmass(i,2)>ny)clcmass(i,2)=clcmass(i,2)-ny
+        if(clcmass(i,2)<1)clcmass(i,2)=ny-abs(clcmass(i,2))
+        if(wclcmass(i,1)>nx)wclcmass(i,1)=wclcmass(i,1)-nx
+        if(wclcmass(i,1)<1)wclcmass(i,1)=nx-abs(wclcmass(i,1))
+        if(wclcmass(i,2)>ny)wclcmass(i,2)=wclcmass(i,2)-ny
+        if(wclcmass(i,2)<1)wclcmass(i,2)=ny-abs(wclcmass(i,2))
       end do
 
       CALL streamClose(streamID1)
