@@ -106,6 +106,7 @@ module globvar
   character(len=1000) :: filename
   character(len=800) :: outfile
   character(len=800) :: bffile,bfclfile
+  real(kind=8) :: pi=3.141592653589793238462643383279502884197169399373510
 
   ! random number
   real(kind=8) :: rnum

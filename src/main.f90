@@ -30,6 +30,7 @@ program celltrack
   use advectioncorrection
   use mainstreamstatistics
   use buffering
+  use cellshape
 
   implicit none
 
@@ -92,6 +93,8 @@ program celltrack
   !=======================================
 
   CALL calccellstatistics()
+  
+  CALL calccellshape()
 
   !=======================================
   !========= FINISHED STATISTICS =========
