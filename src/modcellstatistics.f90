@@ -213,16 +213,16 @@ module cellstatistics
             if(dat2d(x,y)==outmissval)cycle
             ! this cell touches missing values?
             if(x.ne.1)then
-              if(pdat2d(x-1,y)==outmissval)touchb(INT(dat2d(x,y))) = .true.
+              if(pdat2d(x-1,y)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             if(y.ne.1)then
-              if(pdat2d(x,y-1)==outmissval)touchb(INT(dat2d(x,y))) = .true.
+              if(pdat2d(x,y-1)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             if(x.ne.nx)then
-              if(pdat2d(x+1,y)==outmissval)touchb(INT(dat2d(x,y))) = .true.
+              if(pdat2d(x+1,y)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             if(y.ne.ny)then
-              if(pdat2d(x,y+1)==outmissval)touchb(INT(dat2d(x,y))) = .true.
+              if(pdat2d(x,y+1)==inmissval)touchb(INT(dat2d(x,y))) = .true.
             end if
             ! this cell touches time or space boundaries?
             if(periodic)then
