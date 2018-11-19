@@ -21,6 +21,7 @@ module ncdfpars
   integer :: gridID3,taxisID3,vlistID3,varID3,streamID3,zaxisID3,ssizeID
   integer :: nmiss1,nmiss2,nmiss3
   real(kind=8) :: inmissval
+  real(kind=8) :: outmissval=-999.D0
   character(len=1000) :: vunit,xunit,yunit,vname
 
   contains

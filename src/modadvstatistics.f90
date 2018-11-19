@@ -119,7 +119,7 @@ module advstats
 
         ! now loop dat and gather each cells values
         do k=1,nx*ny
-          if(dat(k)==inmissval)cycle
+          if(dat(k)==outmissval)cycle
           cellvalues( INT(dat(k)) , cellcounter(INT(dat(k))) )=pdat(k)
           cellcounter(INT(dat(k)))=cellcounter(INT(dat(k)))+1
         end do

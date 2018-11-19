@@ -139,7 +139,7 @@ module celldetection
       CALL vlistDefVarName(vlistID2,varID2,"cellID")
       CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each cell")
       CALL vlistDefVarUnits(vlistID2,varID2,"-")
-      CALL vlistDefVarMissval(vlistID2,varID2,inmissval)
+      CALL vlistDefVarMissval(vlistID2,varID2,outmissval)
       CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
       ! copy time axis from input
       taxisID2=vlistInqTaxis(vlistID1)
@@ -180,7 +180,7 @@ module celldetection
         ! cycle if field contains only missing values; but write it to output
         if(nmiss1==nx*ny)then
           nmiss2=nmiss1
-          dat=inmissval
+          dat=outmissval
           tsALLna(tsID+1)=.true.
           CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
           deallocate(dat)
@@ -201,14 +201,14 @@ module celldetection
         ! periodic boundaries
         if(nIDs>0 .AND. periodic)then
           globID=globID+1-nIDs
-          CALL mergeboundarycells(cl,globID,globID,nIDs,inmissval)
+          CALL mergeboundarycells(cl,globID,globID,nIDs,outmissval)
           !write(*,*)"perbound: Found ",nIDs," Cells"
           !write(*,*)nIDs,globnIDs,globID
         end if
         ! delete small clusters/cells
         if(nIDs>0 .AND. minarea>0)then
           globID=globID+1-nIDs
-          CALL delsmallcells(cl,globID,globID,nIDs,inmissval)
+          CALL delsmallcells(cl,globID,globID,nIDs,outmissval)
           !write(*,*)"dellsmall: Found ",nIDs," Cells"
           !write(*,*)nIDs,globnIDs,globID
         end if
@@ -257,6 +257,7 @@ module celldetection
     subroutine clustering(data2d,startID,finID,numIDs,tcl,missval)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
+      use ncdfpars, only : outmissval
       
       implicit none
       integer, intent(in) :: startID
@@ -268,7 +269,7 @@ module celldetection
       logical :: mask(nx,ny)
     
       ! initialize variables and arrays
-      tcl=missval
+      tcl=outmissval
       mask=.false.
       clID=startID
       numIDs=0
@@ -288,23 +289,23 @@ module celldetection
         ! assign IDs to continous cells
         do y=1,ny
           do x=1,nx
-            neighb=missval
+            neighb=outmissval
             if(mask(x,y))then
               ! gather neighbouring IDs; left,up
               if(x.ne.1)  neighb(1)=tcl((x-1),y)
               if(y.ne.1)  neighb(2)=tcl(x,(y-1))
               ! check if there is NO cluster around the current pixel; create new one
-              if(ALL(neighb==missval))then
+              if(ALL(neighb==outmissval))then
                 tcl(x,y)=clID
                 clID=clID+1
                 numIDs=numIDs+1
               else
                 ! both neighbours are in the same cluster
-                if(neighb(1)==neighb(2).and.neighb(1).ne.missval)then
+                if(neighb(1)==neighb(2).and.neighb(1).ne.outmissval)then
                   tcl(x,y)=neighb(1)
                 end if
                 ! both neighbors are in different clusters but none of them is (-999)
-                if(neighb(1).ne.neighb(2) .and. neighb(1).ne.missval .and. neighb(2).ne.missval)then
+                if(neighb(1).ne.neighb(2) .and. neighb(1).ne.outmissval .and. neighb(2).ne.outmissval)then
                   numIDs=numIDs-1
                   tcl(x,y)=MINVAL(neighb)
                   ! update the existing higher cluster with the lowest neighbour
@@ -315,7 +316,7 @@ module celldetection
                   end do
                 end if
                 ! both neighbors are in different clusters but ONE of them is empty(-999)
-                if(neighb(1).ne.neighb(2) .and. (neighb(1)==missval .or. neighb(2)==missval))then
+                if(neighb(1).ne.neighb(2) .and. (neighb(1)==outmissval .or. neighb(2)==outmissval))then
                   tcl(x,y)=MAXVAL(neighb)
                 end if
               end if
@@ -326,12 +327,12 @@ module celldetection
         ! gather IDs and rename to gapless ascending IDs
         if(numIDs>0)then
           allocate(allIDs(numIDs))
-          allIDs=missval
+          allIDs=outmissval
           clID=startID-1
           tp=1
           do y=1,ny
             do x=1,nx
-              if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.missval)then
+              if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.outmissval)then
                 allIDs(tp)=tcl(x,y)
                 tp=tp+1
               end if

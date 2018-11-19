@@ -179,16 +179,16 @@ module celllinking
             do x=1,vnx
               do y=1,vny
                 ! reset advcell
-                advcell=inmissval
+                advcell=outmissval
                 ! calculate the number of grid points to move cells in that patch
                 ! movex/movey*(-1) because the shift function does it backwards
                 ! do not move if no velocity data is available
-                if(uvfield2d(x,y)==inmissval)then 
+                if(uvfield2d(x,y)==outmissval)then 
                   movex=0
                 else
                   movex=NINT(uvfield2d(x,y)*tstep/diflon)*(-1)
                 end if
-                if(vvfield2d(x,y)==inmissval)then
+                if(vvfield2d(x,y)==outmissval)then
                   movey=0
                 else
                   movey=NINT(vvfield2d(x,y)*tstep/diflat)*(-1)
@@ -196,7 +196,7 @@ module celllinking
                 ! copy cells from this patch
                 do i=1,nx
                   do k=1,ny
-                    if(pdat2d(i,k)==inmissval)cycle
+                    if(pdat2d(i,k)==outmissval)cycle
                     if(vclxindex(INT(pdat2d(i,k)))==x .AND. vclyindex(INT(pdat2d(i,k)))==y)then
                       advcell(i,k)=pdat2d(i,k)
                     end if
@@ -207,14 +207,14 @@ module celllinking
                   if(movex.ne.0)advcell=CSHIFT(advcell,SHIFT=movex,DIM=1)
                   if(movey.ne.0)advcell=CSHIFT(advcell,SHIFT=movey,DIM=2)
                 else
-                  if(movex.ne.0)advcell=EOSHIFT(advcell,SHIFT=movex,BOUNDARY=inmissval,DIM=1)
-                  if(movey.ne.0)advcell=EOSHIFT(advcell,SHIFT=movey,BOUNDARY=inmissval,DIM=2)
+                  if(movex.ne.0)advcell=EOSHIFT(advcell,SHIFT=movex,BOUNDARY=outmissval,DIM=1)
+                  if(movey.ne.0)advcell=EOSHIFT(advcell,SHIFT=movey,BOUNDARY=outmissval,DIM=2)
                 end if
                 ! do the linking for each patch seperately
                 ! now loop all gridpoints
                 do i=1,nx
                   do k=1,ny
-                    if(advcell(i,k).ne.inmissval .AND. dat2d(i,k).ne.inmissval)then
+                    if(advcell(i,k).ne.outmissval .AND. dat2d(i,k).ne.outmissval)then
                       if(verbose)write(*,*)"We have an overlap! cluster ",INT(advcell(i,k))," with ",INT(dat2d(i,k))
                       j=advcell(i,k)
                       l=dat2d(i,k)
@@ -231,7 +231,7 @@ module celllinking
           else
             ! now loop all gridpoints without advection correction
             do i=1,nx*ny
-              if(dat(i).ne.inmissval .AND. pdat(i).ne.inmissval)then
+              if(dat(i).ne.outmissval .AND. pdat(i).ne.outmissval)then
                 if(verbose)write(*,*)"We have an overlap! cluster ",INT(dat(i))," with ",INT(pdat(i))
                 k=dat(i)
                 j=pdat(i)

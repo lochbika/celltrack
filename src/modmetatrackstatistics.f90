@@ -218,7 +218,7 @@ module metatrackstatistics
       CALL vlistDefVarName(vlistID1,varID1,"metaID")
       CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each meta track")
       CALL vlistDefVarUnits(vlistID1,varID1,"-")
-      CALL vlistDefVarMissval(vlistID1,varID1,inmissval)
+      CALL vlistDefVarMissval(vlistID1,varID1,outmissval)
       CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
       ! copy time axis from input
       taxisID1=vlistInqTaxis(vlistID2)
@@ -255,13 +255,13 @@ module metatrackstatistics
         end if
 
         ! now loop dat and replace clIDs with metaIDs
-        pdat=inmissval
+        pdat=outmissval
         do i=1,nx*ny
-          if(dat(i)==inmissval)then
+          if(dat(i)==outmissval)then
             cycle
           end if
           if(clmeta(INT(dat(i)))==-1)then
-            pdat(i)=inmissval
+            pdat(i)=outmissval
             cycle
           end if
           pdat(i)=clmeta(INT(dat(i)))
@@ -336,7 +336,7 @@ module metatrackstatistics
       CALL vlistDefVarName(vlistID1,varID1,"metaID")
       CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each meta track")
       CALL vlistDefVarUnits(vlistID1,varID1,"-")
-      CALL vlistDefVarMissval(vlistID1,varID1,inmissval)
+      CALL vlistDefVarMissval(vlistID1,varID1,outmissval)
       CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
       ! copy time axis from input
       taxisID1=vlistInqTaxis(vlistID2)
@@ -373,13 +373,13 @@ module metatrackstatistics
         end if
 
         ! now loop dat and replace clIDs with metaIDs
-        pdat=inmissval
+        pdat=outmissval
         do i=1,nx*ny
-          if(dat(i)==inmissval)then
+          if(dat(i)==outmissval)then
             cycle
           end if
           if(clmetamstr(INT(dat(i)))==-1)then
-            pdat(i)=inmissval
+            pdat(i)=outmissval
             cycle
           end if
           pdat(i)=clmetamstr(INT(dat(i)))

@@ -121,7 +121,7 @@ module cellshape
         ! assign coordinates
         do x=1,nx
           do y=1,ny
-            if(dat2d(x,y).ne.inmissval)then
+            if(dat2d(x,y).ne.outmissval)then
               cellcnt(INT(dat2d(x,y)))=cellcnt(INT(dat2d(x,y)))+1
               coords(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))),1)=x
               coords(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))),2)=y
