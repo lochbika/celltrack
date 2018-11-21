@@ -222,11 +222,14 @@ module trackstatistics
       taxisID1=vlistInqTaxis(vlistID2)
       call vlistDefTaxis(vlistID1,taxisID1)
       ! Open the dataset for writing
-      streamID1=streamOpenWrite("tracks.nc",FILETYPE_NC)
+      streamID1=streamOpenWrite("tracks.nc",FILETYPE_NC4)
       if(streamID1<0)then
          write(*,*)cdiStringError(streamID1)
          stop
       end if
+      ! set netCDF4 compression
+      CALL streamDefCompType(streamID1,CDI_COMPRESS_ZIP)
+      CALL streamDefCompLevel(streamID1, 6)
       ! Assign variables to dataset
       call streamDefVList(streamID1,vlistID1)
 
