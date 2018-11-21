@@ -145,11 +145,14 @@ module celldetection
       taxisID2=vlistInqTaxis(vlistID1)
       call vlistDefTaxis(vlistID2,taxisID2)
       ! Open the dataset for writing
-      streamID2=streamOpenWrite(trim(outfile),FILETYPE_NC)
+      streamID2=streamOpenWrite(trim(outfile),FILETYPE_NC4)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
+      ! set netCDF4 compression
+      CALL streamDefCompType(streamID2,CDI_COMPRESS_ZIP)
+      CALL streamDefCompLevel(streamID2, 6)
       ! Assign variables to dataset
       call streamDefVList(streamID2,vlistID2)
       
