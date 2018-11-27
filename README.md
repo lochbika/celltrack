@@ -3,7 +3,7 @@ celltrack is software that finds continuous cells in 2D fields and tracks them
 in time. The primary use case is rain cell tracking.
 
 Tag 0.4 can be considered as a first usable version with the following features:
- - NetCDF support for input and output
+ - NetCDF4 support (with compression) for input and output
  - a 2D clustering algorithm to find continuous cells
  - a linking procedure to establish connections in time between cells
  - iterative advection correction to account for displacement of cells with the mean wind field
