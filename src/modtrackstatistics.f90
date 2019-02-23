@@ -217,12 +217,12 @@ module trackstatistics
       CALL vlistDefVarLongname(vlistID1,varID1,"unique ID of each track")
       CALL vlistDefVarUnits(vlistID1,varID1,"-")
       CALL vlistDefVarMissval(vlistID1,varID1,outmissval)
-      CALL vlistDefVarDatatype(vlistID1,varID1,DATATYPE_INT32)
+      CALL vlistDefVarDatatype(vlistID1,varID1,CDI_DATATYPE_INT32)
       ! copy time axis from input
       taxisID1=vlistInqTaxis(vlistID2)
       call vlistDefTaxis(vlistID1,taxisID1)
       ! Open the dataset for writing
-      streamID1=streamOpenWrite("tracks.nc",FILETYPE_NC4)
+      streamID1=streamOpenWrite("tracks.nc",CDI_FILETYPE_NC4)
       if(streamID1<0)then
          write(*,*)cdiStringError(streamID1)
          stop
