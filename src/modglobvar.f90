@@ -52,6 +52,15 @@ module globvar
   integer, allocatable :: clarea(:)
   real(kind=8), allocatable :: clpint(:),clavint(:),clcmass(:,:),wclcmass(:,:)
 
+  ! variables containing information about *SUB*cells
+  integer :: globsubnIDs
+  integer, allocatable :: subclIDs(:),subtsclID(:),subcldate(:),subcltime(:)
+  logical, allocatable :: subtouchb(:)
+  real(kind=8), allocatable :: kernel(:,:)
+  ! Variables used for cell statistics
+  integer, allocatable :: subclarea(:)
+  real(kind=8), allocatable :: subclpint(:),subclavint(:),subclcmass(:,:),subwclcmass(:,:)
+  
   ! Variables for cell linking
   integer, allocatable :: nbw(:),nfw(:),minclIDloc(:),iclIDloc(:)
   logical, allocatable :: links(:,:),tsALLna(:)
@@ -96,6 +105,7 @@ module globvar
   integer :: outstep,status,riostat
   character(len=1000) :: filename
   character(len=800) :: outfile
+  character(len=800) :: suboutfile
   real(kind=8) :: pi=3.141592653589793238462643383279502884197169399373510
 
   ! random number

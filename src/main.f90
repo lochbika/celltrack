@@ -18,6 +18,7 @@ program celltrack
   use globvar
   ! modules
   use celldetection
+  use subcelldetection
   use cellstatistics
   use advstats
   use celllinking
@@ -40,7 +41,9 @@ program celltrack
   ! current advection iteration 
   adviter=0
   ! name for the cells file
-  outfile="cells.nc"
+  outfile="cells.nc"  
+  ! name for the *SUB*cells file
+  suboutfile="subcells.nc"
 
   ! init the random seed if not specified with cli option
   if(rseed.eq.-1)then
@@ -68,6 +71,7 @@ program celltrack
   !=======================================
 
   CALL docelldetection()
+  CALL dosubcelldetection()
 
   !=======================================
   !======= FINISHED CELL DETECTION =======
