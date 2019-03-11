@@ -1,10 +1,10 @@
 !-------------------------------------------------------------------------------------------
-!  ######  ######## ##       ##       ######## ########     ###     ######  ##    ## 
-! ##    ## ##       ##       ##          ##    ##     ##   ## ##   ##    ## ##   ##  
-! ##       ##       ##       ##          ##    ##     ##  ##   ##  ##       ##  ##   
-! ##       ######   ##       ##          ##    ########  ##     ## ##       #####    
-! ##       ##       ##       ##          ##    ##   ##   ######### ##       ##  ##   
-! ##    ## ##       ##       ##          ##    ##    ##  ##     ## ##    ## ##   ##  
+!  ######  ######## ##       ##       ######## ########     ###     ######  ##    ##
+! ##    ## ##       ##       ##          ##    ##     ##   ## ##   ##    ## ##   ##
+! ##       ##       ##       ##          ##    ##     ##  ##   ##  ##       ##  ##
+! ##       ######   ##       ##          ##    ########  ##     ## ##       #####
+! ##       ##       ##       ##          ##    ##   ##   ######### ##       ##  ##
+! ##    ## ##       ##       ##          ##    ##    ##  ##     ## ##    ## ##   ##
 !  ######  ######## ######## ########    ##    ##     ## ##     ##  ######  ##    ##
 !-------------------------------------------------------------------------------------------
 ! This file is part of celltrack
@@ -13,64 +13,65 @@
 ! Any help will be appreciated :)
 !
 module subcelldetection
-  
+
   use globvar
 
   implicit none
-  
-  
-  contains 
+
+
+  contains
     subroutine dosubcelldetection
-      
+
       use globvar
       use ncdfpars
-      
+
       implicit none
-      
-      include 'cdi.inc'      
-      
+
+      include 'cdi.inc'
+
       integer :: nIDs,globID,truncate
       real(kind=8) :: sigma
       real(kind=8), allocatable :: cl(:,:)
-      
+
       ! data arrays
       real(kind=8), allocatable :: dat(:)          ! array for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:)      ! array for doing the clustering
-      
+      real(kind=8), allocatable :: subcl2d(:,:)    ! array holding the subcell IDs in 2D
+
       globsubnIDs=0
-      globID=1
-      sigma=1.5
-      truncate=2
-      
+      globID=0
+      sigma=2
+      truncate=4
+
       write(*,*)"======================================="
       write(*,*)"====== START SUBCELL DETECTION ========"
       write(*,*)"======================================="
-      
+
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to input file..."
-    
+
       ! Get initial Information about grid and timesteps of both files
       CALL datainfo(ifile)
-    
+
       ! Open the dataset 1
       streamID1=streamOpenRead(ifile)
       if(streamID1<0)then
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-    
+
       ! Set the variable IDs 1
       varID1=ivar
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
       zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
-    
+
       write(*,*)"======================================="
       write(*,*)"=== CREATING OUTPUT ..."
       write(*,*)"Output  :     ",trim(suboutfile)
       write(*,*)"---------"
-    
+
       !! open new nc file for results
       ! define grid
       gridID2=gridCreate(GRID_GENERIC, nx*ny)
@@ -104,13 +105,9 @@ module subcelldetection
       CALL streamDefCompLevel(streamID2, 6)
       ! Assign variables to dataset
       call streamDefVList(streamID2,vlistID2)
-      
+
       ! at this stage we get the gaussian kernel for the smoothing of the input field
       CALL gaussian_kernel(sigma,truncate)
-      !write(*,*)size(kernel,1),size(kernel,2)
-      !do x=-3,3
-      !write(*,'(7f8.6)')kernel(x,:)
-      !enddo
 
       ! Get data
       write(*,*)"======================================="
@@ -119,10 +116,10 @@ module subcelldetection
         if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1 .OR. verbose)then
           write(*,*)"Processing timestep: ",tsID+1,"/",ntp,"..."
         end if
-    
+
         ! Allocate arrays for data storage
         allocate(dat(nx*ny))
-    
+
         ! Set time step for input file
         status=streamInqTimestep(streamID1,tsID)
 
@@ -131,61 +128,70 @@ module subcelldetection
 
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
-        
+
         ! cycle if field contains only missing values; but write it to output
         if(tsALLna(tsID+1))then
           nmiss2=nmiss1
           dat=outmissval
           cycle
         end if
-        
+
         ! reshape array
         allocate(dat2d(nx,ny))
         CALL reshapeT2d(dat,nx,ny,dat2d)
         deallocate(dat)
-    
+
         ! cluster the frame
         ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
         allocate(cl(nx,ny))
+        ! low pass filter the array and deallocate the original one
         CALL blur2d(dat2d,cl,inmissval)
-        !cl=dat2d
         deallocate(dat2d)
+        ! now cluster subcells
+        allocate(subcl2d(nx,ny))
+        CALL subclustering(cl,globID,globID,nIDs,subcl2d,inmissval)
+        deallocate(cl)
         !write(*,*)nIDs,globnIDs,globID
-    
+        
+        if(nIDs>0)then
+          globID=globID+1
+          globsubnIDs=globsubnIDs+nIDs
+        end if
+        
         ! reshape array for writing to nc
         allocate(dat(nx*ny))
-        CALL reshapeF2d(cl,nx,ny,dat)
-        deallocate(cl)
-    
+        CALL reshapeF2d(subcl2d,nx,ny,dat)
+        deallocate(subcl2d)
+
         ! write time step to output file
         nmiss2=nmiss1
         CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
         deallocate(dat)
       end do
-    
+
       ! close input and output
       CALL gridDestroy(gridID2)
       CALL vlistDestroy(vlistID2)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
-    
+
       write(*,*)"======================================="
       write(*,*)"=== Summary ..."
       write(*,*)"---------"
       write(*,*)"Subcells found:",globsubnIDs
       write(*,*)"---------"
-    
+
       write(*,*)"======================================="
-      write(*,*)"======= FINISHED CELL DETECTION ======="
+      write(*,*)"===== FINISHED SUBCELL DETECTION ======"
       write(*,*)"======================================="
-    
+
     end subroutine dosubcelldetection
-    
+
     subroutine blur2d(data2d,tcl,missval)
-      
+
       use globvar, only : y,x,i,tp,nx,ny,thres,kernel,periodic
       use ncdfpars, only : outmissval
-      
+
       implicit none
       integer :: conx,cony,neighb(2)
       integer :: skernx,skerny
@@ -193,15 +199,15 @@ module subcelldetection
       real(kind=8),intent(out) :: tcl(nx,ny)
       real(kind=8), allocatable :: tcltmp(:,:)      ! array for extension of the domain (handling boundaries)
       logical :: mask(nx,ny)
-      
+
       ! get the size of the kernel
       skernx=size(kernel,1)
       skerny=size(kernel,2)
-    
+
       ! initialize variables and arrays
       tcl=outmissval
       mask=.false.
-    
+
       ! mask values higher than threshold and if not missing value
       do y=1,ny
         do x=1,nx
@@ -210,7 +216,7 @@ module subcelldetection
           end if
         end do
       end do
-      
+
       ! check if there are any gridpoints to cluster
       if(ANY(mask))then
         ! now continue differently if we have periodic boundaries or not
@@ -236,7 +242,7 @@ module subcelldetection
           ! lower right
           tcltmp((nx+1):(nx+skernx),(ny+1):(ny+skerny)) = data2d( 1:skernx,1:skerny)
         end if
-                
+
         ! blur it with respecting the boundaries
         do y=1,ny
           do x=1,nx
@@ -244,110 +250,299 @@ module subcelldetection
           end do
         end do
         
+        ! set grid points that were not originally covered to missval
+        do y=1,ny
+          do x=1,nx
+            if(.NOT.mask(x,y))tcl(x,y) = outmissval
+          end do
+        end do
+
       end if
     end subroutine blur2d
-    
+
     subroutine subclustering(data2d,startID,finID,numIDs,tcl,missval)
-      
-      use globvar, only : clID,y,x,i,tp,nx,ny,thres
+
+      use globvar, only : y,x,i,tp,nx,ny,thres,periodic
       use ncdfpars, only : outmissval
-      
+
       implicit none
       integer, intent(in) :: startID
       integer, intent(out) :: finID,numIDs
-      integer, allocatable :: allIDs(:)
-      integer :: conx,cony,neighb(2)
+      integer, allocatable :: ipartcoor(:,:),tpartcoor(:,:),partcoor(:,:),locmaxcoor(:,:)
+      integer :: npart,nlocmax
       real(kind=8), intent(in) :: data2d(nx,ny),missval
       real(kind=8),intent(out) :: tcl(nx,ny)
-      logical :: mask(nx,ny)
-    
+      real(kind=8) :: lmaxt,neighb(9)
+      integer :: dir(nx,ny)
+      logical :: mask(nx,ny),locmax(nx,ny)
+
       ! initialize variables and arrays
       tcl=outmissval
       mask=.false.
-      clID=startID
+      locmax=.false.
+      dir=0
       numIDs=0
-    
+      npart=0
+      nlocmax=0
+
       ! mask values higher than threshold and if not missing value
       do y=1,ny
         do x=1,nx
           if(data2d(x,y)>thres .AND. data2d(x,y).ne.missval)then
-          mask(x,y)=.true.
+            mask(x,y)=.true.
           end if
         end do
       end do
-      
+
       ! check if there are any gridpoints to cluster
       if(ANY(mask))then
-      
-        ! assign IDs to continous cells
+
+        ! find local maxima and directions
         do y=1,ny
           do x=1,nx
-            neighb=outmissval
             if(mask(x,y))then
-              ! gather neighbouring IDs; left,up
-              if(x.ne.1)  neighb(1)=tcl((x-1),y)
-              if(y.ne.1)  neighb(2)=tcl(x,(y-1))
-              ! check if there is NO cluster around the current pixel; create new one
-              if(ALL(neighb==outmissval))then
-                tcl(x,y)=clID
-                clID=clID+1
-                numIDs=numIDs+1
+              ! extract the 8 neighboring grid points
+              neighb=outmissval
+              ! the center gridpoint is always assigned the same way
+              neighb(5)=data2d(x,y)
+              ! for the rest, we have to take care of the boundaries
+              ! we are in the upper left corner
+              if(x.eq.1 .AND. y.eq.1)then
+                neighb(6)=data2d(x+1,y)
+                neighb(8)=data2d(x,y+1)
+                neighb(9)=data2d(x+1,y+1)
+                if(periodic)then
+                  neighb(1)=data2d(nx,ny)
+                  neighb(2)=data2d(x,ny)
+                  neighb(3)=data2d(x+1,ny)
+                  neighb(4)=data2d(nx,y)
+                  neighb(7)=data2d(nx,y+1)
+                end if
+              ! we are in the upper right corner
+              else if(x.eq.nx .AND. y.eq.1)then
+                neighb(4)=data2d(x-1,y)
+                neighb(7)=data2d(x-1,y+1)
+                neighb(8)=data2d(x,y+1)
+                if(periodic)then
+                  neighb(1)=data2d(x-1,ny)
+                  neighb(2)=data2d(x,ny)
+                  neighb(3)=data2d(1,ny)
+                  neighb(6)=data2d(1,y)
+                  neighb(9)=data2d(1,y+1)
+                end if
+              ! we are in the lower left corner
+              else if(x.eq.1 .AND. y.eq.ny)then
+                neighb(2)=data2d(x,y-1)
+                neighb(3)=data2d(x+1,y-1)
+                neighb(6)=data2d(x+1,y)
+                if(periodic)then
+                  neighb(1)=data2d(nx,y-1)
+                  neighb(4)=data2d(nx,y)
+                  neighb(7)=data2d(nx,1)
+                  neighb(8)=data2d(x,1)
+                  neighb(9)=data2d(x+1,1)
+                end if
+              ! we are in the lower right corner
+              else if(x.eq.nx .AND. y.eq.ny)then
+                neighb(1)=data2d(x-1,y-1)
+                neighb(2)=data2d(x,y-1)
+                neighb(4)=data2d(x-1,y)
+                if(periodic)then
+                  neighb(3)=data2d(1,y-1)
+                  neighb(6)=data2d(1,y)
+                  neighb(7)=data2d(x-1,1)
+                  neighb(8)=data2d(x,1)
+                  neighb(9)=data2d(1,1)
+                end if
+              ! we are in between upper left and lower left corner
+              else if(x.eq.1 .AND. y.ne.1 .AND. y.ne.ny)then
+                neighb(2)=data2d(x,y-1)
+                neighb(3)=data2d(x+1,y-1)
+                neighb(6)=data2d(x+1,y)
+                neighb(8)=data2d(x,y+1)
+                neighb(9)=data2d(x+1,y+1)
+                if(periodic)then
+                  neighb(1)=data2d(nx,y-1)
+                  neighb(4)=data2d(nx,y)
+                  neighb(7)=data2d(nx,y+1)
+                end if
+              ! we are in between upper left and upper right corner
+              else if(y.eq.1 .AND. x.ne.1 .AND. x.ne.nx)then
+                neighb(4)=data2d(x-1,y)
+                neighb(6)=data2d(x+1,y)
+                neighb(7)=data2d(x-1,y+1)
+                neighb(8)=data2d(x,y+1)
+                neighb(9)=data2d(x+1,y+1)
+                if(periodic)then
+                  neighb(1)=data2d(x-1,ny)
+                  neighb(2)=data2d(x,ny)
+                  neighb(3)=data2d(x+1,ny)
+                end if
+              ! we are in between lower left and lower right corner
+              else if(y.eq.ny .AND. x.ne.1 .AND. x.ne.nx)then
+                neighb(1)=data2d(x-1,y-1)
+                neighb(2)=data2d(x,y-1)
+                neighb(3)=data2d(x+1,y-1)
+                neighb(4)=data2d(x-1,y)
+                neighb(6)=data2d(x+1,y)
+                if(periodic)then
+                  neighb(7)=data2d(x-1,1)
+                  neighb(8)=data2d(x,1)
+                  neighb(9)=data2d(x+1,1)
+                end if
+              ! we are in between upper right and lower right corner
+              else if(x.eq.nx .AND. y.ne.1 .AND. y.ne.ny)then
+                neighb(1)=data2d(x-1,y-1)
+                neighb(2)=data2d(x,y-1)
+                neighb(4)=data2d(x-1,y)
+                neighb(7)=data2d(x-1,y+1)
+                neighb(8)=data2d(x,y+1)
+                if(periodic)then
+                  neighb(3)=data2d(1,y-1)
+                  neighb(6)=data2d(1,y)
+                  neighb(9)=data2d(1,y+1)
+                end if
+              ! NOW, this is the case when we don't have to care about the boundaries
               else
-                ! both neighbours are in the same cluster
-                if(neighb(1)==neighb(2).and.neighb(1).ne.outmissval)then
-                  tcl(x,y)=neighb(1)
-                end if
-                ! both neighbors are in different clusters but none of them is (-999)
-                if(neighb(1).ne.neighb(2) .and. neighb(1).ne.outmissval .and. neighb(2).ne.outmissval)then
-                  numIDs=numIDs-1
-                  tcl(x,y)=MINVAL(neighb)
-                  ! update the existing higher cluster with the lowest neighbour
-                  do cony=1,ny
-                    do conx=1,nx
-                      if(tcl(conx,cony)==MAXVAL(neighb))tcl(conx,cony)=MINVAL(neighb)
-                    end do
-                  end do
-                end if
-                ! both neighbors are in different clusters but ONE of them is empty(-999)
-                if(neighb(1).ne.neighb(2) .and. (neighb(1)==outmissval .or. neighb(2)==outmissval))then
-                  tcl(x,y)=MAXVAL(neighb)
-                end if
+                neighb(1)=data2d(x-1,y-1)
+                neighb(2)=data2d(x,y-1)
+                neighb(3)=data2d(x+1,y-1)
+                neighb(4)=data2d(x-1,y)
+                neighb(6)=data2d(x+1,y)
+                neighb(7)=data2d(x-1,y+1)
+                neighb(8)=data2d(x,y+1)
+                neighb(9)=data2d(x+1,y+1)
               end if
+
+              ! so, now we know the neighboring grid points
+              ! is this grid point a local maximum??
+              lmaxt=-1.0
+              tp=0
+              do i=1,9
+                if(neighb(i)>lmaxt .AND. neighb(i).ne.outmissval)then
+                  tp=i
+                  lmaxt=neighb(i)
+                end if
+              end do
+              if(tp.eq.5)then
+                locmax(x,y)=.true.
+              end if
+              ! save the direction
+              dir(x,y)=tp
             end if
           end do
         end do
         
-        ! gather IDs and rename to gapless ascending IDs
-        if(numIDs>0)then
-          allocate(allIDs(numIDs))
-          allIDs=outmissval
-          clID=startID-1
-          tp=1
-          do y=1,ny
-            do x=1,nx
-              if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.outmissval)then
-                allIDs(tp)=tcl(x,y)
-                tp=tp+1
-              end if
-            end do
-          end do
-      
-          do i=1,tp-1
-            clID=clID+1
-            do y=1,ny
-              do x=1,nx
-                if(tcl(x,y)==allIDs(i))then
-                  tcl(x,y)=clID
-                end if
-              end do
-            end do
-          end do
-          deallocate(allIDs)
-        end if
+        ! we have the directions for each pixel 
+        ! and know which of them are local maxima
+        ! lets seed particles and let them migrate to them
         
+        ! how many local maxima and cell grid points
+        do y=1,ny
+          do x=1,nx
+            if(mask(x,y))then
+              npart=npart+1
+            end if
+            if(locmax(x,y))then
+              nlocmax=nlocmax+1
+            end if
+          end do
+        end do
+        
+        ! get their coordinates
+        allocate(ipartcoor(npart,2),partcoor(npart,2),locmaxcoor(nlocmax,2))
+        tp=0 ! counter for locmax
+        i=0  ! counter for particles
+        do y=1,ny
+          do x=1,nx
+            if(mask(x,y))then
+              i=i+1
+              ipartcoor(i,1)=x
+              ipartcoor(i,2)=y
+              partcoor(i,1)=x
+              partcoor(i,2)=y
+            end if
+            if(locmax(x,y))then
+              tp=tp+1
+              locmaxcoor(tp,1)=x
+              locmaxcoor(tp,2)=y
+            end if
+          end do
+        end do
+        
+        ! now start the iterative process to move particles
+        allocate(tpartcoor(npart,2))
+        
+        do i=1,100
+          tpartcoor=partcoor
+          
+          do tp=1,npart
+            ! is this particle already at a local maximum? Then, don't move it!
+            if(locmax( tpartcoor(tp,1),tpartcoor(tp,2) ))then
+              cycle
+            end if
+            ! otherwise, get direction and move it!
+            if(dir( tpartcoor(tp,1),tpartcoor(tp,2) ).eq.1)then
+              tpartcoor(tp,1)=tpartcoor(tp,1)-1
+              tpartcoor(tp,2)=tpartcoor(tp,2)-1
+            else if(dir( tpartcoor(tp,1),tpartcoor(tp,2) ).eq.2)then
+              tpartcoor(tp,2)=tpartcoor(tp,2)-1
+            else if(dir( tpartcoor(tp,1),tpartcoor(tp,2) ).eq.3)then
+              tpartcoor(tp,1)=tpartcoor(tp,1)+1
+              tpartcoor(tp,2)=tpartcoor(tp,2)-1
+            else if(dir( tpartcoor(tp,1),tpartcoor(tp,2) ).eq.4)then
+              tpartcoor(tp,1)=tpartcoor(tp,1)-1
+            else if(dir( tpartcoor(tp,1),tpartcoor(tp,2) ).eq.6)then
+              tpartcoor(tp,1)=tpartcoor(tp,1)+1
+            else if(dir( tpartcoor(tp,1),tpartcoor(tp,2) ).eq.7)then
+              tpartcoor(tp,1)=tpartcoor(tp,1)-1
+              tpartcoor(tp,2)=tpartcoor(tp,2)+1
+            else if(dir( tpartcoor(tp,1),tpartcoor(tp,2) ).eq.8)then
+              tpartcoor(tp,2)=tpartcoor(tp,2)+1
+            else if(dir( tpartcoor(tp,1),tpartcoor(tp,2) ).eq.9)then
+              tpartcoor(tp,1)=tpartcoor(tp,1)+1
+              tpartcoor(tp,2)=tpartcoor(tp,2)+1
+            end if
+            ! check if we moved across boundaries
+            if(periodic)then
+              if(tpartcoor(tp,1)<1)tpartcoor(tp,1)=nx
+              if(tpartcoor(tp,1)>nx)tpartcoor(tp,1)=1
+              if(tpartcoor(tp,2)<1)tpartcoor(tp,2)=ny
+              if(tpartcoor(tp,2)>ny)tpartcoor(tp,2)=1
+            else ! reset
+              if(tpartcoor(tp,1)<1)tpartcoor(tp,1)=partcoor(tp,1)
+              if(tpartcoor(tp,1)>nx)tpartcoor(tp,1)=partcoor(tp,1)
+              if(tpartcoor(tp,2)<1)tpartcoor(tp,2)=partcoor(tp,2)
+              if(tpartcoor(tp,2)>ny)tpartcoor(tp,2)=partcoor(tp,2)         
+            end if
+          end do
+          
+          ! check if we moved any particle 
+          if(ALL(partcoor==tpartcoor))then
+            if(verbose)write(*,*)"We finished after",i," iterations!"
+            exit
+          end if
+          ! update partcoor
+          partcoor=tpartcoor
+        end do
+        
+        ! now find which particles ended up in which local maximum 
+        ! and assign IDs to gridpoints
+        do i=1,npart
+          do tp=1,nlocmax
+            ! if coordinates match assign ID to gridpoint where the particle was originally
+            if(partcoor(i,1).eq.locmaxcoor(tp,1) .AND. partcoor(i,2).eq.locmaxcoor(tp,2))then
+              tcl( ipartcoor(i,1),ipartcoor(i,2) ) = (startID-1)+tp
+              exit
+            end if
+            if(tp==nlocmax)write(*,*)"WARNING: A particle didn't move to a local maximum!!!"
+          end do
+        end do
+
       end if
-      ! return final cluster ID
-      finID=clID
+      ! return final cluster ID and set numIDs to return to main program
+      finID=(startID-1)+nlocmax
+      numIDs=nlocmax
     end subroutine subclustering
 
 end module subcelldetection
