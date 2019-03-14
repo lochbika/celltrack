@@ -202,14 +202,14 @@ module subcelldetection
       skerny=size(kernel,2)
 
       ! initialize variables and arrays
-      tcl=outmissval
+      tcl=missval
       mask=.false.
 
       ! mask values higher than threshold and if not missing value
       do y=1,ny
         do x=1,nx
           if(data2d(x,y)>thres .AND. data2d(x,y).ne.missval)then
-          mask(x,y)=.true.
+            mask(x,y)=.true.
           end if
         end do
       end do
@@ -250,7 +250,7 @@ module subcelldetection
         ! set grid points that were not originally covered to missval
         do y=1,ny
           do x=1,nx
-            if(.NOT.mask(x,y))tcl(x,y) = outmissval
+            if(.NOT.mask(x,y))tcl(x,y) = missval
           end do
         end do
 
@@ -274,7 +274,7 @@ module subcelldetection
       logical :: mask(nx,ny),locmax(nx,ny)
 
       ! initialize variables and arrays
-      tcl=outmissval
+      tcl=missval
       mask=.false.
       locmax=.false.
       dir=0
@@ -282,10 +282,10 @@ module subcelldetection
       npart=0
       nlocmax=0
 
-      ! mask values higher than threshold and if not missing value
+      ! mask values if not missing value
       do y=1,ny
         do x=1,nx
-          if(data2d(x,y)>thres .AND. data2d(x,y).ne.missval)then
+          if(data2d(x,y).ne.missval)then
             mask(x,y)=.true.
           end if
         end do
@@ -416,7 +416,7 @@ module subcelldetection
               lmaxt=-1.0
               tp=0
               do i=1,9
-                if(neighb(i)>lmaxt .AND. neighb(i).ne.outmissval)then
+                if(neighb(i)>lmaxt .AND. neighb(i).ne.outmissval .AND. neighb(i).ne.missval)then
                   tp=i
                   lmaxt=neighb(i)
                 end if
