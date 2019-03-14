@@ -29,8 +29,7 @@ module subcelldetection
 
       include 'cdi.inc'
 
-      integer :: nIDs,globID,truncate
-      real(kind=8) :: sigma
+      integer :: nIDs,globID
       real(kind=8), allocatable :: cl(:,:)
 
       ! data arrays
@@ -40,8 +39,6 @@ module subcelldetection
 
       globsubnIDs=0
       globID=0
-      sigma=2
-      truncate=4
 
       write(*,*)"======================================="
       write(*,*)"====== START SUBCELL DETECTION ========"

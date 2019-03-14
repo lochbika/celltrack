@@ -51,6 +51,8 @@ subroutine cliarguments
   periodic=.false.
   maxvel=50
   minarea=0
+  sigma=2
+  truncate=4
 
   do while (arg < narg)
     arg=arg+1
@@ -141,7 +143,14 @@ subroutine cliarguments
       arg=arg+1
       call getarg(arg,argc)
       read(argc,*)minarea
-
+    case ("-sigma")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)sigma
+    case ("-trunc")
+      arg=arg+1
+      call getarg(arg,argc)
+      read(argc,*)truncate
     case DEFAULT
       call help(trim(command)//": ERROR: unknown argument: "//trim(argc))
     end select

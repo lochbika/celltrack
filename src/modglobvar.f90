@@ -36,6 +36,8 @@ module globvar
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
   integer :: minarea                         ! minimum area for clusters in grid points
+  real(kind=8) :: sigma                      ! the std dev for the gaussian blur before subcelldetection
+  integer :: truncate                        ! truncation(span) for the gaussian blur before subcelldetection
 
   ! variables containing information about the domain
   real(kind=8) :: level,diflon,diflat
