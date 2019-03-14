@@ -36,9 +36,11 @@ module subcelldetection
       real(kind=8), allocatable :: dat(:)          ! array for reading float from nc
       real(kind=8), allocatable :: dat2d(:,:)      ! array for doing the clustering
       real(kind=8), allocatable :: subcl2d(:,:)    ! array holding the subcell IDs in 2D
+      real(kind=8), allocatable :: cells(:)        ! array for reading cell IDs from nc
+      real(kind=8), allocatable :: cells2d(:,:)    ! array for holding cell IDs in 2d
 
       globsubnIDs=0
-      globID=0
+      globID=1
 
       write(*,*)"======================================="
       write(*,*)"====== START SUBCELL DETECTION ========"
@@ -63,6 +65,26 @@ module subcelldetection
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
       zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
+
+      write(*,*)"======================================="
+      write(*,*)"=== Opening connection to cells file..."
+
+      ! Get initial Information about grid and timesteps of both files
+      CALL datainfo(ifile)
+
+      ! Open the dataset 1
+      streamID3=streamOpenRead(outfile)
+      if(streamID3<0)then
+         write(*,*)cdiStringError(streamID3)
+         stop
+      end if
+
+      ! Set the variable IDs 1
+      varID3=0
+      vlistID3=streamInqVlist(streamID3)
+      gridID3=vlistInqVarGrid(vlistID3,varID3)
+      taxisID3=vlistInqTaxis(vlistID3)
+      zaxisID3=vlistInqVarZaxis(vlistID3,varID3)
 
       write(*,*)"======================================="
       write(*,*)"=== CREATING OUTPUT ..."
@@ -116,9 +138,13 @@ module subcelldetection
 
         ! Allocate arrays for data storage
         allocate(dat(nx*ny))
+        allocate(cells(nx*ny))
 
         ! Set time step for input file
         status=streamInqTimestep(streamID1,tsID)
+
+        ! Set time step for cells file
+        status=streamInqTimestep(streamID3,tsID)
 
         ! set time step for output file
         status=streamDefTimestep(streamID2,tsID)
@@ -126,17 +152,13 @@ module subcelldetection
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
 
-        ! cycle if field contains only missing values; but write it to output
-        if(tsALLna(tsID+1))then
-          nmiss2=nmiss1
-          dat=outmissval
-          cycle
-        end if
-
-        ! reshape array
+        ! reshape arrays
         allocate(dat2d(nx,ny))
+        allocate(cells2d(nx,ny))
         CALL reshapeT2d(dat,nx,ny,dat2d)
+        CALL reshapeT2d(cells,nx,ny,cells2d)
         deallocate(dat)
+        deallocate(cells)
 
         ! cluster the frame
         ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
@@ -146,7 +168,7 @@ module subcelldetection
         deallocate(dat2d)
         ! now cluster subcells
         allocate(subcl2d(nx,ny))
-        CALL subclustering(cl,globID,globID,nIDs,subcl2d,inmissval)
+        CALL subclustering(cl,globID,globID,nIDs,subcl2d,inmissval,cells2d)
         deallocate(cl)
         !write(*,*)nIDs,globnIDs,globID
         
@@ -164,6 +186,8 @@ module subcelldetection
         nmiss2=nmiss1
         CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
         deallocate(dat)
+        ! deallocate cells
+        deallocate(cells2d)
       end do
 
       ! close input and output
@@ -171,6 +195,7 @@ module subcelldetection
       CALL vlistDestroy(vlistID2)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
+      CALL streamClose(streamID3)
 
       write(*,*)"======================================="
       write(*,*)"=== Summary ..."
@@ -257,7 +282,7 @@ module subcelldetection
       end if
     end subroutine blur2d
 
-    subroutine subclustering(data2d,startID,finID,numIDs,tcl,missval)
+    subroutine subclustering(data2d,startID,finID,numIDs,tcl,missval,cIDs)
 
       use globvar, only : y,x,i,tp,nx,ny,thres,periodic
       use ncdfpars, only : outmissval
@@ -267,7 +292,7 @@ module subcelldetection
       integer, intent(out) :: finID,numIDs
       integer, allocatable :: ipartcoor(:,:),tpartcoor(:,:),partcoor(:,:),locmaxcoor(:,:)
       integer :: npart,nlocmax
-      real(kind=8), intent(in) :: data2d(nx,ny),missval
+      real(kind=8), intent(in) :: data2d(nx,ny),cIDs(nx,ny),missval
       real(kind=8),intent(out) :: tcl(nx,ny)
       real(kind=8) :: lmaxt,neighb(9)
       integer :: dir(nx,ny)
@@ -299,116 +324,117 @@ module subcelldetection
           do x=1,nx
             if(mask(x,y))then
               ! extract the 8 neighboring grid points
+              ! IMPORTANT: we only extract values of neighbors which belong to the same cell!
               neighb=outmissval
               ! the center gridpoint is always assigned the same way
               neighb(5)=data2d(x,y)
               ! for the rest, we have to take care of the boundaries
               ! we are in the upper left corner
               if(x.eq.1 .AND. y.eq.1)then
-                neighb(6)=data2d(x+1,y)
-                neighb(8)=data2d(x,y+1)
-                neighb(9)=data2d(x+1,y+1)
+                if(cIDs(x+1,y).eq.cIDs(x,y))neighb(6)=data2d(x+1,y)
+                if(cIDs(x,y+1).eq.cIDs(x,y))neighb(8)=data2d(x,y+1)
+                if(cIDs(x+1,y+1).eq.cIDs(x,y))neighb(9)=data2d(x+1,y+1)
                 if(periodic)then
-                  neighb(1)=data2d(nx,ny)
-                  neighb(2)=data2d(x,ny)
-                  neighb(3)=data2d(x+1,ny)
-                  neighb(4)=data2d(nx,y)
-                  neighb(7)=data2d(nx,y+1)
+                  if(cIDs(nx,ny).eq.cIDs(x,y))neighb(1)=data2d(nx,ny)
+                  if(cIDs(x,ny).eq.cIDs(x,y))neighb(2)=data2d(x,ny)
+                  if(cIDs(x+1,ny).eq.cIDs(x,y))neighb(3)=data2d(x+1,ny)
+                  if(cIDs(nx,y).eq.cIDs(x,y))neighb(4)=data2d(nx,y)
+                  if(cIDs(nx,y+1).eq.cIDs(x,y))neighb(7)=data2d(nx,y+1)
                 end if
               ! we are in the upper right corner
               else if(x.eq.nx .AND. y.eq.1)then
-                neighb(4)=data2d(x-1,y)
-                neighb(7)=data2d(x-1,y+1)
-                neighb(8)=data2d(x,y+1)
+                if(cIDs(x-1,y).eq.cIDs(x,y))neighb(4)=data2d(x-1,y)
+                if(cIDs(x-1,y+1).eq.cIDs(x,y))neighb(7)=data2d(x-1,y+1)
+                if(cIDs(x,y+1).eq.cIDs(x,y))neighb(8)=data2d(x,y+1)
                 if(periodic)then
-                  neighb(1)=data2d(x-1,ny)
-                  neighb(2)=data2d(x,ny)
-                  neighb(3)=data2d(1,ny)
-                  neighb(6)=data2d(1,y)
-                  neighb(9)=data2d(1,y+1)
+                  if(cIDs(x-1,ny).eq.cIDs(x,y))neighb(1)=data2d(x-1,ny)
+                  if(cIDs(x,ny).eq.cIDs(x,y))neighb(2)=data2d(x,ny)
+                  if(cIDs(1,ny).eq.cIDs(x,y))neighb(3)=data2d(1,ny)
+                  if(cIDs(1,y).eq.cIDs(x,y))neighb(6)=data2d(1,y)
+                  if(cIDs(1,y+1).eq.cIDs(x,y))neighb(9)=data2d(1,y+1)
                 end if
               ! we are in the lower left corner
               else if(x.eq.1 .AND. y.eq.ny)then
-                neighb(2)=data2d(x,y-1)
-                neighb(3)=data2d(x+1,y-1)
-                neighb(6)=data2d(x+1,y)
+                if(cIDs(x,y-1).eq.cIDs(x,y))neighb(2)=data2d(x,y-1)
+                if(cIDs(x+1,y-1).eq.cIDs(x,y))neighb(3)=data2d(x+1,y-1)
+                if(cIDs(x+1,y).eq.cIDs(x,y))neighb(6)=data2d(x+1,y)
                 if(periodic)then
-                  neighb(1)=data2d(nx,y-1)
-                  neighb(4)=data2d(nx,y)
-                  neighb(7)=data2d(nx,1)
-                  neighb(8)=data2d(x,1)
-                  neighb(9)=data2d(x+1,1)
+                  if(cIDs(nx,y-1).eq.cIDs(x,y))neighb(1)=data2d(nx,y-1)
+                  if(cIDs(nx,y).eq.cIDs(x,y))neighb(4)=data2d(nx,y)
+                  if(cIDs(nx,1).eq.cIDs(x,y))neighb(7)=data2d(nx,1)
+                  if(cIDs(x,1).eq.cIDs(x,y))neighb(8)=data2d(x,1)
+                  if(cIDs(x+1,1).eq.cIDs(x,y))neighb(9)=data2d(x+1,1)
                 end if
               ! we are in the lower right corner
               else if(x.eq.nx .AND. y.eq.ny)then
-                neighb(1)=data2d(x-1,y-1)
-                neighb(2)=data2d(x,y-1)
-                neighb(4)=data2d(x-1,y)
+                if(cIDs(x-1,y-1).eq.cIDs(x,y))neighb(1)=data2d(x-1,y-1)
+                if(cIDs(x,y-1).eq.cIDs(x,y))neighb(2)=data2d(x,y-1)
+                if(cIDs(x-1,y).eq.cIDs(x,y))neighb(4)=data2d(x-1,y)
                 if(periodic)then
-                  neighb(3)=data2d(1,y-1)
-                  neighb(6)=data2d(1,y)
-                  neighb(7)=data2d(x-1,1)
-                  neighb(8)=data2d(x,1)
-                  neighb(9)=data2d(1,1)
+                  if(cIDs(1,y-1).eq.cIDs(x,y))neighb(3)=data2d(1,y-1)
+                  if(cIDs(1,y).eq.cIDs(x,y))neighb(6)=data2d(1,y)
+                  if(cIDs(x-1,1).eq.cIDs(x,y))neighb(7)=data2d(x-1,1)
+                  if(cIDs(x,1).eq.cIDs(x,y))neighb(8)=data2d(x,1)
+                  if(cIDs(1,1).eq.cIDs(x,y))neighb(9)=data2d(1,1)
                 end if
               ! we are in between upper left and lower left corner
               else if(x.eq.1 .AND. y.ne.1 .AND. y.ne.ny)then
-                neighb(2)=data2d(x,y-1)
-                neighb(3)=data2d(x+1,y-1)
-                neighb(6)=data2d(x+1,y)
-                neighb(8)=data2d(x,y+1)
-                neighb(9)=data2d(x+1,y+1)
+                if(cIDs(x,y-1).eq.cIDs(x,y))neighb(2)=data2d(x,y-1)
+                if(cIDs(x+1,y-1).eq.cIDs(x,y))neighb(3)=data2d(x+1,y-1)
+                if(cIDs(x+1,y).eq.cIDs(x,y))neighb(6)=data2d(x+1,y)
+                if(cIDs(x,y+1).eq.cIDs(x,y))neighb(8)=data2d(x,y+1)
+                if(cIDs(x+1,y+1).eq.cIDs(x,y))neighb(9)=data2d(x+1,y+1)
                 if(periodic)then
-                  neighb(1)=data2d(nx,y-1)
-                  neighb(4)=data2d(nx,y)
-                  neighb(7)=data2d(nx,y+1)
+                  if(cIDs(nx,y-1).eq.cIDs(x,y))neighb(1)=data2d(nx,y-1)
+                  if(cIDs(nx,y).eq.cIDs(x,y))neighb(4)=data2d(nx,y)
+                  if(cIDs(nx,y+1).eq.cIDs(x,y))neighb(7)=data2d(nx,y+1)
                 end if
               ! we are in between upper left and upper right corner
               else if(y.eq.1 .AND. x.ne.1 .AND. x.ne.nx)then
-                neighb(4)=data2d(x-1,y)
-                neighb(6)=data2d(x+1,y)
-                neighb(7)=data2d(x-1,y+1)
-                neighb(8)=data2d(x,y+1)
-                neighb(9)=data2d(x+1,y+1)
+                if(cIDs(x-1,y).eq.cIDs(x,y))neighb(4)=data2d(x-1,y)
+                if(cIDs(x+1,y).eq.cIDs(x,y))neighb(6)=data2d(x+1,y)
+                if(cIDs(x-1,y+1).eq.cIDs(x,y))neighb(7)=data2d(x-1,y+1)
+                if(cIDs(x,y+1).eq.cIDs(x,y))neighb(8)=data2d(x,y+1)
+                if(cIDs(x+1,y+1).eq.cIDs(x,y))neighb(9)=data2d(x+1,y+1)
                 if(periodic)then
-                  neighb(1)=data2d(x-1,ny)
-                  neighb(2)=data2d(x,ny)
-                  neighb(3)=data2d(x+1,ny)
+                  if(cIDs(x-1,ny).eq.cIDs(x,y))neighb(1)=data2d(x-1,ny)
+                  if(cIDs(x,ny).eq.cIDs(x,y))neighb(2)=data2d(x,ny)
+                  if(cIDs(x+1,ny).eq.cIDs(x,y))neighb(3)=data2d(x+1,ny)
                 end if
               ! we are in between lower left and lower right corner
               else if(y.eq.ny .AND. x.ne.1 .AND. x.ne.nx)then
-                neighb(1)=data2d(x-1,y-1)
-                neighb(2)=data2d(x,y-1)
-                neighb(3)=data2d(x+1,y-1)
-                neighb(4)=data2d(x-1,y)
-                neighb(6)=data2d(x+1,y)
+                if(cIDs(x-1,y-1).eq.cIDs(x,y))neighb(1)=data2d(x-1,y-1)
+                if(cIDs(x,y-1).eq.cIDs(x,y))neighb(2)=data2d(x,y-1)
+                if(cIDs(x+1,y-1).eq.cIDs(x,y))neighb(3)=data2d(x+1,y-1)
+                if(cIDs(x-1,y).eq.cIDs(x,y))neighb(4)=data2d(x-1,y)
+                if(cIDs(x+1,y).eq.cIDs(x,y))neighb(6)=data2d(x+1,y)
                 if(periodic)then
-                  neighb(7)=data2d(x-1,1)
-                  neighb(8)=data2d(x,1)
-                  neighb(9)=data2d(x+1,1)
+                  if(cIDs(x-1,1).eq.cIDs(x,y))neighb(7)=data2d(x-1,1)
+                  if(cIDs(x,1).eq.cIDs(x,y))neighb(8)=data2d(x,1)
+                  if(cIDs(x+1,1).eq.cIDs(x,y))neighb(9)=data2d(x+1,1)
                 end if
               ! we are in between upper right and lower right corner
               else if(x.eq.nx .AND. y.ne.1 .AND. y.ne.ny)then
-                neighb(1)=data2d(x-1,y-1)
-                neighb(2)=data2d(x,y-1)
-                neighb(4)=data2d(x-1,y)
-                neighb(7)=data2d(x-1,y+1)
-                neighb(8)=data2d(x,y+1)
+                if(cIDs(x-1,y-1).eq.cIDs(x,y))neighb(1)=data2d(x-1,y-1)
+                if(cIDs(x,y-1).eq.cIDs(x,y))neighb(2)=data2d(x,y-1)
+                if(cIDs(x-1,y).eq.cIDs(x,y))neighb(4)=data2d(x-1,y)
+                if(cIDs(x-1,y+1).eq.cIDs(x,y))neighb(7)=data2d(x-1,y+1)
+                if(cIDs(x,y+1).eq.cIDs(x,y))neighb(8)=data2d(x,y+1)
                 if(periodic)then
-                  neighb(3)=data2d(1,y-1)
-                  neighb(6)=data2d(1,y)
-                  neighb(9)=data2d(1,y+1)
+                  if(cIDs(1,y-1).eq.cIDs(x,y))neighb(3)=data2d(1,y-1)
+                  if(cIDs(1,y).eq.cIDs(x,y))neighb(6)=data2d(1,y)
+                  if(cIDs(1,y+1).eq.cIDs(x,y))neighb(9)=data2d(1,y+1)
                 end if
               ! NOW, this is the case when we don't have to care about the boundaries
               else
-                neighb(1)=data2d(x-1,y-1)
-                neighb(2)=data2d(x,y-1)
-                neighb(3)=data2d(x+1,y-1)
-                neighb(4)=data2d(x-1,y)
-                neighb(6)=data2d(x+1,y)
-                neighb(7)=data2d(x-1,y+1)
-                neighb(8)=data2d(x,y+1)
-                neighb(9)=data2d(x+1,y+1)
+                if(cIDs(x-1,y-1).eq.cIDs(x,y))neighb(1)=data2d(x-1,y-1)
+                if(cIDs(x,y-1).eq.cIDs(x,y))neighb(2)=data2d(x,y-1)
+                if(cIDs(x+1,y-1).eq.cIDs(x,y))neighb(3)=data2d(x+1,y-1)
+                if(cIDs(x-1,y).eq.cIDs(x,y))neighb(4)=data2d(x-1,y)
+                if(cIDs(x+1,y).eq.cIDs(x,y))neighb(6)=data2d(x+1,y)
+                if(cIDs(x-1,y+1).eq.cIDs(x,y))neighb(7)=data2d(x-1,y+1)
+                if(cIDs(x,y+1).eq.cIDs(x,y))neighb(8)=data2d(x,y+1)
+                if(cIDs(x+1,y+1).eq.cIDs(x,y))neighb(9)=data2d(x+1,y+1)
               end if
 
               ! so, now we know the neighboring grid points
@@ -538,7 +564,9 @@ module subcelldetection
 
       end if
       ! return final cluster ID and set numIDs to return to main program
-      finID=(startID-1)+nlocmax
+      if(nlocmax>0)then
+        finID=(startID-1)+nlocmax
+      end if
       numIDs=nlocmax
     end subroutine subclustering
 
