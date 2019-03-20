@@ -152,6 +152,9 @@ module subcelldetection
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
 
+        ! Read time step from cells input
+        call streamReadVarSlice(streamID3,varID3,0,cells,nmiss3)
+
         ! reshape arrays
         allocate(dat2d(nx,ny))
         allocate(cells2d(nx,ny))
@@ -568,6 +571,36 @@ module subcelldetection
         finID=(startID-1)+nlocmax
       end if
       numIDs=nlocmax
+            
+      ! checks
+      do y=1,ny
+        do x=1,nx
+          ! is there a subcell but no cell?
+          if(tcl(x,y).ne.missval .AND. cIDs(x,y)==outmissval)then
+            write(*,*)"WARNING: we have a SUBcell where there is no cell",cIDs(x,y),tcl(x,y)
+          end if
+          ! is there a cell but no subcell?
+          if(tcl(x,y)==missval .AND. cIDs(x,y).ne.outmissval)then
+            write(*,*)"WARNING: we have a cell where there is no SUBcell",cIDs(x,y),tcl(x,y)
+          end if
+        end do
+      end do
+      ! check if any subcell is part of more than one cell
+      do i=startID,finID
+        tp=0
+        k=0
+        do y=1,ny
+          do x=1,nx
+            if(tcl(x,y)==i .AND. cIDs(x,y).ne.outmissval)then
+              if(tp.ne.cIDs(x,y))then
+                tp=cIDs(x,y)
+                k=k+1
+              end if
+              if(k>1)write(*,*)"SUBcell",i," is part of",k," cells",cIDs(x,y)
+            end if
+          end do
+        end do
+      end do
     end subroutine subclustering
 
 end module subcelldetection
