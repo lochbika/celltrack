@@ -67,6 +67,9 @@ module globvar
   integer, allocatable :: nbw(:),nfw(:),minclIDloc(:),iclIDloc(:)
   logical, allocatable :: links(:,:),tsALLna(:)
   integer :: maxnIDs
+  
+  ! variables for linking SUBcells to cells
+  integer, allocatable :: sublinks(:) ! each subcell can only be linked to one cell :)
 
   ! variables for advection correction
   character(len=800) :: vfile                         ! basename for velocity fields

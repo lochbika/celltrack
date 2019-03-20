@@ -23,6 +23,7 @@ program celltrack
   use subcellstatistics
   use advstats
   use celllinking
+  use subcelllinking
   use linkstatistics
   use buildtracks
   use trackstatistics
@@ -116,6 +117,7 @@ program celltrack
   !=======================================
 
   CALL linking()
+  CALL dosubcelllinking()
 
   !=======================================
   !========== FINISHED LINKING ===========
