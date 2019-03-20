@@ -20,6 +20,7 @@ program celltrack
   use celldetection
   use subcelldetection
   use cellstatistics
+  use subcellstatistics
   use advstats
   use celllinking
   use linkstatistics
@@ -82,6 +83,7 @@ program celltrack
   !=======================================
 
   CALL calccellstatistics()
+  CALL calcsubcellstatistics()
   
   CALL calccellshape()
 
