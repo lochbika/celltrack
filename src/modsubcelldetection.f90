@@ -227,7 +227,7 @@ module subcelldetection
       skerny=size(kernel,2)
 
       ! initialize variables and arrays
-      tcl=missval
+      tcl=0.D0
       mask=.false.
 
       ! mask values higher than threshold and if not missing value
