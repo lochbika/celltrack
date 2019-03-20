@@ -105,8 +105,8 @@ module subcelldetection
       ! define variables
       vlistID2=vlistCreate()
       varID2=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
-      CALL vlistDefVarName(vlistID2,varID2,"cellID")
-      CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each cell")
+      CALL vlistDefVarName(vlistID2,varID2,"subcellID")
+      CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each subcell")
       CALL vlistDefVarUnits(vlistID2,varID2,"-")
       CALL vlistDefVarMissval(vlistID2,varID2,outmissval)
       CALL vlistDefVarDatatype(vlistID2,varID2,CDI_DATATYPE_FLT32)
@@ -154,6 +154,14 @@ module subcelldetection
 
         ! Read time step from cells input
         call streamReadVarSlice(streamID3,varID3,0,cells,nmiss3)
+        ! cycle if field contains only missing values; but write it to output
+        if(nmiss3==nx*ny)then
+          nmiss2=nx*ny
+          dat=outmissval
+          CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
+          deallocate(dat,cells)
+          cycle
+        end if
 
         ! reshape arrays
         allocate(dat2d(nx,ny))
@@ -164,7 +172,6 @@ module subcelldetection
         deallocate(cells)
 
         ! cluster the frame
-        ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
         allocate(cl(nx,ny))
         ! low pass filter the array and deallocate the original one
         CALL blur2d(dat2d,cl,inmissval)
@@ -173,7 +180,6 @@ module subcelldetection
         allocate(subcl2d(nx,ny))
         CALL subclustering(cl,globID,globID,nIDs,subcl2d,inmissval,cells2d)
         deallocate(cl)
-        !write(*,*)nIDs,globnIDs,globID
         
         if(nIDs>0)then
           globID=globID+1
