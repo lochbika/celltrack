@@ -123,15 +123,7 @@ module subcelllinking
         ! clean up
         deallocate(subcells,cells)
       end do
-
-      ! write the links to file
-      open(unit=1,file="sublinks.txt",action="write",status="replace")
-      write(1,*)"   subclID       clID"
-      do i=1,globsubnIDs
-        write(1,'(2i11)')subclIDs(i),sublinks(i)
-      end do
-      close(unit=1)
-
+      
       ! close input and output
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)

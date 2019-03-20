@@ -70,6 +70,8 @@ module globvar
   
   ! variables for linking SUBcells to cells
   integer, allocatable :: sublinks(:) ! each subcell can only be linked to one cell :)
+  integer, allocatable :: clIDnsub(:) ! how many subcells does a cell have?
+  integer, allocatable :: clIDsub(:,:) ! which subcells are linked to which cell?
 
   ! variables for advection correction
   character(len=800) :: vfile                         ! basename for velocity fields

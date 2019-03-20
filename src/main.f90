@@ -25,6 +25,7 @@ program celltrack
   use celllinking
   use subcelllinking
   use linkstatistics
+  use sublinkstatistics
   use buildtracks
   use trackstatistics
   use buildmetatracks
@@ -128,6 +129,7 @@ program celltrack
   !=======================================
 
   CALL calclinkstatistics()
+  CALL calcsublinkstatistics()
 
   !=======================================
   !====== FINISHED LINK STATISTICS =======
