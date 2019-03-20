@@ -248,7 +248,7 @@ module subcelldetection
         end do
       end do
 
-      ! check if there are any gridpoints to cluster
+      ! check if there are any gridpoints masked
       if(ANY(mask))then
         ! now continue differently if we have periodic boundaries or not
         allocate(tcltmp( (1-skernx):(nx+skernx) , (1-skerny):(ny+skerny) ))
