@@ -70,6 +70,9 @@ In this part all cells are checked for forward and backward links (one time step
 
 The logical link matrix makes it easy to check for overlaps between two cells any time later.
 
+\subsection{The subcell detection}
+TO DO!
+
 \subsection{The tracking algorithm}
 Using the logical link matrix the tracking part is quite simple. For each row (which corresponds to a specific ID) the algorithm checks whether there are cells with higher and lower IDs that are linked i.e. the link matrix is TRUE at this address. Counting these the number of forward and backwards links in time can be determined. Based on this information and using the link matrix it is known which IDs initiate a track according to the definition given above. If an ID is at the beginning of a track the algorithm changes to the corresponding row in the link matrix and searches for forward links to cells in the next time step. If there is such a connection the algorithm changes to the corresponding row. This step is repeated until the conditions for terminating a track are met.
 \begin{figure}[h]
@@ -85,6 +88,7 @@ celltrack features an iterative advection correction algorithm. Again, this foll
 
 \subsection{Periodic boundary conditions}
 Sometimes, it is useful to consider the boundaries of a domain as periodic, for instance, if one wants to apply celltrack to model output. For this reason, celltrack features periodic boundary conditions. If switched on, celltrack recognizes if a cell crosses the boundaries during the cell detection and advection correction. This means, that cells of the same track can exit the domain on one side and re-enter on the other side. Without this option a new track is initiated at each boundary crossing.
+The detection of subcells and the linking to cells is can also handle periodic boundaries.
 
 \subsection{Meta tracks and mainstream detection}
 \label{sec:aco}
@@ -289,6 +293,27 @@ This file contains the number of forward and backward links for each cell. The c
 	\item[nfw] The number of forward links.
 
 \end{labeling}
+
+\subsection{The subcells files}
+These files contain information about each of the detected subcells. The following subsections contain also information about the linking with cells since the linking is not in time in this case; Cells can only contain subcells from the same time step. There is no linking of subcells between time steps, .
+
+
+\subsubsection{subcells\_stats.txt}
+Statistics and characteristics for each subcell, similar to cell\_stats.txt
+\begin{labeling}{subclID}
+    \item[subclID] The subcell ID.
+    \item[clID] The cell a subcell is part of.
+    
+\end{labeling}
+
+\subsubsection{sublinks.txt}
+This file contains the cell ID for each subcell, meaning that subcell A is completely covered by cell B.
+\begin{labeling}{subclID}
+    \item[subclID] The subcell ID.
+    \item[clID] The cell this subcell is part of.
+    
+\end{labeling}
+
 
 \subsection{The tracks files}
 \subsubsection{tracks.nc}
