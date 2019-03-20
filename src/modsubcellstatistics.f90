@@ -443,15 +443,15 @@ module subcellstatistics
 
       write(*,*)"======================================="
       write(*,*)"=== Summary ..."
-      write(*,'(A,1i12)')" AVerage subcell area(gridpoints):",SUM(clarea)/globnIDs
-      write(*,'(A,1i12)')" Minimum subcell area(gridpoints):",MINVAL(clarea)
-      write(*,'(A,1i12)')" Maximum subcell area(gridpoints):",MAXVAL(clarea)
-      write(*,'(A,1f12.6)')" TOtal average value          :",SUM(clavint)/globnIDs
-      write(*,'(A,1f12.6)')" Mininmum avergae value       :",MINVAL(clavint)
-      write(*,'(A,1f12.6)')" Maxinmum avergae value       :",MAXVAL(clavint)
-      write(*,'(A,1f12.6)')" AVerage peak value           :",SUM(clpint)/globnIDs
-      write(*,'(A,1f12.6)')" Mininmum peak value          :",MINVAL(clpint)
-      write(*,'(A,1f12.6)')" Maxinmum peak value          :",MAXVAL(clpint)
+      write(*,'(A,1i12)')" AVerage subcell area(gridpoints):",SUM(subclarea)/globsubnIDs
+      write(*,'(A,1i12)')" Minimum subcell area(gridpoints):",MINVAL(subclarea)
+      write(*,'(A,1i12)')" Maximum subcell area(gridpoints):",MAXVAL(subclarea)
+      write(*,'(A,1f12.6)')" TOtal average value           :",SUM(subclavint)/globsubnIDs
+      write(*,'(A,1f12.6)')" Mininmum avergae value        :",MINVAL(subclavint)
+      write(*,'(A,1f12.6)')" Maxinmum avergae value        :",MAXVAL(subclavint)
+      write(*,'(A,1f12.6)')" AVerage peak value            :",SUM(subclpint)/globsubnIDs
+      write(*,'(A,1f12.6)')" Mininmum peak value           :",MINVAL(subclpint)
+      write(*,'(A,1f12.6)')" Maxinmum peak value           :",MAXVAL(subclpint)
       write(*,*)"---------"
 
       write(*,*)"======================================="
