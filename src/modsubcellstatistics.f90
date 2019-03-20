@@ -463,7 +463,7 @@ module subcellstatistics
       write(1,*)"   subclID  subtsclID  subclarea     subclcmassX"//&
       &"     subclcmassY    subwclcmassX    subwclcmassY          subpeakVal"//&
       &"            subavVal subtouchb       date(YYYYMMDD)         time(hhmmss)"
-      do i=1,globnIDs
+      do i=1,globsubnIDs
         write(1,'(3i11,4f16.6,2f20.12,1L9,2i21.6)')subclIDs(i),subtsclID(i),subclarea(i),subclcmass(i,:), &
           & subwclcmass(i,:),subclpint(i),subclavint(i),subtouchb(i),subcldate(i),subcltime(i)
       end do
