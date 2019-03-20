@@ -202,6 +202,7 @@ program celltrack
 
   write(*,*)"---------"
   write(*,*)"Cells                  : ",globnIDs
+  write(*,*)"SUBcells               : ",globsubnIDs
   write(*,*)"Clean tracks           : ",ncleantr
   if(.NOT.nometa)write(*,*)"Meta tracks            : ",nmeta
   write(*,*)"---------"
