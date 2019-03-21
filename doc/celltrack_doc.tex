@@ -25,6 +25,10 @@ The following two definitions are in accordance with \cite{moseley2013}.
 \subsubsection*{Cell}
 A cell is a continuous area of grid points which exceed a certain threshold. Two grid points are adjacent if their coordinates differ either in one x or one y step. Diagonal adjacency is not allowed.
 
+\subsubsection*{Subcell}
+A subcell is part of a cell. A subcell can only be part of one cell and is fully covered by it. Multiple subcells can be part of the same cell. In a nutshell, a subcell is a part of a cell that belongs to a local maximum. Thus, if a cell has only one local maximum (which then is the global maximum of the cell), it has only one subcell which covers the whole cell. As soon as a cell has more than one local maximum, it will have more than one subcell. For a detailed description of the algorithm, see section \ref{sec:detectsubcells}.
+% The detection of subcells is inspired by watershed algorithms. However, the algorithm in celltrack is heavily modified  
+
 \subsubsection*{Track}
 A track is a time series of cells. Two cells are members of the same track if they (partly) overlap. The difference in time steps where the two cells occur is $(\pm)1$. This means that a track can not have more than one cell at each time step. 
 \begin{figure}[h]
@@ -71,7 +75,11 @@ In this part all cells are checked for forward and backward links (one time step
 The logical link matrix makes it easy to check for overlaps between two cells any time later.
 
 \subsection{The subcell detection}
-TO DO!
+\label{sec:detectsubcells}
+A cell represents a continuous area of the key variable above a certain threshold. This definition groups neighboring grid points into the same cell while ignoring the variability of the key variable within the cell. Thus, it is possible that the output statistics (e.g. average or maximum value of a cell) become less representative in the case of large and/or complex cells.
+
+\subsection{Linking subcells with cells}
+Each subcell is assigned to one cell by checking for overlaps. Due to the definition of a subcell linking multiple subcells to the same cell is possible, but a subcell can not be linked with more than one cell.
 
 \subsection{The tracking algorithm}
 Using the logical link matrix the tracking part is quite simple. For each row (which corresponds to a specific ID) the algorithm checks whether there are cells with higher and lower IDs that are linked i.e. the link matrix is TRUE at this address. Counting these the number of forward and backwards links in time can be determined. Based on this information and using the link matrix it is known which IDs initiate a track according to the definition given above. If an ID is at the beginning of a track the algorithm changes to the corresponding row in the link matrix and searches for forward links to cells in the next time step. If there is such a connection the algorithm changes to the corresponding row. This step is repeated until the conditions for terminating a track are met.
@@ -88,7 +96,7 @@ celltrack features an iterative advection correction algorithm. Again, this foll
 
 \subsection{Periodic boundary conditions}
 Sometimes, it is useful to consider the boundaries of a domain as periodic, for instance, if one wants to apply celltrack to model output. For this reason, celltrack features periodic boundary conditions. If switched on, celltrack recognizes if a cell crosses the boundaries during the cell detection and advection correction. This means, that cells of the same track can exit the domain on one side and re-enter on the other side. Without this option a new track is initiated at each boundary crossing.
-The detection of subcells and the linking to cells is can also handle periodic boundaries.
+The detection of subcells and the linking to cells supports periodic boundaries.
 
 \subsection{Meta tracks and mainstream detection}
 \label{sec:aco}
@@ -198,11 +206,14 @@ cmake -DCMAKE_Fortran_COMPILER=gfortran ..
 \end{verbatim}
 
 \section{Usage}
+A basic example to run celltrack without advection correction:
 \begin{verbatim}
 celltrack -i <filename> -var <int> -lev <int> -thres <float> \
           -nants <int> -nruns <int> -rho <float> \
           -rseed <int> -lout [-h -v]
-          
+\end{verbatim}   
+Run celltrack with advection correction:
+\begin{verbatim}       
 celltrack -i <filename> -var <int> -lev <int> -thres <float> \
           -nants <int> -nruns <int> -rho <float> \
           -rseed <int> -lout \
@@ -215,28 +226,30 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
 \end{verbatim}
 
 \subsubsection*{Options}
-\begin{labeling}{-maxnants}
-	\item[-i] Input file name.
-	\item[-var] NetCDF/grib variable ID. Default is 0.
-	\item[-lev] NetCDF/grib level ID. Default is 0 i.e. the first variable.
-	\item[-thres] All grid points with values greater than this are considered. Default is 0.
-	\item[-nants] Number of ants/agents for mainstream detection. Default value is the number of nodes of a meta track.
-	\item[-maxnants] The maximum number of ants/agents for mainstream detection. Setting this value can be useful to avoid long computation times for large meta track. Nevertheless it may decrease the validity of the detected mainstream.
-	\item[-nruns] Number of iterations for mainstream detection. Default is 300.
-	\item[-rho] Pheromone evaporation rate. Default is 0.5.
-	\item[-rseed] If set, the random number generator will use this seed.
+\begin{labeling}{-maxnantsoooooooo}
+	\item[-i \textless char\textgreater] Input file name.
+	\item[-var \textless int\textgreater] NetCDF/grib variable ID. Default is 0.
+	\item[-lev \textless int\textgreater] NetCDF/grib level ID. Default is 0 i.e. the first variable.
+	\item[-thres \textless float\textgreater] All grid points with values greater than this are considered. Default is 0.
+	\item[-nants \textless int\textgreater] Number of ants/agents for mainstream detection. Default value is the number of nodes of a meta track.
+	\item[-maxnants \textless int\textgreater] The maximum number of ants/agents for mainstream detection. Setting this value can be useful to avoid long computation times for large meta track. Nevertheless it may decrease the validity of the detected mainstream.
+	\item[-nruns \textless int\textgreater] Number of iterations for mainstream detection. Default is 300.
+	\item[-rho \textless float\textgreater] Pheromone evaporation rate. Default is 0.5.
+	\item[-rseed \textless int\textgreater] If set, the random number generator will use this seed.
     \item[-lout] Write the truncated logical links matrix to file cell\_links.txt.
     \item[-advcor] If set, celltrack performs an advection correction.
-    \item[-nadviter] The number of iterations for advection correction. Default is 6.
-    \item[-maxv] The maximum allowed velocity of cells. This prevents that errors in the advection correction (unrealistically high velocities) are taken into account. Default is 50 distance units/per second.
+    \item[-nadviter \textless int\textgreater] The number of iterations for advection correction. Default is 6.
+    \item[-maxv \textless float\textgreater] The maximum allowed velocity of cells. This prevents that errors in the advection correction (unrealistically high velocities) are taken into account. Default is 50 distance units/per second.
     \item[-nometa] Completely switch off all meta track routines.
     \item[-perbound] Switch on periodic boundary conditions.
-    \item[-cx] The divisor for the coarse graining of the grid (velocity fields, advection correction); x direction. A number of 2 would lead to a doubled grid spacing. 
-    \item[-cy] Same as -cx but for y direction.
-    \item[-tstep] The time step of the input file in seconds. Mandatory for advection correction!
+    \item[-cx \textless int\textgreater] The divisor for the coarse graining of the grid (velocity fields, advection correction); x direction. A number of 2 would lead to a doubled grid spacing. 
+    \item[-cy \textless int\textgreater] Same as -cx but for y direction.
+    \item[-tstep \textless float\textgreater] The time step of the input file in seconds. Mandatory for advection correction!
     \item[-tracknc] Output of tracks to netCDF.
     \item[-metanc] Output of meta tracks to netCDF.
-    \item[-minarea] The minimum area of a cluster in grid points. Smaller clusters will be omitted. Default is 0.
+    \item[-minarea \textless int\textgreater] The minimum area of a cluster in grid points. Smaller clusters will be omitted. Default is 0.
+    \item[-sigma \textless float\textgreater] The standard deviation for the gaussian low-pass filter. Higher values cause a stronger smoothing of the input field. Default is 2.
+    \item[-trunc \textless float\textgreater] Truncation of the filter weights. Higher values cause a wider filter span. Default is 4.
 	\item[-v] Verbose output to stdout. Use with caution! Massively slows down code execution!
 	\item[-h] Show help.
 \end{labeling}
@@ -295,8 +308,10 @@ This file contains the number of forward and backward links for each cell. The c
 \end{labeling}
 
 \subsection{The subcells files}
-These files contain information about each of the detected subcells. The following subsections contain also information about the linking with cells since the linking is not in time in this case; Cells can only contain subcells from the same time step. There is no linking of subcells between time steps, .
+These files contain information about each of the detected subcells. The following subsections contain also information about the linking with cells since the linking is not in time in this case; Cells can only contain subcells from the same time step. There is no linking of subcells between time steps.
 
+\subsubsection{subcells.nc}
+This NetCDF file has the same structure as the input file and the cells.nc file. It contains the unique subcell IDs.
 
 \subsubsection{subcells\_stats.txt}
 Statistics and characteristics for each subcell, similar to cell\_stats.txt
