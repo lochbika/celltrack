@@ -283,6 +283,8 @@ This file contains some simple statistics about the detected cells. The columns 
 	\item[peakVal] The maximum value.
 	\item[avVal] The average value.
 	\item[touchb] TRUE if the cell touches the boundaries.
+    \item[date] The date for tsclID.
+    \item[time] The time for tsclID.
 \end{labeling}
 
 \subsubsection{cell\_advstats\_percentiles.txt}
@@ -313,12 +315,21 @@ These files contain information about each of the detected subcells. The followi
 \subsubsection{subcells.nc}
 This NetCDF file has the same structure as the input file and the cells.nc file. It contains the unique subcell IDs.
 
-\subsubsection{subcells\_stats.txt}
-Statistics and characteristics for each subcell, similar to cell\_stats.txt
-\begin{labeling}{subclID}
-    \item[subclID] The subcell ID.
-    \item[clID] The cell a subcell is part of.
-    
+\subsubsection{subcell\_stats.txt}
+Statistics and characteristics for each subcell, similar to cell\_stats.txt. The columns are:
+\begin{labeling}{subwclcmassX}
+    \item[subclID] The cell ID.
+    \item[subtsclID] The time step this subcell occurs.
+    \item[subclarea] The area in unit grid points.
+    \item[subclcmassX] The x coordinate of the center of mass.
+    \item[subclcmassY] The y coordinate of the center of mass.
+    \item[subwclcmassX] The x coordinate of the weighted center of mass.
+    \item[subwclcmassY] The y coordinate of the weighted center of mass.
+    \item[subpeakVal] The maximum value.
+    \item[subavVal] The average value.
+    \item[subtouchb] TRUE if the subcell touches the boundaries.
+    \item[date] The date for subtsclID.
+    \item[time] The time for subtsclID.
 \end{labeling}
 
 \subsubsection{sublinks.txt}
