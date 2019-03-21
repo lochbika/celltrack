@@ -125,6 +125,45 @@ module subcelldetection
       ! Assign variables to dataset
       call streamDefVList(streamID2,vlistID2)
 
+      write(*,*)"======================================="
+      write(*,*)"=== CREATING OUTPUT ..."
+      write(*,*)"Output  :     ",trim(blurfile)
+      write(*,*)"---------"
+
+      !! open new nc file for results
+      ! define grid
+      gridID4=gridCreate(GRID_GENERIC, nx*ny)
+      CALL gridDefXsize(gridID4,nx)
+      CALL gridDefYsize(gridID4,ny)
+      CALL gridDefXvals(gridID4,xvals)
+      CALL gridDefYvals(gridID4,yvals)
+      CALL gridDefXunits(gridID4,TRIM(xunit))
+      CALL gridDefYunits(gridID4,TRIM(yunit))
+      zaxisID4=zaxisCreate(ZAXIS_GENERIC, 1)
+      CALL zaxisDefLevels(zaxisID4, level)
+      ! define variables
+      vlistID4=vlistCreate()
+      varID4=vlistDefVar(vlistID4,gridID4,zaxisID4,TIME_VARIABLE)
+      CALL vlistDefVarName(vlistID4,varID4,trim(vname))
+      CALL vlistDefVarLongname(vlistID4,varID4,"")
+      CALL vlistDefVarUnits(vlistID4,varID4,trim(vunit))
+      CALL vlistDefVarMissval(vlistID4,varID4,outmissval)
+      CALL vlistDefVarDatatype(vlistID4,varID4,CDI_DATATYPE_FLT32)
+      ! copy time axis from input
+      taxisID4=vlistInqTaxis(vlistID1)
+      call vlistDefTaxis(vlistID4,taxisID4)
+      ! Open the dataset for writing
+      streamID4=streamOpenWrite(trim(blurfile),CDI_FILETYPE_NC4)
+      if(streamID4<0)then
+         write(*,*)cdiStringError(streamID4)
+         stop
+      end if
+      ! set netCDF4 compression
+      CALL streamDefCompType(streamID4,CDI_COMPRESS_ZIP)
+      CALL streamDefCompLevel(streamID4, 6)
+      ! Assign variables to dataset
+      call streamDefVList(streamID4,vlistID4)
+
       ! at this stage we get the gaussian kernel for the smoothing of the input field
       CALL gaussian_kernel(sigma,truncate)
 
@@ -148,6 +187,9 @@ module subcelldetection
 
         ! set time step for output file
         status=streamDefTimestep(streamID2,tsID)
+
+        ! set time step for smoothed file
+        status=streamDefTimestep(streamID4,tsID)
 
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
@@ -173,19 +215,34 @@ module subcelldetection
 
         ! cluster the frame
         allocate(cl(nx,ny))
+        ! let us first replace the missing value from the input file with outmissval
+        nmiss4=0 ! reset missing value counter
+        do x=1,nx
+          do y=1,ny
+            if(dat2d(x,y)==inmissval)then
+              dat2d(x,y)=outmissval
+              nmiss4=nmiss4+1
+            end if
+          end do
+        end do
         ! low pass filter the array and deallocate the original one
-        CALL blur2d(dat2d,cl,inmissval)
+        CALL blur2d(dat2d,cl,outmissval)
         deallocate(dat2d)
+        ! write blurred field to netcdf
+        allocate(dat(nx*ny))
+        CALL reshapeF2d(cl,nx,ny,dat)
+        CALL streamWriteVar(streamID4,varID4,dat,nmiss4)
+        deallocate(dat)
         ! now cluster subcells
         allocate(subcl2d(nx,ny))
-        CALL subclustering(cl,globID,globID,nIDs,subcl2d,inmissval,cells2d)
+        CALL subclustering(cl,globID,globID,nIDs,subcl2d,outmissval,cells2d)
         deallocate(cl)
-        
+
         if(nIDs>0)then
           globID=globID+1
           globsubnIDs=globsubnIDs+nIDs
         end if
-        
+
         ! reshape array for writing to nc
         allocate(dat(nx*ny))
         CALL reshapeF2d(subcl2d,nx,ny,dat)
@@ -202,9 +259,12 @@ module subcelldetection
       ! close input and output
       CALL gridDestroy(gridID2)
       CALL vlistDestroy(vlistID2)
+      CALL gridDestroy(gridID4)
+      CALL vlistDestroy(vlistID4)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
       CALL streamClose(streamID3)
+      CALL streamClose(streamID4)
 
       write(*,*)"======================================="
       write(*,*)"=== Summary ..."
@@ -221,14 +281,16 @@ module subcelldetection
     subroutine blur2d(data2d,tcl,missval)
 
       use globvar, only : y,x,i,tp,nx,ny,thres,kernel,periodic
-      use ncdfpars, only : outmissval
 
       implicit none
       integer :: conx,cony,neighb(2)
       integer :: skernx,skerny
+      integer :: kx,ky ! iterators over dimensions of filter window
+      real(kind=8) :: fltav ! average value inside filter window; NA values are replaced by this variable
       real(kind=8), intent(in) :: data2d(nx,ny),missval
       real(kind=8),intent(out) :: tcl(nx,ny)
       real(kind=8), allocatable :: tcltmp(:,:)      ! array for extension of the domain (handling boundaries)
+      real(kind=8), allocatable :: flttmp(:,:)      ! array for temporary storing the values for the current filter region
       logical :: mask(nx,ny)
 
       ! get the size of the kernel
@@ -236,7 +298,7 @@ module subcelldetection
       skerny=size(kernel,2)
 
       ! initialize variables and arrays
-      tcl=0.D0
+      tcl=missval
       mask=.false.
 
       ! mask values higher than threshold and if not missing value
@@ -252,7 +314,8 @@ module subcelldetection
       if(ANY(mask))then
         ! now continue differently if we have periodic boundaries or not
         allocate(tcltmp( (1-skernx):(nx+skernx) , (1-skerny):(ny+skerny) ))
-        tcltmp(1:nx,1:ny) = data2d
+        tcltmp=missval ! initially fill with NA
+        tcltmp(1:nx,1:ny) = data2d ! fill in values we have from data2d
 
         if(periodic)then
           !copy from the other edges
@@ -275,12 +338,36 @@ module subcelldetection
         end if
 
         ! blur it with respecting the boundaries
+        ! this is the temporary array which holds the values of the filter window
+        allocate(flttmp(skernx,skerny))
         do y=1,ny
           do x=1,nx
-            tcl(x,y) = sum( tcltmp( x-((skernx-1)/2):x+((skernx-1)/2) , y-((skerny-1)/2):y+((skerny-1)/2) ) * kernel )
+            if(.NOT.mask(x,y))cycle ! skip if this grid point is a missing value
+            ! copy window to temporary array
+            flttmp = tcltmp( x-((skernx-1)/2):x+((skernx-1)/2) , y-((skerny-1)/2):y+((skerny-1)/2) )
+            ! calculate the average in the filter window
+            fltav=0.D0
+            tp=0
+            do kx=1,skernx
+              do ky=1,skerny
+                if(flttmp(kx,ky).ne.missval)then
+                  fltav=fltav+flttmp(kx,ky) ! sum it up
+                  tp=tp+1
+                end if
+              end do
+            end do
+            fltav=fltav/tp ! average
+            ! replace missing values with the average
+            do kx=1,skernx
+              do ky=1,skerny
+                if(flttmp(kx,ky)==missval)flttmp(kx,ky)=fltav
+              end do
+            end do
+            ! apply the filter to the current window and save it to the output array
+            tcl(x,y) = sum( flttmp * kernel )
           end do
         end do
-        
+
         ! set grid points that were not originally covered to missval
         do y=1,ny
           do x=1,nx
@@ -294,7 +381,6 @@ module subcelldetection
     subroutine subclustering(data2d,startID,finID,numIDs,tcl,missval,cIDs)
 
       use globvar, only : y,x,i,tp,nx,ny,thres,periodic
-      use ncdfpars, only : outmissval
 
       implicit none
       integer, intent(in) :: startID
@@ -334,7 +420,7 @@ module subcelldetection
             if(mask(x,y))then
               ! extract the 8 neighboring grid points
               ! IMPORTANT: we only extract values of neighbors which belong to the same cell!
-              neighb=outmissval
+              neighb=missval
               ! the center gridpoint is always assigned the same way
               neighb(5)=data2d(x,y)
               ! for the rest, we have to take care of the boundaries
@@ -451,7 +537,7 @@ module subcelldetection
               lmaxt=-1.0
               tp=0
               do i=1,9
-                if(neighb(i)>lmaxt .AND. neighb(i).ne.outmissval .AND. neighb(i).ne.missval)then
+                if(neighb(i)>lmaxt .AND. neighb(i).ne.missval)then
                   tp=i
                   lmaxt=neighb(i)
                 end if
@@ -464,11 +550,11 @@ module subcelldetection
             end if
           end do
         end do
-        
-        ! we have the directions for each pixel 
+
+        ! we have the directions for each pixel
         ! and know which of them are local maxima
         ! lets seed particles and let them migrate to them
-        
+
         ! how many local maxima and cell grid points
         do y=1,ny
           do x=1,nx
@@ -480,7 +566,7 @@ module subcelldetection
             end if
           end do
         end do
-        
+
         ! get their coordinates
         allocate(ipartcoor(npart,2),partcoor(npart,2),locmaxcoor(nlocmax,2))
         tp=0 ! counter for locmax
@@ -501,13 +587,13 @@ module subcelldetection
             end if
           end do
         end do
-        
+
         ! now start the iterative process to move particles
         allocate(tpartcoor(npart,2))
-        
+
         do i=1,100
           tpartcoor=partcoor
-          
+
           do tp=1,npart
             ! is this particle already at a local maximum? Then, don't move it!
             if(locmax( tpartcoor(tp,1),tpartcoor(tp,2) ))then
@@ -545,11 +631,11 @@ module subcelldetection
               if(tpartcoor(tp,1)<1)tpartcoor(tp,1)=partcoor(tp,1)
               if(tpartcoor(tp,1)>nx)tpartcoor(tp,1)=partcoor(tp,1)
               if(tpartcoor(tp,2)<1)tpartcoor(tp,2)=partcoor(tp,2)
-              if(tpartcoor(tp,2)>ny)tpartcoor(tp,2)=partcoor(tp,2)         
+              if(tpartcoor(tp,2)>ny)tpartcoor(tp,2)=partcoor(tp,2)
             end if
           end do
-          
-          ! check if we moved any particle 
+
+          ! check if we moved any particle
           if(ALL(partcoor==tpartcoor))then
             if(verbose)write(*,*)"We finished after",i," iterations!"
             exit
@@ -557,8 +643,8 @@ module subcelldetection
           ! update partcoor
           partcoor=tpartcoor
         end do
-        
-        ! now find which particles ended up in which local maximum 
+
+        ! now find which particles ended up in which local maximum
         ! and assign IDs to gridpoints
         do i=1,npart
           do tp=1,nlocmax
@@ -577,16 +663,16 @@ module subcelldetection
         finID=(startID-1)+nlocmax
       end if
       numIDs=nlocmax
-            
+
       ! checks
       do y=1,ny
         do x=1,nx
           ! is there a subcell but no cell?
-          if(tcl(x,y).ne.missval .AND. cIDs(x,y)==outmissval)then
+          if(tcl(x,y).ne.missval .AND. cIDs(x,y)==missval)then
             write(*,*)"WARNING: we have a SUBcell where there is no cell",cIDs(x,y),tcl(x,y)
           end if
           ! is there a cell but no subcell?
-          if(tcl(x,y)==missval .AND. cIDs(x,y).ne.outmissval)then
+          if(tcl(x,y)==missval .AND. cIDs(x,y).ne.missval)then
             write(*,*)"WARNING: we have a cell where there is no SUBcell",cIDs(x,y),tcl(x,y)
           end if
         end do
@@ -597,7 +683,7 @@ module subcelldetection
         k=0
         do y=1,ny
           do x=1,nx
-            if(tcl(x,y)==i .AND. cIDs(x,y).ne.outmissval)then
+            if(tcl(x,y)==i .AND. cIDs(x,y).ne.missval)then
               if(tp.ne.cIDs(x,y))then
                 tp=cIDs(x,y)
                 k=k+1

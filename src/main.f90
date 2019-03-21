@@ -47,6 +47,8 @@ program celltrack
   outfile="cells.nc"  
   ! name for the *SUB*cells file
   suboutfile="subcells.nc"
+  ! name for the smoothed input file
+  blurfile="input_smoothed.nc"
 
   ! init the random seed if not specified with cli option
   if(rseed.eq.-1)then
