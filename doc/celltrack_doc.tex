@@ -20,17 +20,16 @@
 celltrack is software that finds continuous cells in 2D fields and tracks them in time. The basic concept is inspired by \cite{moseley2013}. celltrack consists of several parts which are explained in detail in the following sections.
 
 \subsection{Definitions}
-The following two definitions are in accordance with \cite{moseley2013}.
 
 \subsubsection*{Cell}
-A cell is a continuous area of grid points which exceed a certain threshold. Two grid points are adjacent if their coordinates differ either in one x or one y step. Diagonal adjacency is not allowed.
+A cell is a continuous area of grid points which exceed a certain threshold. Two grid points are adjacent if their coordinates differ either in one x or one y step. Diagonal adjacency is not allowed. This definition is in accordance with \cite{moseley2013}.
 
 \subsubsection*{Subcell}
 A subcell is part of a cell. A subcell can only be part of one cell and is fully covered by it. Multiple subcells can be part of the same cell. In a nutshell, a subcell is a part of a cell that belongs to a local maximum. Thus, if a cell has only one local maximum (which then is the global maximum of the cell), it has only one subcell which covers the whole cell. As soon as a cell has more than one local maximum, it will have more than one subcell. For a detailed description of the algorithm, see section \ref{sec:detectsubcells}.
 % The detection of subcells is inspired by watershed algorithms. However, the algorithm in celltrack is heavily modified  
 
 \subsubsection*{Track}
-A track is a time series of cells. Two cells are members of the same track if they (partly) overlap. The difference in time steps where the two cells occur is $(\pm)1$. This means that a track can not have more than one cell at each time step. 
+A track is a time series of cells. Its definition is in accordance with \cite{moseley2013}. Two cells are members of the same track if they (partly) overlap. The difference in time steps where the two cells occur is $(\pm)1$. This means that a track can not have more than one cell at each time step. 
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=.8\linewidth]{trackinitterm}
