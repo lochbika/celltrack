@@ -76,7 +76,7 @@ module sublinkstatistics
       write(*,*)"---------"
       
       ! write detailed subcell statistics for each cell, similar to meta track statistics
-      open(unit=1,file="cells_subcell_stats.txt",action="write",status="replace")
+      open(unit=1,file="cell_subcell_stats.txt",action="write",status="replace")
       do i=1,globnIDs
         ! write header for this cell
         write(1,'(1a4,1i12,1i4)')"### ",i,clIDnsub(i)
