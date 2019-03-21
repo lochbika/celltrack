@@ -18,10 +18,14 @@ program celltrack
   use globvar
   ! modules
   use celldetection
+  use subcelldetection
   use cellstatistics
+  use subcellstatistics
   use advstats
   use celllinking
+  use subcelllinking
   use linkstatistics
+  use sublinkstatistics
   use buildtracks
   use trackstatistics
   use buildmetatracks
@@ -40,7 +44,11 @@ program celltrack
   ! current advection iteration 
   adviter=0
   ! name for the cells file
-  outfile="cells.nc"
+  outfile="cells.nc"  
+  ! name for the *SUB*cells file
+  suboutfile="subcells.nc"
+  ! name for the smoothed input file
+  blurfile="input_smoothed.nc"
 
   ! init the random seed if not specified with cli option
   if(rseed.eq.-1)then
@@ -68,6 +76,7 @@ program celltrack
   !=======================================
 
   CALL docelldetection()
+  CALL dosubcelldetection()
 
   !=======================================
   !======= FINISHED CELL DETECTION =======
@@ -78,6 +87,7 @@ program celltrack
   !=======================================
 
   CALL calccellstatistics()
+  CALL calcsubcellstatistics()
   
   CALL calccellshape()
 
@@ -110,6 +120,7 @@ program celltrack
   !=======================================
 
   CALL linking()
+  CALL dosubcelllinking()
 
   !=======================================
   !========== FINISHED LINKING ===========
@@ -120,6 +131,7 @@ program celltrack
   !=======================================
 
   CALL calclinkstatistics()
+  CALL calcsublinkstatistics()
 
   !=======================================
   !====== FINISHED LINK STATISTICS =======
@@ -196,6 +208,7 @@ program celltrack
 
   write(*,*)"---------"
   write(*,*)"Cells                  : ",globnIDs
+  write(*,*)"SUBcells               : ",globsubnIDs
   write(*,*)"Clean tracks           : ",ncleantr
   if(.NOT.nometa)write(*,*)"Meta tracks            : ",nmeta
   write(*,*)"---------"

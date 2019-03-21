@@ -36,6 +36,8 @@ module globvar
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
   integer :: minarea                         ! minimum area for clusters in grid points
+  real(kind=8) :: sigma                      ! the std dev for the gaussian blur before subcelldetection
+  integer :: truncate                        ! truncation(span) for the gaussian blur before subcelldetection
 
   ! variables containing information about the domain
   real(kind=8) :: level,diflon,diflat
@@ -52,10 +54,24 @@ module globvar
   integer, allocatable :: clarea(:)
   real(kind=8), allocatable :: clpint(:),clavint(:),clcmass(:,:),wclcmass(:,:)
 
+  ! variables containing information about *SUB*cells
+  integer :: globsubnIDs
+  integer, allocatable :: subclIDs(:),subtsclID(:),subcldate(:),subcltime(:)
+  logical, allocatable :: subtouchb(:)
+  real(kind=8), allocatable :: kernel(:,:)
+  ! Variables used for cell statistics
+  integer, allocatable :: subclarea(:)
+  real(kind=8), allocatable :: subclpint(:),subclavint(:),subclcmass(:,:),subwclcmass(:,:)
+  
   ! Variables for cell linking
   integer, allocatable :: nbw(:),nfw(:),minclIDloc(:),iclIDloc(:)
   logical, allocatable :: links(:,:),tsALLna(:)
   integer :: maxnIDs
+  
+  ! variables for linking SUBcells to cells
+  integer, allocatable :: sublinks(:) ! each subcell can only be linked to one cell :)
+  integer, allocatable :: clIDnsub(:) ! how many subcells does a cell have?
+  integer, allocatable :: clIDsub(:,:) ! which subcells are linked to which cell?
 
   ! variables for advection correction
   character(len=800) :: vfile                         ! basename for velocity fields
@@ -96,6 +112,8 @@ module globvar
   integer :: outstep,status,riostat
   character(len=1000) :: filename
   character(len=800) :: outfile
+  character(len=800) :: suboutfile
+  character(len=800) :: blurfile
   real(kind=8) :: pi=3.141592653589793238462643383279502884197169399373510
 
   ! random number
