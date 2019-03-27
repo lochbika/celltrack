@@ -64,10 +64,9 @@ module globvar
   real(kind=8), allocatable :: subclpint(:),subclavint(:),subclcmass(:,:),subwclcmass(:,:)
   
   ! Variables for cell linking
-  integer, allocatable :: nbw(:),nfw(:),clink(:),nlinks(:),links(:,:),tlinks(:,:)
+  integer, allocatable :: nbw(:),nfw(:),clink(:),nlinks(:),links(:,:)
   integer, allocatable :: ltype(:,:) ! 0 for forward; 1 for backward link
   logical, allocatable :: tsALLna(:)
-  integer :: maxnIDs
   
   ! variables for linking SUBcells to cells
   integer, allocatable :: sublinks(:) ! each subcell can only be linked to one cell :)

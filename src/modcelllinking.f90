@@ -33,7 +33,9 @@ module celllinking
       real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! arrays for the advection correction
       real(kind=8), allocatable :: advcell(:,:)            ! temporary array for advected cells
       integer                   :: movex,movey             ! the number of gridpoints to move a cell (x and y direction)
-      integer, allocatable      :: nCLts(:)
+      integer                   :: maxnIDs                 ! the number of maximum possible links per cell (max for 2nd dim of links(:,:))
+      integer                   :: nmaxnIDs                ! new value for maxnIDs
+      integer, allocatable      :: tlinks(:,:)             ! temporary array for links while resizing
 
       write(*,*)"======================================="
       write(*,*)"=========== STARTED LINKING ==========="
@@ -58,7 +60,7 @@ module celllinking
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
 
       ! allocate the links array. We first guess that we will have a maximum of 100 links per cell
-      maxnIDs=100
+      maxnIDs=2
       allocate(links(globnIDs,maxnIDs))
       links=-1
       ! allocate the vector for storing the number of links per cell
@@ -194,6 +196,28 @@ module celllinking
                         ltype(l,clink(l))=1
                         clink(l)=clink(l)+1
                         nlinks(l)=nlinks(l)+1
+                        ! what if we reach maxnIDs????
+                        if(nlinks(l)==maxnIDs)then
+                          nmaxnIDs=NINT(maxnIDs*1.5)
+                          write(*,*)"We resize links from ",maxnIDs,"to",nmaxnIDs
+                          ! resize links
+                          allocate(tlinks(globnIDs,nmaxnIDs))
+                          tlinks=-1
+                          tlinks(:,1:maxnIDs)=links(:,1:maxnIDs)
+                          deallocate(links)
+                          allocate(links(globnIDs,nmaxnIDs))
+                          links=tlinks
+                          deallocate(tlinks)
+                          ! resize ltype
+                          allocate(tlinks(globnIDs,nmaxnIDs))
+                          tlinks=-1
+                          tlinks(:,1:maxnIDs)=ltype(:,1:maxnIDs)
+                          deallocate(ltype)
+                          allocate(ltype(globnIDs,nmaxnIDs))
+                          ltype=tlinks
+                          deallocate(tlinks)
+                          maxnIDs=nmaxnIDs
+                        end if
                       end if
                       ! forward linking
                       ! if this is the first time we find this link, increase the counter
@@ -202,6 +226,28 @@ module celllinking
                         ltype(j,clink(j))=0
                         clink(j)=clink(j)+1
                         nlinks(j)=nlinks(j)+1
+                        ! what if we reach maxnIDs????
+                        if(nlinks(j)==maxnIDs)then
+                          nmaxnIDs=NINT(maxnIDs*1.5)
+                          write(*,*)"We resize links from ",maxnIDs,"to",nmaxnIDs
+                          ! resize links
+                          allocate(tlinks(globnIDs,nmaxnIDs))
+                          tlinks=-1
+                          tlinks(:,1:maxnIDs)=links(:,1:maxnIDs)
+                          deallocate(links)
+                          allocate(links(globnIDs,nmaxnIDs))
+                          links=tlinks
+                          deallocate(tlinks)
+                          ! resize ltype
+                          allocate(tlinks(globnIDs,nmaxnIDs))
+                          tlinks=-1
+                          tlinks(:,1:maxnIDs)=ltype(:,1:maxnIDs)
+                          deallocate(ltype)
+                          allocate(ltype(globnIDs,nmaxnIDs))
+                          ltype=tlinks
+                          deallocate(tlinks)
+                          maxnIDs=nmaxnIDs
+                        end if
                       end if
                     end if
                   end do
@@ -223,6 +269,28 @@ module celllinking
                   ltype(k,clink(k))=1
                   clink(k)=clink(k)+1
                   nlinks(k)=nlinks(k)+1
+                  ! what if we reach maxnIDs????
+                  if(nlinks(k)==maxnIDs)then
+                    nmaxnIDs=NINT(maxnIDs*1.5)
+                    write(*,*)"We (backward) resize links from ",maxnIDs,"to",nmaxnIDs
+                    ! resize links
+                    allocate(tlinks(globnIDs,nmaxnIDs))
+                    tlinks=-1
+                    tlinks(:,1:maxnIDs)=links(:,1:maxnIDs)
+                    deallocate(links)
+                    allocate(links(globnIDs,nmaxnIDs))
+                    links=tlinks
+                    deallocate(tlinks)
+                    ! resize ltype
+                    allocate(tlinks(globnIDs,nmaxnIDs))
+                    tlinks=-1
+                    tlinks(:,1:maxnIDs)=ltype(:,1:maxnIDs)
+                    deallocate(ltype)
+                    allocate(ltype(globnIDs,nmaxnIDs))
+                    ltype=tlinks
+                    deallocate(tlinks)
+                    maxnIDs=nmaxnIDs
+                  end if
                 end if
                 ! forward linking
                 ! if this is the first time we find this link, increase the counter
@@ -231,6 +299,28 @@ module celllinking
                   ltype(j,clink(j))=0
                   clink(j)=clink(j)+1
                   nlinks(j)=nlinks(j)+1
+                  ! what if we reach maxnIDs????
+                  if(nlinks(j)==maxnIDs)then
+                    nmaxnIDs=NINT(maxnIDs*1.5)
+                    write(*,*)"We (forward) resize links from ",maxnIDs,"to",nmaxnIDs
+                    ! resize links
+                    allocate(tlinks(globnIDs,nmaxnIDs))
+                    tlinks=-1
+                    tlinks(:,1:maxnIDs)=links(:,1:maxnIDs)
+                    deallocate(links)
+                    allocate(links(globnIDs,nmaxnIDs))
+                    links=tlinks
+                    deallocate(tlinks)
+                    ! resize ltype
+                    allocate(tlinks(globnIDs,nmaxnIDs))
+                    tlinks=-1
+                    tlinks(:,1:maxnIDs)=ltype(:,1:maxnIDs)
+                    deallocate(ltype)
+                    allocate(ltype(globnIDs,nmaxnIDs))
+                    ltype=tlinks
+                    deallocate(tlinks)
+                    maxnIDs=nmaxnIDs
+                  end if
                 end if
               end if
             end do
