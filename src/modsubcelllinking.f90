@@ -129,12 +129,6 @@ module subcelllinking
       CALL streamClose(streamID2)
 
       write(*,*)"======================================="
-      write(*,*)"=== Summary ..."
-      write(*,*)"---------"
-      write(*,*)"Subcells found:",globsubnIDs
-      write(*,*)"---------"
-
-      write(*,*)"======================================="
       write(*,*)"====== FINISHED SUBCELL LINKING ======="
       write(*,*)"======================================="
 
