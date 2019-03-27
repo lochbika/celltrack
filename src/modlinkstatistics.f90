@@ -40,16 +40,10 @@ module linkstatistics
     
       ! calc nbw/nfw
       do i=1,globnIDs
-        if(tsclID(i).ne.1)then
-          do k=1,iclIDloc(i)
-            if(links(i,k))nbw(i)=nbw(i)+1
-          end do
-        end if
-        if(tsclID(i).ne.ntp)then
-          do k=iclIDloc(i),maxnIDs
-            if(links(i,k))nfw(i)=nfw(i)+1
-          end do
-        end if
+        do j=1,nlinks(i)
+          if(ltype(i,j)==1)nbw(i)=nbw(i)+1
+          if(ltype(i,j)==0)nfw(i)=nfw(i)+1
+        end do
       end do
 
       if(.NOT.advcor .OR. adviter>nadviter)then    

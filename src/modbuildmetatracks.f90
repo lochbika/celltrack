@@ -61,14 +61,16 @@ module buildmetatracks
           tp=alltracks(k,1)
           if(tsclID(tp)-tsclID(j).ne.1)cycle
           !write(*,*)"cl track 2:",tp,tsclID(tp)
-          if(links(j,tp-minclIDloc(j)))then
-            trcon(l,1)=i
-            trcon(l,2)=k
-            if(MOD(l,outstep*2)==0 .OR. l==1)then
-              write(*,*)"Found ",l," connections between tracks."
+          do n=1,nlinks(j)
+            if(links(j,n)==tp .AND. ltype(j,n)==0)then
+              trcon(l,1)=i
+              trcon(l,2)=k
+              if(MOD(l,outstep*2)==0 .OR. l==1)then
+                write(*,*)"Found ",l," connections between tracks."
+              end if
+              l=l+1
             end if
-            l=l+1
-          end if
+          end do
         end do
       end do
       ncon=l-1

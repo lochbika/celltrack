@@ -57,51 +57,20 @@ module celllinking
       taxisID2=vlistInqTaxis(vlistID2)
       zaxisID2=vlistInqVarZaxis(vlistID2,varID2)
 
-      ! find th maximum number of cells per timestep
-      ! to reduce 2nd dimension of the logical link matrix
-      allocate(nCLts(ntp))
-      nCLts=0
-      maxnIDs=0
-      do i=1,globnIDs
-        nCLts(tsclID(i))=nCLts(tsclID(i))+1
-      end do
-      maxnIDs=MAXVAL(nCLts)
-      if(MOD(REAL(maxnIDs*4+5),2.0D0)==0.D0)then
-        maxnIDs=maxnIDs*4+6
-      else
-        maxnIDs=maxnIDs*4+5
-      end if
-
-      if(globnIDs>25000 .OR. maxnIDs>25000)then
-        write(*,*)"=== This may use a lot of RAM! Will allocate: ",maxnIDs*globnIDs*4/1024/1024,"Mb"
-      end if
-
-      ! allocate the logical link matrix
+      ! allocate the links array. We first guess that we will have a maximum of 100 links per cell
+      maxnIDs=100
       allocate(links(globnIDs,maxnIDs))
-      links=.false.
-      ! allocate the vector for storing the minclIDs
-      allocate(minclIDloc(globnIDs))
-      minclIDloc=0
-
-      ! truncate the 2nd dim of the link matrix
-      do i=1,globnIDs
-        minclIDloc(i)=i-((maxnIDs-1)/2)
-        if(minclIDloc(i)<0)minclIDloc(i)=0
-      end do
+      links=-1
+      ! allocate the vector for storing the number of links per cell
+      allocate(nlinks(globnIDs))
+      nlinks=0
+      ! allocate the vector for storing the current link entry per cell
+      allocate(clink(globnIDs))
+      clink=1
+      ! allocate the vector for storing the link type per cell and entry
+      allocate(ltype(globnIDs,maxnIDs))
+      ltype=-1
       
-      ! now we need to find where in links 2nd dim is i; iclIDloc
-      allocate(iclIDloc(globnIDs))
-      iclIDloc=1
-      do i=1,globnIDs
-        do k=minclIDloc(i)+1,minclIDloc(i)+maxnIDs
-          if(clIDs(k)==clIDs(i))then
-            iclIDloc(i)=k-minclIDloc(i)
-            !write(*,*)iclIDloc(i),minclIDloc(i)
-            exit
-          end if
-        end do
-      end do
-
       ! if we do advection correction... read the vfile now
       if(advcor .AND. adviter>1)then
         write(vfile,'(A7,I0.3,A3)')"vfield_",adviter-1,".nc"
@@ -216,12 +185,24 @@ module celllinking
                   do k=1,ny
                     if(advcell(i,k).ne.outmissval .AND. dat2d(i,k).ne.outmissval)then
                       if(verbose)write(*,*)"We have an overlap! cluster ",INT(advcell(i,k))," with ",INT(dat2d(i,k))
-                      j=advcell(i,k)
-                      l=dat2d(i,k)
+                      j=INT(advcell(i,k))
+                      l=INT(dat2d(i,k))
                       ! backward linking
-                      links(l,j-minclIDloc(l))=.true.
+                      ! if this is the first time we find this link, increase the counter
+                      if(ALL(links(l,:).ne.j))then
+                        links(l,clink(l))=j
+                        ltype(l,clink(l))=1
+                        clink(l)=clink(l)+1
+                        nlinks(l)=nlinks(l)+1
+                      end if
                       ! forward linking
-                      links(j,l-minclIDloc(j))=.true.
+                      ! if this is the first time we find this link, increase the counter
+                      if(ALL(links(j,:).ne.l))then                    
+                        links(j,clink(j))=l
+                        ltype(j,clink(j))=0
+                        clink(j)=clink(j)+1
+                        nlinks(j)=nlinks(j)+1
+                      end if
                     end if
                   end do
                 end do
@@ -236,9 +217,21 @@ module celllinking
                 k=dat(i)
                 j=pdat(i)
                 ! backward linking
-                links(k,j-minclIDloc(k))=.true.
+                ! if this is the first time we find this link, increase the counter
+                if(ALL(links(k,:).ne.j))then
+                  links(k,clink(k))=j
+                  ltype(k,clink(k))=1
+                  clink(k)=clink(k)+1
+                  nlinks(k)=nlinks(k)+1
+                end if
                 ! forward linking
-                links(j,k-minclIDloc(j))=.true.
+                ! if this is the first time we find this link, increase the counter
+                if(ALL(links(j,:).ne.k))then                
+                  links(j,clink(j))=k
+                  ltype(j,clink(j))=0
+                  clink(j)=clink(j)+1
+                  nlinks(j)=nlinks(j)+1
+                end if
               end if
             end do
           end if
@@ -253,7 +246,7 @@ module celllinking
       CALL streamClose(streamID2)
       if(advcor .AND. adviter>1)CALL streamClose(streamID3)
 
-      if(lout .AND. adviter==nadviter+1)then
+      if(lout)then
 
         write(*,*)"======================================="
         write(*,*)"=== writing links to file cell_links.txt ..."
@@ -261,9 +254,9 @@ module celllinking
 
         ! write the link matrix to file
         open(unit=1,file="cell_links.txt",action="write",status="replace")
-        write(1,*)"stIDloc   stID      .......        "
+        write(1,*)"clID      .......        "
         do i=1,globnIDs
-          write(1,*)minclIDloc(i),iclIDloc(i),clIDs(i),links(i,:)
+          write(1,*)i,nlinks(i),ltype(i,1:10),links(i,1:10)
         end do
         close(unit=1)
 

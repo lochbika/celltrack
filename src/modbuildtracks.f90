@@ -59,9 +59,9 @@ module buildtracks
           trtype=trtype+2
         else if(nbw(i)==1)then
           ! check if the bw link cell has more than one fw links -> cell splits from other track
-          do k=1,maxnIDs
-            if(links(i,k))then
-              if(nfw(k+minclIDloc(i))<2)then
+          do k=1,nlinks(i)
+            if(ltype(i,k)==1)then
+              if(nfw(links(i,k))<2)then
                 skipID=.true.
               else
                 trtype=trtype+4             ! the code for this track initiation is 4
@@ -80,9 +80,10 @@ module buildtracks
 
         if(MOD(ctrack,outstep)==0 .OR. ctrack==1)then
           write(*,'(1a14,1i12)')" Found track: ",ctrack
-          if(verbose)write(*,*)"Cell with ID ",clIDs(i)," initiates a track at ts: ",tsclID(i)
         end if
-
+        
+        if(verbose)write(*,*)"Cell with ID ",clIDs(i)," initiates a track at ts: ",tsclID(i)
+        
         ! allocate buffer for IDs and timesteps
         tp=1 ! this is the counter for the buffers
         allocate(tnums(maxtrlen))
@@ -117,12 +118,12 @@ module buildtracks
             exit
           end if
           ! now walk through the tree of links
-          do j=minclIDloc(k)+iclIDloc(k),minclIDloc(k)+1+maxnIDs
-            if(links(k,j-minclIDloc(k)))then ! take the first cell which is a forward link
+          do j=1,nlinks(k)
+            if(ltype(k,j)==0)then ! take the first cell which is a forward link
               if(verbose)write(*,*)"continues at ts ",tsclID(j), " with ",clIDs(j)
               tp=tp+1
-              tnums(tp)=j
-              k=j
+              tnums(tp)=links(k,j)
+              k=links(k,j)
               exit
             end if
           end do

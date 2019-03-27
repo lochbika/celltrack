@@ -180,9 +180,9 @@ module advectioncorrection
           if(touchb(clID))cycle
           if(tsclID(clID).ne.1 .AND. nbw(clID)==1)then
             ! find the cell which is connected backwards
-            do i=1,iclIDloc(clID)
-              if(links(clID,i))then
-                selCL=i+minclIDloc(clID)
+            do i=1,nlinks(clID)
+              if(ltype(clID,i)==1)then
+                selCL=links(clID,i)
                 exit
               end if
             end do
@@ -283,7 +283,7 @@ module advectioncorrection
         end do
 
         ! deallocate some arrays to rerun the linking part
-        deallocate(links,minclIDloc,iclIDloc,nbw,nfw)
+        deallocate(links,nlinks,clink,ltype,nbw,nfw)
 
         ! close input and output
         CALL gridDestroy(gridID2)
