@@ -344,9 +344,9 @@ module celllinking
 
         ! write the link matrix to file
         open(unit=1,file="cell_links.txt",action="write",status="replace")
-        write(1,*)"clID      .......        "
+        write(1,*)"clID   link_type ... linked_cell ..."
         do i=1,globnIDs
-          write(1,*)i,nlinks(i),ltype(i,1:10),links(i,1:10)
+          write(1,*)i,nlinks(i),ltype(i,:),links(i,:)
         end do
         close(unit=1)
 
