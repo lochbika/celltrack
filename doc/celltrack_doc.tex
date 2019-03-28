@@ -9,7 +9,7 @@
 
 \title{celltrack\\
 	A 2D cell tracking algorithm\\ \medskip
-	v0.3 beta}
+	v0.8}
 \author{K. Lochbihler}
 
 \begin{document}
@@ -69,23 +69,30 @@ This part does the cell detection. Therefore celltrack iterates the two spatial 
 This step is repeated for all time steps. At the end of this step all detected cells have unique IDs. This procedure leads to the fact that a cell A with a higher (lower) ID than cell B occurs at the same time step or later (earlier).
 
 \subsection{The linking}
-In this part all cells are checked for forward and backward links (one time step) with other cells. The results are stored in a logical matrix which has the size $n * n$, where n is the number of detected cells. Each row/column belongs to a particular cell ID. For an example, see figure \ref{links}: If the linking matrix is true at row 4 and column 7, the cell with ID 4 has a forward link with cell 7.
+In this part all cells are checked for forward and backward links (one time step) with other cells. The results are stored in a array which has the size $n * L_{max}$, where n is the number of detected cells and $L_{max}$ is the maximum number of detected links of a cell in the whole data set. Each row belongs to a particular cell ID. The columns list other cells which are linked to this cell. For an example, see figure \ref{links}. The type of link (forward or backward in time) is stored in a second matrix.
 
-The logical link matrix makes it easy to check for overlaps between two cells any time later.
+The link (and link type) matrix makes it easy to check for overlaps between two cells any time later.
 
 \subsection{The subcell detection}
 \label{sec:detectsubcells}
-A cell represents a continuous area of the key variable above a certain threshold. This definition groups neighboring grid points into the same cell while ignoring the variability of the key variable within the cell. Thus, it is possible that the output statistics (e.g. average or maximum value of a cell) become less representative in the case of large and/or complex cells.
+A cell represents a continuous area of the key variable above a certain threshold. This definition groups neighboring grid points into the same cell while ignoring the variability of the key variable within the cell. Thus, it is possible that the output statistics (e.g. average or maximum value of a cell) become less representative in the case of large and/or complex cells. To obtain a more detailed picture of such complex cells, celltrack features an algorithm to subdivide cells into separate parts, each of them belonging to one local maximum within the cell.
+The following steps are taken to achieve this:
+\begin{enumerate}
+	\item Smooth the input data field with a gaussian blur.
+	\item Detect local maxima in the field and give them unique IDs.
+	\item Seed particles at all grid points and let them ascent along the gradient of the smoothed field
+	\item Assign IDs to the original locations (grid points) of all particles after they have moved to a local maximum.
+\end{enumerate}
 
 \subsection{Linking subcells with cells}
 Each subcell is assigned to one cell by checking for overlaps. Due to the definition of a subcell linking multiple subcells to the same cell is possible, but a subcell can not be linked with more than one cell.
 
 \subsection{The tracking algorithm}
-Using the logical link matrix the tracking part is quite simple. For each row (which corresponds to a specific ID) the algorithm checks whether there are cells with higher and lower IDs that are linked i.e. the link matrix is TRUE at this address. Counting these the number of forward and backwards links in time can be determined. Based on this information and using the link matrix it is known which IDs initiate a track according to the definition given above. If an ID is at the beginning of a track the algorithm changes to the corresponding row in the link matrix and searches for forward links to cells in the next time step. If there is such a connection the algorithm changes to the corresponding row. This step is repeated until the conditions for terminating a track are met.
+Using the link and link type matrices the tracking part is quite simple. For each row (which corresponds to a specific ID) the algorithm checks whether there are cells that are linked. By checking the link type matrix the number of forward and backwards links in time can be determined. Based on this information and using the link matrix it is known which IDs initiate a track according to the definition given above. If an ID is at the beginning of a track the algorithm changes to the corresponding row in the link matrix and searches for forward links to cells in the next time step. If there is such a connection the algorithm changes to the corresponding row. This step is repeated until the conditions for terminating a track are met.
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=.8\linewidth]{links}
-	\caption{Example logical link matrix with IDs and the corresponding linking tree.}
+	\caption{Example link matrix with IDs, the corresponding link types and the corresponding linking tree.}
 	\label{links}
 \end{figure}
 Figure \ref{links} shows a basic example of a link matrix. Based on this one can easily generate the corresponding topology tree which shows all cells and their relationships.
@@ -235,7 +242,7 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
 	\item[-nruns \textless int\textgreater] Number of iterations for mainstream detection. Default is 300.
 	\item[-rho \textless float\textgreater] Pheromone evaporation rate. Default is 0.5.
 	\item[-rseed \textless int\textgreater] If set, the random number generator will use this seed.
-    \item[-lout] Write the truncated logical links matrix to file cell\_links.txt.
+    \item[-lout] Write the links matrix and link type matrix to file cell\_links.txt.
     \item[-advcor] If set, celltrack performs an advection correction.
     \item[-nadviter \textless int\textgreater] The number of iterations for advection correction. Default is 6.
     \item[-maxv \textless float\textgreater] The maximum allowed velocity of cells. This prevents that errors in the advection correction (unrealistically high velocities) are taken into account. Default is 50 distance units/per second.
@@ -297,7 +304,7 @@ This file contains percentiles of the key variable within each cell. The columns
 
 \subsection{The links files}
 \subsubsection{cell\_links.txt}
-This file is rather intended for development and debugging. It contains the truncated logical link matrix. The rows represent cells which are the same like in cell\_stats.txt. Because the matrix is truncated each row contains only cells which appear at the same, one before and after time step of the corresponding row/cell. The first column mentions the point of truncation. The second column names the first ID in each row. With this information the complete $n*n$ matrix can be reconstructed. The third column contains the column number of each row/cell in the link matrix.
+This file is rather intended for development and debugging. It contains the link matrix and the link type matrix for each cell.
 
 \subsubsection{links\_stats.txt}
 This file contains the number of forward and backward links for each cell. The columns are:
