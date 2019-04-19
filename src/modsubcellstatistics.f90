@@ -29,11 +29,11 @@ module subcellstatistics
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
-      real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! array for doing the clustering
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat2d(:,:),pdat2d(:,:)  ! array for doing the clustering
 
-      real(kind=8), allocatable :: coords(:,:,:)     ! array for holding all cells coordinates
-      real(kind=8), allocatable :: ints(:,:)         ! array for holding all cells coordinates
+      real(kind=stdfloattype), allocatable :: coords(:,:,:)     ! array for holding all cells coordinates
+      real(kind=stdfloattype), allocatable :: ints(:,:)         ! array for holding all cells coordinates
       integer, allocatable :: cellcnt(:)             ! array for holding a counter for each cell
 
       logical :: clbnd ! true if a cell touches domain boundaries
@@ -42,7 +42,7 @@ module subcellstatistics
 
       integer :: minclID,maxclID,maxarea
 
-      real(kind=8), allocatable :: wsum(:)
+      real(kind=stdfloattype), allocatable :: wsum(:)
 
       write(*,*)"======================================="
       write(*,*)"========= SUBCELL STATISTICS =========="

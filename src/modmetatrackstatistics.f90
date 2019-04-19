@@ -176,7 +176,7 @@ module metatrackstatistics
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
 
       write(*,*)"======================================="
       write(*,*)"====== WRITE META TRACKS TO FILE ======"
@@ -294,7 +294,7 @@ module metatrackstatistics
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
 
       write(*,*)"======================================="
       write(*,*)"====== WRITE MAINSTREAMS TO FILE ======"

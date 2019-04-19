@@ -29,18 +29,18 @@ module cellshape
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:),dat2d(:,:) ! array for reading cellIDs from nc
-      real(kind=8), allocatable :: coords(:,:,:)     ! array for holding all cells coordinates
+      real(kind=stdfloattype), allocatable :: dat(:),dat2d(:,:) ! array for reading cellIDs from nc
+      real(kind=stdfloattype), allocatable :: coords(:,:,:)     ! array for holding all cells coordinates
       integer, allocatable :: cellcnt(:)             ! array for holding a counter for each cell
-      real(kind=8), allocatable  :: axisLen(:,:)
-      real(kind=8), allocatable  :: rot(:)           ! rotation angles in radians
+      real(kind=stdfloattype), allocatable  :: axisLen(:,:)
+      real(kind=stdfloattype), allocatable  :: rot(:)           ! rotation angles in radians
 
-      real(kind=8) :: distxo,distyo ! the direct distance if cells do not cross boundaries
-      real(kind=8) :: distxp,distyp ! the distance between if cells touch boundaries
+      real(kind=stdfloattype) :: distxo,distyo ! the direct distance if cells do not cross boundaries
+      real(kind=stdfloattype) :: distxp,distyp ! the distance between if cells touch boundaries
 
       integer :: minclID,maxclID,maxarea
-      real(kind=8) :: maxLen
-      real(kind=8), allocatable  :: tmpcoords(:,:)
+      real(kind=stdfloattype) :: maxLen
+      real(kind=stdfloattype), allocatable  :: tmpcoords(:,:)
 
       write(*,*)"======================================="
       write(*,*)"============= CELL SHAPE =============="

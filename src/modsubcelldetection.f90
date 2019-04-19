@@ -30,14 +30,14 @@ module subcelldetection
       include 'cdi.inc'
 
       integer :: nIDs,globID
-      real(kind=8), allocatable :: cl(:,:)
+      real(kind=stdfloattype), allocatable :: cl(:,:)
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:)          ! array for reading float from nc
-      real(kind=8), allocatable :: dat2d(:,:)      ! array for doing the clustering
-      real(kind=8), allocatable :: subcl2d(:,:)    ! array holding the subcell IDs in 2D
-      real(kind=8), allocatable :: cells(:)        ! array for reading cell IDs from nc
-      real(kind=8), allocatable :: cells2d(:,:)    ! array for holding cell IDs in 2d
+      real(kind=stdfloattype), allocatable :: dat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat2d(:,:)      ! array for doing the clustering
+      real(kind=stdfloattype), allocatable :: subcl2d(:,:)    ! array holding the subcell IDs in 2D
+      real(kind=stdfloattype), allocatable :: cells(:)        ! array for reading cell IDs from nc
+      real(kind=stdfloattype), allocatable :: cells2d(:,:)    ! array for holding cell IDs in 2d
 
       globsubnIDs=0
       globID=1
@@ -281,11 +281,11 @@ module subcelldetection
       integer :: conx,cony,neighb(2)
       integer :: skernx,skerny
       integer :: kx,ky ! iterators over dimensions of filter window
-      real(kind=8) :: fltav ! average value inside filter window; NA values are replaced by this variable
-      real(kind=8), intent(in) :: data2d(nx,ny),missval
-      real(kind=8),intent(out) :: tcl(nx,ny)
-      real(kind=8), allocatable :: tcltmp(:,:)      ! array for extension of the domain (handling boundaries)
-      real(kind=8), allocatable :: flttmp(:,:)      ! array for temporary storing the values for the current filter region
+      real(kind=stdfloattype) :: fltav ! average value inside filter window; NA values are replaced by this variable
+      real(kind=stdfloattype), intent(in) :: data2d(nx,ny),missval
+      real(kind=stdfloattype),intent(out) :: tcl(nx,ny)
+      real(kind=stdfloattype), allocatable :: tcltmp(:,:)      ! array for extension of the domain (handling boundaries)
+      real(kind=stdfloattype), allocatable :: flttmp(:,:)      ! array for temporary storing the values for the current filter region
       logical :: mask(nx,ny)
 
       ! get the size of the kernel
@@ -382,9 +382,9 @@ module subcelldetection
       integer, intent(out) :: finID,numIDs
       integer, allocatable :: ipartcoor(:,:),tpartcoor(:,:),partcoor(:,:),locmaxcoor(:,:)
       integer :: npart,nlocmax
-      real(kind=8), intent(in) :: data2d(nx,ny),cIDs(nx,ny),missval
-      real(kind=8),intent(out) :: tcl(nx,ny)
-      real(kind=8) :: lmaxt,neighb(9)
+      real(kind=stdfloattype), intent(in) :: data2d(nx,ny),cIDs(nx,ny),missval
+      real(kind=stdfloattype),intent(out) :: tcl(nx,ny)
+      real(kind=stdfloattype) :: lmaxt,neighb(9)
       integer :: dir(nx,ny)
       logical :: mask(nx,ny),locmax(nx,ny)
 

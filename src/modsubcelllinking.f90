@@ -30,8 +30,8 @@ module subcelllinking
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: subcells(:)     ! array for reading from subcells nc
-      real(kind=8), allocatable :: cells(:)        ! array for reading from cells nc
+      real(kind=stdfloattype), allocatable :: subcells(:)     ! array for reading from subcells nc
+      real(kind=stdfloattype), allocatable :: cells(:)        ! array for reading from cells nc
 
       write(*,*)"======================================="
       write(*,*)"======== START SUBCELL LINKING ========"

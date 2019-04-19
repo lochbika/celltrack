@@ -29,11 +29,11 @@ module mainstreamdetection
       integer, allocatable :: init(:),quit(:),qi(:),ninit,nquit
       integer, allocatable :: paths(:,:),pathsi(:,:),qicon(:,:)
       integer, allocatable :: thismainstream(:),lastmainstream(:)
-      real(kind=8),allocatable :: eta(:),pher(:)
+      real(kind=stdfloattype),allocatable :: eta(:),pher(:)
       logical,allocatable :: backw(:)
       logical :: resetnants
       character(len=stdclen) :: ttrack
-      real(kind=8) :: wsum,isum,areasum,intsum
+      real(kind=stdfloattype) :: wsum,isum,areasum,intsum
 
       write(*,*)"======================================="
       write(*,*)"======== MAINSTREAM DETECTION ========="
@@ -377,9 +377,9 @@ module mainstreamdetection
       integer,intent(out) :: path(ncons*2),pathi(ncons*2)
       integer,intent(in)  :: cons(ncons,2),ncons,init
       integer :: a,ai,next(500),pcount,i,tp
-      real(kind=8),intent(in) :: pher(ncons),lens(ncons)
-      real(kind=8) :: tauij,etaij,tauil,etail,zeta,rnum,probsum
-      real(kind=8),allocatable :: cprob(:)
+      real(kind=stdfloattype),intent(in) :: pher(ncons),lens(ncons)
+      real(kind=stdfloattype) :: tauij,etaij,tauil,etail,zeta,rnum,probsum
+      real(kind=stdfloattype),allocatable :: cprob(:)
 
       pcount=0
       a=init
@@ -448,9 +448,9 @@ module mainstreamdetection
       integer,intent(out) :: path(ncons*2),pathi(ncons*2)
       integer,intent(in)  :: cons(ncons,2),ncons,init
 
-      real(kind=8),intent(in) :: lens(ncons)
+      real(kind=stdfloattype),intent(in) :: lens(ncons)
 
-      real(kind=8) :: clen
+      real(kind=stdfloattype) :: clen
 
       integer :: i,ai,tp,a,next(500),pcount
 

@@ -29,9 +29,9 @@ module celllinking
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)          ! arrays for reading float from nc
-      real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! arrays for the advection correction
-      real(kind=8), allocatable :: advcell(:,:)            ! temporary array for advected cells
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)          ! arrays for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat2d(:,:),pdat2d(:,:)  ! arrays for the advection correction
+      real(kind=stdfloattype), allocatable :: advcell(:,:)            ! temporary array for advected cells
       integer                   :: movex,movey             ! the number of gridpoints to move a cell (x and y direction)
       integer                   :: maxnIDs                 ! the number of maximum possible links per cell (max for 2nd dim of links(:,:))
       integer                   :: nmaxnIDs                ! new value for maxnIDs

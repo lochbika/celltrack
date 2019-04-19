@@ -23,6 +23,8 @@
 ! Made F conformant by Walt Brainerd
 module quicksort
 
+use globvar, only : stdfloattype
+
 implicit none
 public :: QsortC
 private :: Partition
@@ -30,7 +32,7 @@ private :: Partition
 contains
 
 recursive subroutine QsortC(A)
-  real(kind=8), intent(in out), dimension(:) :: A
+  real(kind=stdfloattype), intent(in out), dimension(:) :: A
   integer :: iq
 
   if(size(A) > 1) then
@@ -41,11 +43,11 @@ recursive subroutine QsortC(A)
 end subroutine QsortC
 
 subroutine Partition(A, marker)
-  real(kind=8), intent(in out), dimension(:) :: A
+  real(kind=stdfloattype), intent(in out), dimension(:) :: A
   integer, intent(out) :: marker
   integer :: i, j
-  real(kind=8) :: temp
-  real(kind=8) :: x      ! pivot point
+  real(kind=stdfloattype) :: temp
+  real(kind=stdfloattype) :: x      ! pivot point
   x = A(1)
   i= 0
   j= size(A) + 1

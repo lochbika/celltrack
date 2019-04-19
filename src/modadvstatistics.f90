@@ -32,10 +32,10 @@ module advstats
       include 'cdi.inc'
 
       ! local data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)     ! array for reading float from nc
-      real(kind=8), allocatable :: cellvalues(:,:)    ! holds all values of each cell
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)     ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: cellvalues(:,:)    ! holds all values of each cell
       integer, allocatable :: cellcounter(:)          ! current position for each cells grid points
-      real(kind=8) :: probs(22)
+      real(kind=stdfloattype) :: probs(22)
       integer :: fcellID,lcellID
 
       write(*,*)"======================================="
@@ -174,12 +174,12 @@ module advstats
     subroutine quantile(x,prob,qu)
       ! taken from: http://fortranwiki.org/fortran/show/Quartiles
       implicit none
-      real(kind=8), intent(in)  :: x(:)
-      real(kind=8), intent(in)  :: prob
-      real(kind=8), intent(out) :: qu
+      real(kind=stdfloattype), intent(in)  :: x(:)
+      real(kind=stdfloattype), intent(in)  :: prob
+      real(kind=stdfloattype), intent(out) :: qu
       
       integer :: n,ib
-      real(kind=8) :: tol,a,b,c,diff
+      real(kind=stdfloattype) :: tol,a,b,c,diff
       
       n=SIZE(x)
       tol=1.e-8
@@ -201,7 +201,7 @@ module advstats
       ! taken from: http://fortranwiki.org/fortran/show/Quartiles
       implicit none
       ! Subroutine to that returns the Right hand and Left hand side digits of a decimal number
-      real(kind=8) :: a,b,c
+      real(kind=stdfloattype) :: a,b,c
       
       b=mod(a,1.0d0)
       c=a-b

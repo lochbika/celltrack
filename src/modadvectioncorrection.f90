@@ -33,10 +33,10 @@ module advectioncorrection
 
       ! variables and arrays
       integer :: selCL
-      real(kind=8), allocatable :: smpsize2d(:,:),smpsize(:)   ! sample size for each gridpoint on the velocity field
-      real(kind=8) :: mindist,cdist,vxres,vyres
-      real(kind=8) :: distxo,distyo ! the direct distance if cells do not cross boundaries
-      real(kind=8) :: distxp,distyp ! the distance between if cells crossed boundaries
+      real(kind=stdfloattype), allocatable :: smpsize2d(:,:),smpsize(:)   ! sample size for each gridpoint on the velocity field
+      real(kind=stdfloattype) :: mindist,cdist,vxres,vyres
+      real(kind=stdfloattype) :: distxo,distyo ! the direct distance if cells do not cross boundaries
+      real(kind=stdfloattype) :: distxp,distyp ! the distance between if cells crossed boundaries
 
       write(*,*)"======================================="
       write(*,*)"===== START ADVECTION CORRECTION ======"

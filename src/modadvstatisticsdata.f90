@@ -13,8 +13,11 @@
 ! Any help will be appreciated :)
 !
 module advstatsdata
+
+  use globvar, only : stdfloattype
+
   implicit none
 
-  real(kind=8), allocatable :: cellperc(:,:)
+  real(kind=stdfloattype), allocatable :: cellperc(:,:)
 
 end module advstatsdata

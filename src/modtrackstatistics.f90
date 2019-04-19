@@ -26,7 +26,7 @@ module trackstatistics
       implicit none
 
       character(len=stdclen) :: ttrack
-      real(kind=8) :: pint,avint
+      real(kind=stdfloattype) :: pint,avint
       integer :: pinttime
 
       write(*,*)"======================================="
@@ -172,7 +172,7 @@ module trackstatistics
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:)      ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat(:)      ! array for reading float from nc
 
       integer, allocatable :: tnums(:)
       

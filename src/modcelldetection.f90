@@ -30,11 +30,11 @@ module celldetection
       include 'cdi.inc'      
       
       integer :: nIDs,globID
-      real(kind=8), allocatable :: cl(:,:)
+      real(kind=stdfloattype), allocatable :: cl(:,:)
       
       ! data arrays
-      real(kind=8), allocatable :: dat(:)          ! array for reading float from nc
-      real(kind=8), allocatable :: dat2d(:,:)      ! array for doing the clustering
+      real(kind=stdfloattype), allocatable :: dat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat2d(:,:)      ! array for doing the clustering
       
       globnIDs=0
       globID=1
@@ -273,8 +273,8 @@ module celldetection
       integer, intent(out) :: finID,numIDs
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
-      real(kind=8), intent(in) :: data2d(nx,ny),missval
-      real(kind=8),intent(out) :: tcl(nx,ny)
+      real(kind=stdfloattype), intent(in) :: data2d(nx,ny),missval
+      real(kind=stdfloattype),intent(out) :: tcl(nx,ny)
       logical :: mask(nx,ny)
     
       ! initialize variables and arrays
@@ -376,8 +376,8 @@ module celldetection
       integer, intent(out) :: finID
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
-      real(kind=8), intent(in) :: missval
-      real(kind=8),intent(inout) :: data2d(nx,ny)
+      real(kind=stdfloattype), intent(in) :: missval
+      real(kind=stdfloattype),intent(inout) :: data2d(nx,ny)
     
       ! initialize variables and arrays
     
@@ -462,8 +462,8 @@ module celldetection
       integer, intent(out) :: finID
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2),area(numIDs)
-      real(kind=8), intent(in) :: missval
-      real(kind=8),intent(inout) :: data2d(nx,ny)
+      real(kind=stdfloattype), intent(in) :: missval
+      real(kind=stdfloattype),intent(inout) :: data2d(nx,ny)
     
       ! calculate each cells area
       area=0

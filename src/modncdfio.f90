@@ -14,7 +14,7 @@
 !
 module ncdfpars
 
-  use globvar, only : stdclen
+  use globvar, only : stdclen,stdfloattype
 
   implicit none
 
@@ -24,8 +24,8 @@ module ncdfpars
   integer :: gridID3,taxisID3,vlistID3,varID3,streamID3,zaxisID3,ssizeID
   integer :: gridID4,taxisID4,vlistID4,varID4,streamID4,zaxisID4
   integer :: nmiss1,nmiss2,nmiss3,nmiss4
-  real(kind=8) :: inmissval
-  real(kind=8) :: outmissval=-999.D0
+  real(kind=stdfloattype) :: inmissval
+  real(kind=stdfloattype) :: outmissval=-999.D0
   character(len=stdclen) :: vunit,xunit,yunit,vname
 
   contains
