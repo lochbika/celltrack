@@ -49,9 +49,6 @@ module subcelldetection
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to input file..."
 
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(ifile)
-
       ! Open the dataset 1
       streamID1=streamOpenRead(ifile)
       if(streamID1<0)then
@@ -60,7 +57,7 @@ module subcelldetection
       end if
 
       ! Set the variable IDs 1
-      varID1=ivar
+      varID1=getVarIDbyName(ifile,ivar)
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
@@ -68,9 +65,6 @@ module subcelldetection
 
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to cells file..."
-
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(ifile)
 
       ! Open the dataset 1
       streamID3=streamOpenRead(outfile)
@@ -80,7 +74,7 @@ module subcelldetection
       end if
 
       ! Set the variable IDs 1
-      varID3=0
+      varID3=getVarIDbyName(outfile,"cellID")
       vlistID3=streamInqVlist(streamID3)
       gridID3=vlistInqVarGrid(vlistID3,varID3)
       taxisID3=vlistInqTaxis(vlistID3)
@@ -93,13 +87,13 @@ module subcelldetection
 
       !! open new nc file for results
       ! define grid
-      gridID2=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID2,nx)
-      CALL gridDefYsize(gridID2,ny)
-      CALL gridDefXvals(gridID2,xvals)
-      CALL gridDefYvals(gridID2,yvals)
-      CALL gridDefXunits(gridID2,TRIM(xunit))
-      CALL gridDefYunits(gridID2,TRIM(yunit))
+      gridID2=gridDuplicate(gridID3)
+      !CALL gridDefXsize(gridID2,nx)
+      !CALL gridDefYsize(gridID2,ny)
+      !CALL gridDefXvals(gridID2,xvals)
+      !CALL gridDefYvals(gridID2,yvals)
+      !CALL gridDefXunits(gridID2,TRIM(xunit))
+      !CALL gridDefYunits(gridID2,TRIM(yunit))
       zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID2, level)
       ! define variables
@@ -132,13 +126,13 @@ module subcelldetection
 
       !! open new nc file for results
       ! define grid
-      gridID4=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID4,nx)
-      CALL gridDefYsize(gridID4,ny)
-      CALL gridDefXvals(gridID4,xvals)
-      CALL gridDefYvals(gridID4,yvals)
-      CALL gridDefXunits(gridID4,TRIM(xunit))
-      CALL gridDefYunits(gridID4,TRIM(yunit))
+      gridID4=gridDuplicate(gridID3)
+      !CALL gridDefXsize(gridID4,nx)
+      !CALL gridDefYsize(gridID4,ny)
+      !CALL gridDefXvals(gridID4,xvals)
+      !CALL gridDefYvals(gridID4,yvals)
+      !CALL gridDefXunits(gridID4,TRIM(xunit))
+      !CALL gridDefYunits(gridID4,TRIM(yunit))
       zaxisID4=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID4, level)
       ! define variables
@@ -196,6 +190,7 @@ module subcelldetection
 
         ! Read time step from cells input
         call streamReadVarSlice(streamID3,varID3,0,cells,nmiss3)
+
         ! cycle if field contains only missing values; but write it to output
         if(nmiss3==nx*ny)then
           nmiss2=nx*ny
@@ -257,9 +252,9 @@ module subcelldetection
       end do
 
       ! close input and output
-      CALL gridDestroy(gridID2)
+      !CALL gridDestroy(gridID2)
       CALL vlistDestroy(vlistID2)
-      CALL gridDestroy(gridID4)
+      !CALL gridDestroy(gridID4)
       CALL vlistDestroy(vlistID4)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)

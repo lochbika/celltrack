@@ -21,7 +21,7 @@ module globvar
   real(kind=8) :: pherevap                   ! pheromone evaporation value
   logical :: verbose                         ! verbosity
   logical :: lout                            ! switch for file output of the logical link matrix
-  integer :: ivar                            ! netcdf ID of input variable
+  character(len=800) :: ivar                 ! name of the input variable (must match the name in NCDF file)
   integer :: levelID                         ! netcdf level ID of input variable
   integer :: nants                           ! number of ants ie agents during mainstream detection
   integer :: maxnants                        ! maximum number of ants

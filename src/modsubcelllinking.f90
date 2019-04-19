@@ -40,9 +40,6 @@ module subcelllinking
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to cells file..."
 
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(outfile)
-
       ! Open the dataset
       streamID1=streamOpenRead(outfile)
       if(streamID1<0)then
@@ -59,9 +56,6 @@ module subcelllinking
       
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to SUBcells file..."
-
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(suboutfile)
 
       ! Open the dataset
       streamID2=streamOpenRead(suboutfile)

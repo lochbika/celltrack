@@ -114,7 +114,7 @@ module advectioncorrection
         end if
 
         ! Set the variable IDs 1
-        varID1=ivar
+        varID1=0
         vlistID1=streamInqVlist(streamID1)
         gridID1=vlistInqVarGrid(vlistID1,varID1)
         taxisID1=vlistInqTaxis(vlistID1)

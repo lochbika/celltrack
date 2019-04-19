@@ -182,9 +182,6 @@ module trackstatistics
       write(*,*)"=== ... to tracks.nc ..."
       write(*,*)"---------"
 
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(outfile)
-
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
       if(streamID2<0)then

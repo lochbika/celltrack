@@ -63,8 +63,6 @@ module subcellstatistics
         subclIDs(i)=i
       end do
 
-      CALL datainfo(suboutfile)
-
       ! Open the cells file
       streamID2=streamOpenRead(suboutfile)
       if(streamID2<0)then
@@ -130,7 +128,6 @@ module subcellstatistics
 
       !!!!!!!!!
       ! find center of mass and area of clusters
-      CALL datainfo(outfile)
 
       ! Open the cells file
       streamID2=streamOpenRead(suboutfile)
@@ -150,7 +147,7 @@ module subcellstatistics
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-      varID1=ivar
+      varID1=0
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)

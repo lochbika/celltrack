@@ -45,8 +45,6 @@ module celllinking
       write(*,*)"=== Searching for fw/bw links betw cells ..."
       write(*,*)"---------"
 
-      CALL datainfo(outfile)
-
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
       if(streamID2<0)then

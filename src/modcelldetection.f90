@@ -48,37 +48,39 @@ module celldetection
     
       ! Get initial Information about grid and timesteps of both files
       CALL datainfo(ifile)
-    
+
       ! Open the dataset 1
       streamID1=streamOpenRead(ifile)
       if(streamID1<0)then
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-    
       ! Set the variable IDs 1
-      varID1=ivar
+      varID1=getVarIDbyName(ifile,ivar)
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
       zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
     
       ! Get information about longitudes and latitudes and levels
-      allocate(xvals(0:nx-1))
-      allocate(yvals(0:ny-1))
+      allocate(xvals(0:(nx-1)))
+      allocate(yvals(0:(ny-1)))
       if(verbose)write(*,*)"Arrays for grid values successfully allocated!"
       nlev=zaxisInqSize(zaxisID1)
       !allocate(levels(1:nlev))
       !call zaxisInqLevels(zaxisID1,levels)
-      nblon=gridInqXvals(gridID1,xvals)
-      nblat=gridInqYvals(gridID1,yvals)
-      diflon=(xvals(nx-1)-xvals(0))/(nblon-1)
-      diflat=(yvals(ny-1)-yvals(0))/(nblat-1)
-      level=zaxisInqLevel(zaxisID1,levelID)
+      !nblon=gridInqXvals(gridID1,xvals)
+      !nblat=gridInqYvals(gridID1,yvals)
+      !write(*,*)xvals(0),yvals(0)
+      !diflon=(xvals(nx-1)-xvals(0))/(nblon-1)
+      !diflat=(yvals(ny-1)-yvals(0))/(nblat-1)
+      !level=zaxisInqLevel(zaxisID1,levelID)
+      
       CALL vlistInqVarUnits(vlistID1,varID1,vunit)
       CALL gridInqXunits(gridID1,xunit)
       CALL gridInqYunits(gridID1,yunit)
       inmissval=vlistInqVarMissval(vlistID1,varID1)
+      if(NINT(inmissval).eq.0)inmissval=-123456789.D0
       call vlistInqVarName(vlistID1,varID1,vname)
       ! extract dates and times for all time steps
       allocate(vdate(ntp))
@@ -98,16 +100,20 @@ module celldetection
       write(*,*)"---------"
       write(*,'(A,1a12)')" VAR        : ",trim(vname)
       write(*,'(A,1a12)')" Unit       : ",trim(vunit)
-      write(*,'(A,1f12.2)')" MissVal    : ",inmissval
+      if(inmissval.eq.-123456789.D0)then
+        write(*,'(A,1f12.2)')" MissVal    :   undefined!"
+      else
+        write(*,'(A,1f12.2)')" MissVal    : ",inmissval
+      end if
       write(*,'(A,1i12)')" NX         : ",nx
-      write(*,'(A,1f12.2)')" MIN X      : ",xvals(0)
-      write(*,'(A,1f12.2)')" MAX X      : ",xvals(nblon-1)
-      write(*,'(A,1f12.2)')" DIF X      : ",diflon
+      !write(*,'(A,1f12.2)')" MIN X      : ",xvals(0)
+      !write(*,'(A,1f12.2)')" MAX X      : ",xvals(nblon-1)
+      !write(*,'(A,1f12.2)')" DIF X      : ",diflon
       write(*,'(A,1a12)')" Unit       : ",trim(xunit)
       write(*,'(A,1i12)')" NY         : ",ny
-      write(*,'(A,1f12.2)')" MIN Y      : ",yvals(0)
-      write(*,'(A,1f12.2)')" MAX Y      : ",yvals(nblat-1)
-      write(*,'(A,1f12.2)')" DIF Y      : ",diflat
+      !write(*,'(A,1f12.2)')" MIN Y      : ",yvals(0)
+      !write(*,'(A,1f12.2)')" MAX Y      : ",yvals(nblat-1)
+      !write(*,'(A,1f12.2)')" DIF Y      : ",diflat
       write(*,'(A,1a12)')" Unit       : ",trim(yunit)
       write(*,'(A,1i8,1i8.6)')" START DATE : ",vdate(1),vtime(1)
       write(*,'(A,1i8,1I8.6)')" END DATE   : ",vdate(ntp),vtime(ntp)
@@ -124,13 +130,13 @@ module celldetection
     
       !! open new nc file for results
       ! define grid
-      gridID2=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID2,nx)
-      CALL gridDefYsize(gridID2,ny)
-      CALL gridDefXvals(gridID2,xvals)
-      CALL gridDefYvals(gridID2,yvals)
-      CALL gridDefXunits(gridID2,TRIM(xunit))
-      CALL gridDefYunits(gridID2,TRIM(yunit))
+      gridID2=gridDuplicate(gridID1)
+      !CALL gridDefXsize(gridID2,nx)
+      !CALL gridDefYsize(gridID2,ny)
+      !CALL gridDefXvals(gridID2,xvals)
+      !CALL gridDefYvals(gridID2,yvals)
+      !CALL gridDefXunits(gridID2,TRIM(xunit))
+      !CALL gridDefYunits(gridID2,TRIM(yunit))
       zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID2, level)
       ! define variables

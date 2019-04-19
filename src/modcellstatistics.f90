@@ -63,15 +63,13 @@ module cellstatistics
         clIDs(i)=i
       end do
 
-      CALL datainfo(outfile)
-
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=0
+      varID2=getVarIDbyName(outfile,"cellID")
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
@@ -130,7 +128,6 @@ module cellstatistics
 
       !!!!!!!!!
       ! find center of mass and area of clusters
-      CALL datainfo(outfile)
 
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
@@ -150,7 +147,7 @@ module cellstatistics
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-      varID1=ivar
+      varID1=0
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)

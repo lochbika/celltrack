@@ -54,8 +54,6 @@ module cellshape
         !write(*,*)rot(i)
       end do
 
-      CALL datainfo(outfile)
-
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
       if(streamID2<0)then

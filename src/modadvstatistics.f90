@@ -51,7 +51,6 @@ module advstats
 
       !!!!!!!!!
       ! gather all cell values and calculate percentiles
-      CALL datainfo(outfile)
 
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
@@ -71,7 +70,7 @@ module advstats
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-      varID1=ivar
+      varID1=0
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)

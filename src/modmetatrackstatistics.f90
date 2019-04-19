@@ -184,9 +184,6 @@ module metatrackstatistics
       write(*,*)"=== ... to meta.nc ..."
       write(*,*)"---------"
 
-      ! Get initial Information about grid and timesteps
-      CALL datainfo(outfile)
-
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
       if(streamID2<0)then
@@ -304,9 +301,6 @@ module metatrackstatistics
       write(*,*)"======================================="
       write(*,*)"=== ... to meta_mainstream.nc ..."
       write(*,*)"---------"
-
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(outfile)
 
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
