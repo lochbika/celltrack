@@ -43,6 +43,10 @@ module globvar
   real(kind=stdfloattype) :: sigma                      ! the std dev for the gaussian blur before subcelldetection
   integer :: truncate                        ! truncation(span) for the gaussian blur before subcelldetection
   
+  ! basic information about variable in input file
+  character(len=stdclen) :: vunit,vname
+  real(kind=stdfloattype) :: inmissval
+  
   ! variables containing information about the (horizontal) input grid
   integer :: ingrid       ! input grid type
   integer :: nx,ny        ! size of the grid in x and y direction

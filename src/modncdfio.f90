@@ -24,11 +24,45 @@ module ncdfpars
   integer :: gridID3,taxisID3,vlistID3,varID3,streamID3,zaxisID3,ssizeID
   integer :: gridID4,taxisID4,vlistID4,varID4,streamID4,zaxisID4
   integer :: nmiss1,nmiss2,nmiss3,nmiss4
-  real(kind=stdfloattype) :: inmissval
   real(kind=stdfloattype) :: outmissval=-999.D0
-  character(len=stdclen) :: vunit,vname
 
   contains
+
+    subroutine getVarInfo(infile)
+
+      use globvar, only : ntp,status,tp,ivar,stdclen,vunit,vname,inmissval
+
+      implicit none
+
+      include 'cdi.inc'
+
+      character(len=*), intent(in) :: infile
+
+      ! Open the dataset
+      streamID1=streamOpenRead(infile)
+      if(streamID1<0)then
+         write(0,*)cdiStringError(streamID1)
+         stop
+      end if
+      
+      ! Set the variable IDs
+      varID1=getVarIDbyName(infile,ivar)
+      vlistID1=streamInqVlist(streamID1)
+
+      ! set name
+      vname=ivar
+      
+      ! unit
+      CALL vlistInqVarUnits(vlistID1,varID1,vunit)
+      
+      ! missing value
+      inmissval=vlistInqVarMissval(vlistID1,varID1)
+      if(NINT(inmissval).eq.0)inmissval=-123456789.D0
+      
+      call streamClose(streamID1)
+
+    end subroutine getVarInfo
+  
     subroutine getTaxisInfo(infile)
 
       use globvar, only : ntp,status,tp,ivar,stdclen,vdate,vtime
@@ -45,6 +79,7 @@ module ncdfpars
          write(0,*)cdiStringError(streamID1)
          stop
       end if
+      
       ! Set the variable IDs
       varID1=getVarIDbyName(infile,ivar)
       vlistID1=streamInqVlist(streamID1)
@@ -91,6 +126,7 @@ module ncdfpars
          write(0,*)cdiStringError(streamID1)
          stop
       end if
+      
       ! Set the variable IDs
       varID1=getVarIDbyName(infile,ivar)
       vlistID1=streamInqVlist(streamID1)

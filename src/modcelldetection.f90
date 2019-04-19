@@ -46,12 +46,6 @@ module celldetection
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to input file..."
     
-      ! Get initial Information about time axis
-      CALL getTaxisInfo(ifile)
-
-      ! Get grid information
-      CALL gethorGrid(ifile)
-      
       ! Open the dataset 1
       streamID1=streamOpenRead(ifile)
       if(streamID1<0)then
@@ -71,42 +65,6 @@ module celldetection
       !call zaxisInqLevels(zaxisID1,levels)
       !level=zaxisInqLevel(zaxisID1,levelID)
       
-      CALL vlistInqVarUnits(vlistID1,varID1,vunit)
-      vname=ivar
-
-      inmissval=vlistInqVarMissval(vlistID1,varID1)
-      if(NINT(inmissval).eq.0)inmissval=-123456789.D0
-      
-      write(*,*)"======================================="
-      write(*,*)"=== INPUT SUMMARY:"
-      write(*,*)"---------"
-      write(*,*)"Input   : ",trim(ifile)
-      write(*,*)"---------"
-      write(*,'(A,1a12)')" VAR        : ",trim(vname)
-      write(*,'(A,1a12)')" Unit       : ",trim(vunit)
-      if(inmissval.eq.-123456789.D0)then
-        write(*,'(A,1f12.2)')" MissVal    :   undefined!"
-      else
-        write(*,'(A,1f12.2)')" MissVal    : ",inmissval
-      end if
-      write(*,'(A,1i12)')" NX         : ",nx
-      write(*,'(A,1f12.2)')" MIN X      : ",minx
-      write(*,'(A,1f12.2)')" MAX X      : ",maxx
-      !write(*,'(A,1f12.2)')" DIF X      : ",diflon
-      write(*,'(A,1a12)')" Unit       : ",trim(xunit)
-      write(*,'(A,1i12)')" NY         : ",ny
-      write(*,'(A,1f12.2)')" MIN Y      : ",miny
-      write(*,'(A,1f12.2)')" MAX Y      : ",maxy
-      !write(*,'(A,1f12.2)')" DIF Y      : ",diflat
-      write(*,'(A,1a12)')" Unit       : ",trim(yunit)
-      write(*,'(A,1i8,1i8.6)')" START DATE : ",vdate(1),vtime(1)
-      write(*,'(A,1i8,1I8.6)')" END DATE   : ",vdate(ntp),vtime(ntp)
-      write(*,'(A,1i12)')" NTSTEPS    : ",ntp
-      write(*,'(A,1i12)')" TSTEP      : ",tstep
-      write(*,'(A,1i12)')" NLEV       : ",nlev
-      write(*,'(A,1f12.2)')" SELLEV     : ",level
-      write(*,*)"---------"
-    
       write(*,*)"======================================="
       write(*,*)"=== CREATING OUTPUT ..."
       write(*,*)"Output  :     ",trim(outfile)
