@@ -13,6 +13,9 @@
 ! Any help will be appreciated :)
 !
 module ncdfpars
+
+  use globvar, only : stdclen
+
   implicit none
 
   ! Variables for netCDF actions
@@ -23,18 +26,18 @@ module ncdfpars
   integer :: nmiss1,nmiss2,nmiss3,nmiss4
   real(kind=8) :: inmissval
   real(kind=8) :: outmissval=-999.D0
-  character(len=1000) :: vunit,xunit,yunit,vname
+  character(len=stdclen) :: vunit,xunit,yunit,vname
 
   contains
     subroutine datainfo(infile)
 
-      use globvar, only : nx,ny,ntp,status,tp,ivar
+      use globvar, only : nx,ny,ntp,status,tp,ivar,stdclen
 
       implicit none
 
       include 'cdi.inc'
 
-      character(len=800), intent(in) :: infile
+      character(len=*), intent(in) :: infile
 
       ! Open the dataset
       streamID1=streamOpenRead(infile)
@@ -72,9 +75,9 @@ module ncdfpars
 
       include 'cdi.inc'
 
-      character(len=800) , intent(in) :: infile
+      character(len=*) , intent(in) :: infile
       character(len=*), intent(in) :: name
-      character(len=1000) :: testname
+      character(len=stdclen) :: testname
       
       integer :: varID,streamID,vlistID,nVars,i
 

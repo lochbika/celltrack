@@ -25,7 +25,7 @@ module trackstatistics
 
       implicit none
 
-      character(len=800) :: ttrack
+      character(len=stdclen) :: ttrack
       real(kind=8) :: pint,avint
       integer :: pinttime
 

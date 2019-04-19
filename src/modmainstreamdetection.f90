@@ -32,7 +32,7 @@ module mainstreamdetection
       real(kind=8),allocatable :: eta(:),pher(:)
       logical,allocatable :: backw(:)
       logical :: resetnants
-      character(len=800) :: ttrack
+      character(len=stdclen) :: ttrack
       real(kind=8) :: wsum,isum,areasum,intsum
 
       write(*,*)"======================================="

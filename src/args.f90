@@ -18,7 +18,7 @@ subroutine cliarguments
 
   implicit none
 
-  character(len=1000) :: argc,command
+  character(len=stdclen) :: argc,command
   integer :: narg,arg
 
   call getarg(0,command)

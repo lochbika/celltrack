@@ -25,7 +25,7 @@ module metatrackstatistics
 
       implicit none
 
-      character(len=800) :: ttrack
+      character(len=stdclen) :: ttrack
       integer :: mints,maxts
 
       write(*,*)"======================================="
