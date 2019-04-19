@@ -58,6 +58,7 @@ module globvar
   
   ! variables containing information about the vertical input grid
   real(kind=stdfloattype) :: level ! the level we have chosen
+  real(kind=stdfloattype), allocatable :: levels(:) ! the available levels
   integer :: nlev ! number of levels in the input file
   
   ! Variables for information about time axis of the input file

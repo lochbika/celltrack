@@ -58,12 +58,6 @@ module celldetection
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
       zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
-    
-      ! Get information about longitudes and latitudes and levels
-      nlev=zaxisInqSize(zaxisID1)
-      !allocate(levels(1:nlev))
-      !call zaxisInqLevels(zaxisID1,levels)
-      !level=zaxisInqLevel(zaxisID1,levelID)
       
       write(*,*)"======================================="
       write(*,*)"=== CREATING OUTPUT ..."

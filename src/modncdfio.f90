@@ -168,6 +168,37 @@ module ncdfpars
 
     end subroutine gethorGrid
     
+    subroutine getZaxisInfo(infile)
+
+      use globvar, only : ivar,stdclen,levels,level,levelID,nlev
+
+      implicit none
+
+      include 'cdi.inc'
+
+      character(len=*), intent(in) :: infile
+
+      ! Open the dataset
+      streamID1=streamOpenRead(infile)
+      if(streamID1<0)then
+         write(0,*)cdiStringError(streamID1)
+         stop
+      end if
+      
+      ! Set the variable IDs
+      varID1=getVarIDbyName(infile,ivar)
+      vlistID1=streamInqVlist(streamID1)
+      zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
+
+      nlev=zaxisInqSize(zaxisID1)
+      allocate(levels(0:(nlev-1)))
+      nlev=zaxisInqLevels(zaxisID1,levels)
+      level=zaxisInqLevel(zaxisID1,levelID)
+      
+      call streamClose(streamID1)
+
+    end subroutine getZaxisInfo
+    
     integer function getVarIDbyName(infile,name)
     
       ! this function returns the variable ID for a certain variable (name)
