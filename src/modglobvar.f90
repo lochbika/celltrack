@@ -15,7 +15,7 @@
 module globvar
   implicit none
 
-  ! variables for data types
+  ! constants for data types
   integer, parameter :: stdclen = 1000
   integer, parameter :: stdfloattype = 8
   
@@ -43,12 +43,22 @@ module globvar
   real(kind=stdfloattype) :: sigma                      ! the std dev for the gaussian blur before subcelldetection
   integer :: truncate                        ! truncation(span) for the gaussian blur before subcelldetection
   
-  ! variables containing information about the domain
-  real(kind=stdfloattype) :: level,diflon,diflat
-  real(kind=stdfloattype), allocatable :: xvals(:),yvals(:)!,levels(:)
-  ! Variables for general information about dimensions of input/output fields
-  integer :: nx,ny,ntp,nlev,nblon,nblat
-  integer, allocatable :: vdate(:),vtime(:)
+  ! variables containing information about the (horizontal) input grid
+  integer :: ingrid       ! input grid type
+  integer :: nx,ny        ! size of the grid in x and y direction
+  real(kind=stdfloattype) :: minx,maxx,miny,maxy        ! maximum values for each grid dimension
+  integer :: nblon,nblat  ! number of values in each (x and y) direction
+  real(kind=stdfloattype), allocatable :: xvals(:),yvals(:) ! values of gridpoints for each direction of the grid
+  character(len=stdclen) :: xunit,yunit ! unit of each direction of the grid
+  real(kind=stdfloattype) :: diflon,diflat
+  
+  ! variables containing information about the vertical input grid
+  real(kind=stdfloattype) :: level ! the level we have chosen
+  integer :: nlev ! number of levels in the input file
+  
+  ! Variables for information about time axis of the input file
+  integer :: ntp ! number of time steps
+  integer, allocatable :: vdate(:),vtime(:) ! for dates and times of the input time axis
 
   ! variables containing information about cells
   integer :: globnIDs

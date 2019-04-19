@@ -46,9 +46,12 @@ module celldetection
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to input file..."
     
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(ifile)
+      ! Get initial Information about time axis
+      CALL getTaxisInfo(ifile)
 
+      ! Get grid information
+      CALL gethorGrid(ifile)
+      
       ! Open the dataset 1
       streamID1=streamOpenRead(ifile)
       if(streamID1<0)then
@@ -63,35 +66,16 @@ module celldetection
       zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
     
       ! Get information about longitudes and latitudes and levels
-      allocate(xvals(0:(nx-1)))
-      allocate(yvals(0:(ny-1)))
-      if(verbose)write(*,*)"Arrays for grid values successfully allocated!"
       nlev=zaxisInqSize(zaxisID1)
       !allocate(levels(1:nlev))
       !call zaxisInqLevels(zaxisID1,levels)
-      !nblon=gridInqXvals(gridID1,xvals)
-      !nblat=gridInqYvals(gridID1,yvals)
-      !write(*,*)xvals(0),yvals(0)
-      !diflon=(xvals(nx-1)-xvals(0))/(nblon-1)
-      !diflat=(yvals(ny-1)-yvals(0))/(nblat-1)
       !level=zaxisInqLevel(zaxisID1,levelID)
       
       CALL vlistInqVarUnits(vlistID1,varID1,vunit)
-      CALL gridInqXunits(gridID1,xunit)
-      CALL gridInqYunits(gridID1,yunit)
+      vname=ivar
+
       inmissval=vlistInqVarMissval(vlistID1,varID1)
       if(NINT(inmissval).eq.0)inmissval=-123456789.D0
-      call vlistInqVarName(vlistID1,varID1,vname)
-      ! extract dates and times for all time steps
-      allocate(vdate(ntp))
-      allocate(vtime(ntp))
-      do tsID=0,(ntp-1)
-        ! Set time step for input file
-        status=streamInqTimestep(streamID1,tsID)
-        ! read date and time
-        vdate(tsID+1) = taxisInqVdate(taxisID1)
-        vtime(tsID+1) = taxisInqVtime(taxisID1)
-      end do
       
       write(*,*)"======================================="
       write(*,*)"=== INPUT SUMMARY:"
@@ -106,13 +90,13 @@ module celldetection
         write(*,'(A,1f12.2)')" MissVal    : ",inmissval
       end if
       write(*,'(A,1i12)')" NX         : ",nx
-      !write(*,'(A,1f12.2)')" MIN X      : ",xvals(0)
-      !write(*,'(A,1f12.2)')" MAX X      : ",xvals(nblon-1)
+      write(*,'(A,1f12.2)')" MIN X      : ",minx
+      write(*,'(A,1f12.2)')" MAX X      : ",maxx
       !write(*,'(A,1f12.2)')" DIF X      : ",diflon
       write(*,'(A,1a12)')" Unit       : ",trim(xunit)
       write(*,'(A,1i12)')" NY         : ",ny
-      !write(*,'(A,1f12.2)')" MIN Y      : ",yvals(0)
-      !write(*,'(A,1f12.2)')" MAX Y      : ",yvals(nblat-1)
+      write(*,'(A,1f12.2)')" MIN Y      : ",miny
+      write(*,'(A,1f12.2)')" MAX Y      : ",maxy
       !write(*,'(A,1f12.2)')" DIF Y      : ",diflat
       write(*,'(A,1a12)')" Unit       : ",trim(yunit)
       write(*,'(A,1i8,1i8.6)')" START DATE : ",vdate(1),vtime(1)

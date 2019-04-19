@@ -200,13 +200,7 @@ module metatrackstatistics
 
       !! open new nc file for results
       ! define grid
-      gridID1=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID1,nx)
-      CALL gridDefYsize(gridID1,ny)
-      CALL gridDefXvals(gridID1,xvals)
-      CALL gridDefYvals(gridID1,yvals)
-      CALL gridDefXunits(gridID1,TRIM(xunit))
-      CALL gridDefYunits(gridID1,TRIM(yunit))
+      gridID1=gridDuplicate(gridID2)
       zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID1, level)
       ! define variables
@@ -318,13 +312,7 @@ module metatrackstatistics
 
       !! open new nc file for results
       ! define grid
-      gridID1=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID1,nx)
-      CALL gridDefYsize(gridID1,ny)
-      CALL gridDefXvals(gridID1,xvals)
-      CALL gridDefYvals(gridID1,yvals)
-      CALL gridDefXunits(gridID1,"m")
-      CALL gridDefYunits(gridID1,"m")
+      gridID1=gridDuplicate(gridID2)
       zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID1, level)
       ! define variables
