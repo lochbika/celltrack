@@ -298,8 +298,8 @@ module cellstatistics
             ! assign coordinates for center of mass calculation later on
             ! save intensities to calculate weighted center of mass
             cellcnt(INT(dat2d(x,y)))=cellcnt(INT(dat2d(x,y)))+1
-            coords(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))),1)=x
-            coords(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))),2)=y
+            coords(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))),1)=xvals2d(x,y)
+            coords(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))),2)=yvals2d(x,y)
             ints(INT(dat2d(x,y)),cellcnt(INT(dat2d(x,y))))=pdat2d(x,y)
           end do
         end do
@@ -313,15 +313,15 @@ module cellstatistics
             projx=.false.
             projy=.false.
             do i=1,cellcnt(clID)
-              if(coords(clID,i,1)==1 .OR. coords(clID,i,1)==nx .OR. &
-                 & coords(clID,i,2)==1 .OR. coords(clID,i,2)==ny)then
+              if(coords(clID,i,1)==minx .OR. coords(clID,i,1)==maxx .OR. &
+                 & coords(clID,i,2)==miny .OR. coords(clID,i,2)==maxy)then
                 clbnd=.true.
                 exit
               end if
             end do
             do i=1,cellcnt(clID)
-              if(coords(clID,i,1)==1 .OR. coords(clID,i,1)==nx)projx=.true.
-              if(coords(clID,i,2)==1 .OR. coords(clID,i,2)==ny)projy=.true.
+              if(coords(clID,i,1)==minx .OR. coords(clID,i,1)==maxx)projx=.true.
+              if(coords(clID,i,2)==miny .OR. coords(clID,i,2)==maxy)projy=.true.
               if(projx .AND. projy)exit
             end do
             ! if that's the case count how many are closer to the upper boundary
@@ -425,14 +425,16 @@ module cellstatistics
         wclcmass(i,1)=wclcmass(i,1)/wsum(i)
         wclcmass(i,2)=wclcmass(i,2)/wsum(i)
         ! bring projected center of mass back into the domain
-        if(clcmass(i,1)>nx)clcmass(i,1)=clcmass(i,1)-nx
-        if(clcmass(i,1)<1)clcmass(i,1)=nx-abs(clcmass(i,1))
-        if(clcmass(i,2)>ny)clcmass(i,2)=clcmass(i,2)-ny
-        if(clcmass(i,2)<1)clcmass(i,2)=ny-abs(clcmass(i,2))
-        if(wclcmass(i,1)>nx)wclcmass(i,1)=wclcmass(i,1)-nx
-        if(wclcmass(i,1)<1)wclcmass(i,1)=nx-abs(wclcmass(i,1))
-        if(wclcmass(i,2)>ny)wclcmass(i,2)=wclcmass(i,2)-ny
-        if(wclcmass(i,2)<1)wclcmass(i,2)=ny-abs(wclcmass(i,2))
+        if(periodic)then
+          if(clcmass(i,1)>maxx)clcmass(i,1)=clcmass(i,1)-nx
+          if(clcmass(i,1)<minx)clcmass(i,1)=nx-abs(clcmass(i,1))
+          if(clcmass(i,2)>maxy)clcmass(i,2)=clcmass(i,2)-ny
+          if(clcmass(i,2)<miny)clcmass(i,2)=ny-abs(clcmass(i,2))
+          if(wclcmass(i,1)>maxx)wclcmass(i,1)=wclcmass(i,1)-nx
+          if(wclcmass(i,1)<minx)wclcmass(i,1)=nx-abs(wclcmass(i,1))
+          if(wclcmass(i,2)>maxy)wclcmass(i,2)=wclcmass(i,2)-ny
+          if(wclcmass(i,2)<miny)wclcmass(i,2)=ny-abs(wclcmass(i,2))
+        end if
       end do
 
       CALL streamClose(streamID1)

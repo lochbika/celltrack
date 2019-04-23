@@ -112,7 +112,8 @@ module ncdfpars
     
     subroutine gethorGrid(infile)
 
-      use globvar, only : nx,ny,ivar,stdclen,ingrid,xvals,yvals,minx,maxx,miny,maxy,nblon,nblat,xunit,yunit
+      use globvar, only : nx,ny,ivar,stdclen,ingrid,xvals,yvals,xvals2d,yvals2d, &
+        & minx,maxx,miny,maxy,nblon,nblat,xunit,yunit,x,y,tp
 
       implicit none
 
@@ -141,11 +142,11 @@ module ncdfpars
 
       ! extract grid point values (coordinates)
       if(ingrid.eq.GRID_GENERIC)then
-        allocate(xvals(0:(nx-1)))
-        allocate(yvals(0:(ny-1)))
+        allocate(xvals(nx))
+        allocate(yvals(ny))
       else if(ingrid.eq.GRID_CURVILINEAR)then
-        allocate(xvals(0:(nx*ny-1)))
-        allocate(yvals(0:(nx*ny-1)))
+        allocate(xvals(nx*ny))
+        allocate(yvals(nx*ny))
       else
         write(*,*)"ERROR: grid type not supported!"
         stop
@@ -153,6 +154,21 @@ module ncdfpars
       
       nblon=gridInqXvals(gridID1,xvals)
       nblat=gridInqYvals(gridID1,yvals)
+      
+      ! reshape grid values into 2d
+      allocate(xvals2d(nx,ny))
+      allocate(yvals2d(nx,ny))
+      if(ingrid.eq.GRID_GENERIC)then
+        do x=1,nx
+          do y=1,ny
+            xvals2d(x,y)=xvals(x-1)
+            yvals2d(x,y)=yvals(y-1)
+          end do
+        end do
+      else if(ingrid.eq.GRID_CURVILINEAR)then
+        CALL reshapeT2d(xvals,nx,ny,xvals2d)
+        CALL reshapeT2d(yvals,nx,ny,yvals2d)
+      end if
 
       ! get minimum and maximum
       minx=MINVAL(xvals)

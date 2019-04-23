@@ -53,6 +53,7 @@ module globvar
   real(kind=stdfloattype) :: minx,maxx,miny,maxy        ! maximum values for each grid dimension
   integer :: nblon,nblat  ! number of values in each (x and y) direction
   real(kind=stdfloattype), allocatable :: xvals(:),yvals(:) ! values of gridpoints for each direction of the grid
+  real(kind=stdfloattype), allocatable :: xvals2d(:,:),yvals2d(:,:) ! values of gridpoints for each direction of the grid in 2d
   character(len=stdclen) :: xunit,yunit ! unit of each direction of the grid
   real(kind=stdfloattype) :: diflon,diflat
   
