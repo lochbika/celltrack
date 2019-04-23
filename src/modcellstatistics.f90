@@ -331,7 +331,7 @@ module cellstatistics
               ! x direction
               if(projx)then
                 do i=1,cellcnt(clID)
-                  if(coords(clID,i,1)>(nx/2))then
+                  if(coords(clID,i,1)>(maxx/2))then
                     nrupbndx=nrupbndx+1
                   end if
                 end do
@@ -339,15 +339,15 @@ module cellstatistics
                 if((nrupbndx)>(clarea(clID)/2))then ! project at nx
                   if(verbose)write(*,*)"projecting cell",clID,"at nx with ",nrupbndx,"of",clarea(clID),"points"
                   do i=1,cellcnt(clID)
-                    if(coords(clID,i,1)<(nx/2))then
-                      coords(clID,i,1)=coords(clID,i,1)+nx
+                    if(coords(clID,i,1)<(maxx/2))then
+                      coords(clID,i,1)=coords(clID,i,1)+maxx
                     end if
                   end do                  
                 else ! project at x=1
                   if(verbose)write(*,*)"projecting cell",clID,"at x=1 with ",clarea(clID)-nrupbndx,"of",clarea(clID),"points"
                   do i=1,cellcnt(clID)
-                    if(coords(clID,i,1)>=(nx/2))then
-                      coords(clID,i,1)=1-(nx-coords(clID,i,1))
+                    if(coords(clID,i,1)>=(maxx/2))then
+                      coords(clID,i,1)=minx-(maxx-coords(clID,i,1))
                     end if
                   end do                   
                 end if
@@ -355,7 +355,7 @@ module cellstatistics
               ! y direction
               if(projy)then
                 do i=1,cellcnt(clID)
-                  if(coords(clID,i,2)>(ny/2))then
+                  if(coords(clID,i,2)>(maxy/2))then
                     nrupbndy=nrupbndy+1
                   end if
                 end do
@@ -363,15 +363,15 @@ module cellstatistics
                 if((nrupbndy)>(clarea(clID)/2))then ! project at ny
                   if(verbose)write(*,*)"projecting cell",clID,"at ny with ",nrupbndy,"of",clarea(clID),"points"
                   do i=1,cellcnt(clID)
-                    if(coords(clID,i,2)<(ny/2))then
-                      coords(clID,i,2)=coords(clID,i,2)+ny
+                    if(coords(clID,i,2)<(maxy/2))then
+                      coords(clID,i,2)=coords(clID,i,2)+maxy
                     end if
                   end do                  
                 else ! project at y=1
                   if(verbose)write(*,*)"projecting cell",clID,"at y=1 with ",clarea(clID)-nrupbndy,"of",clarea(clID),"points"
                   do i=1,cellcnt(clID)
-                    if(coords(clID,i,2)>=(ny/2))then
-                      coords(clID,i,2)=1-(ny-coords(clID,i,2))
+                    if(coords(clID,i,2)>=(maxy/2))then
+                      coords(clID,i,2)=miny-(maxy-coords(clID,i,2))
                     end if
                   end do                   
                 end if
