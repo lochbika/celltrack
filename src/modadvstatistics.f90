@@ -58,7 +58,7 @@ module advstats
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=0
+      varID2=getVarIDbyName(outfile,"cellID")
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
@@ -70,7 +70,7 @@ module advstats
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-      varID1=0
+      varID1=getVarIDbyName(ifile,ivar)
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
