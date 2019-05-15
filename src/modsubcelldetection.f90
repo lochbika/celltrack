@@ -586,7 +586,7 @@ module subcelldetection
         ! now start the iterative process to move particles
         allocate(tpartcoor(npart,2))
 
-        do i=1,100
+        do i=1,1000
           tpartcoor=partcoor
 
           do tp=1,npart
