@@ -190,7 +190,9 @@ program celltrack
     !=======================================
     !==== FINISHED META TRACK STATISTICS ===
     !=======================================
+  end if
   
+  if(.NOT.nometa .AND. .NOT.nometamstr)then
     !=======================================
     !======== MAINSTREAM DETECTION =========
     !=======================================

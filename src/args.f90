@@ -48,6 +48,7 @@ subroutine cliarguments
   metanc=.false.
   tracknc=.false.
   nometa=.false.
+  nometamstr=.false.
   periodic=.false.
   maxvel=50
   minarea=0
@@ -132,6 +133,8 @@ subroutine cliarguments
       metanc=.true.
     case ("-nometa")
       nometa=.true.
+    case ("-nometamstr")
+      nometamstr=.true.
     case ("-perbound")
       periodic=.true.
     case ("-maxv")
