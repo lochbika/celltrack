@@ -48,17 +48,21 @@ module advectioncorrection
       ! we can use the gathered information to coarse grain the grid and open a new dataset
       vnx=nx/coarsex
       vny=ny/coarsey
-      vxres=( (xvals(nx-1)+diflon/2) - (xvals(0)-diflon/2) ) / vnx
-      vyres=( (yvals(ny-1)+diflat/2) - (yvals(0)-diflat/2) ) / vnx
+      vxres=( (xvals(nx)+diflon/2) - (xvals(1)-diflon/2) ) / vnx
+      vyres=( (yvals(ny)+diflat/2) - (yvals(1)-diflat/2) ) / vnx
       allocate(vxvals(vnx),vyvals(vny))
-      vxvals(1)= (xvals(0)-diflon/2) + (vxres/2)
-      vyvals(1)= (yvals(0)-diflat/2) + (vyres/2)
-      do x=2,vnx
-        vxvals(x)=vxvals(1) + (x-1)*vxres
-      end do
-      do y=2,vny
-        vyvals(y)=vyvals(1) + (y-1)*vyres
-      end do
+      vxvals(1)= (xvals(1)-diflon/2) + (vxres/2)
+      vyvals(1)= (yvals(1)-diflat/2) + (vyres/2)
+      if(vnx>1)then
+        do x=2,vnx
+          vxvals(x)=vxvals(1) + (x-1)*vxres
+        end do
+      end if
+      if(vny>1)then
+        do y=2,vny
+          vyvals(y)=vyvals(1) + (y-1)*vyres
+        end do
+      end if
 
       write(*,*)"======================================="
       write(*,*)"=== GRID FOR ADVECTION CORRECTION:"
@@ -80,7 +84,7 @@ module advectioncorrection
       do clID=1,globnIDs
         mindist=HUGE(mindist)
         do x=1,vnx
-          cdist=abs(vxvals(x)-(wclcmass(clID,1)*diflon+xvals(0)))
+          cdist=abs(vxvals(x)-(wclcmass(clID,1)+xvals(1)))
           if(cdist<mindist)then
             vclxindex(clID)=x
             mindist=cdist
@@ -88,7 +92,7 @@ module advectioncorrection
         end do
         mindist=HUGE(mindist)
         do y=1,vny
-          cdist=abs(vyvals(y)-(wclcmass(clID,2)*diflat+yvals(0)))
+          cdist=abs(vyvals(y)-(wclcmass(clID,2)+yvals(1)))
           if(cdist<mindist)then
             vclyindex(clID)=y
             mindist=cdist
@@ -114,7 +118,7 @@ module advectioncorrection
         end if
 
         ! Set the variable IDs 1
-        varID1=0
+        varID1=getVarIDbyName(ifile,ivar)
         vlistID1=streamInqVlist(streamID1)
         gridID1=vlistInqVarGrid(vlistID1,varID1)
         taxisID1=vlistInqTaxis(vlistID1)
@@ -231,8 +235,8 @@ module advectioncorrection
                   vcly(clID)=distyo*diflat/tstep
                 end if
               else
-                vclx(clID)=(wclcmass(clID,1)-wclcmass(selCL,1))*diflon/tstep
-                vcly(clID)=(wclcmass(clID,2)-wclcmass(selCL,2))*diflat/tstep
+                vclx(clID)=(wclcmass(clID,1)-wclcmass(selCL,1))/tstep
+                vcly(clID)=(wclcmass(clID,2)-wclcmass(selCL,2))/tstep
               end if
             end if
           end if

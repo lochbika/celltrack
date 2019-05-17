@@ -23,7 +23,7 @@ module inputinfo
       use ncdfpars
     
       use globvar, only : ifile,ntp,status,tp,ivar,stdclen,vunit,vname,vdate,vtime, &
-        & tstep,nx,ny,minx,maxx,miny,maxy,level,inmissval,nlev,xunit,yunit
+        & tstep,nx,ny,minx,maxx,miny,maxy,level,inmissval,nlev,xunit,yunit,diflon,diflat
     
       write(*,*)"======================================="
       write(*,*)"========== INPUT INFORMATION =========="
@@ -60,12 +60,12 @@ module inputinfo
       write(*,'(A,1i12)')" NX         : ",nx
       write(*,'(A,1f12.2)')" MIN X      : ",minx
       write(*,'(A,1f12.2)')" MAX X      : ",maxx
-      !write(*,'(A,1f12.2)')" DIF X      : ",diflon
+      write(*,'(A,1f12.2)')" DIF X      : ",diflon
       write(*,'(A,1a12)')" Unit       : ",trim(xunit)
       write(*,'(A,1i12)')" NY         : ",ny
       write(*,'(A,1f12.2)')" MIN Y      : ",miny
       write(*,'(A,1f12.2)')" MAX Y      : ",maxy
-      !write(*,'(A,1f12.2)')" DIF Y      : ",diflat
+      write(*,'(A,1f12.2)')" DIF Y      : ",diflat
       write(*,'(A,1a12)')" Unit       : ",trim(yunit)
       write(*,'(A,1i8,1i8.6)')" START DATE : ",vdate(1),vtime(1)
       write(*,'(A,1i8,1I8.6)')" END DATE   : ",vdate(ntp),vtime(ntp)

@@ -51,7 +51,7 @@ module celllinking
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=0
+      varID2=getVarIDbyName(outfile,"cellID")
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
@@ -84,8 +84,8 @@ module celllinking
            write(*,*)cdiStringError(streamID3)
            stop
         end if
-        vuID=0
-        vvID=1
+        vuID=getVarIDbyName(vfile,"u")
+        vvID=getVarIDbyName(vfile,"v")
         vlistID3=streamInqVlist(streamID3)
         gridID3=vlistInqVarGrid(vlistID2,vuID)
         taxisID3=vlistInqTaxis(vlistID3)

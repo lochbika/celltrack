@@ -101,7 +101,7 @@ module cellshape
             tp=tp+1
             if(clID<minclID)minclID=clID
             if(clID>maxclID)maxclID=clID
-            if(clarea(clID)>maxarea)maxarea=clarea(clID)
+            if(clareagrd(clID)>maxarea)maxarea=clareagrd(clID)
           end if
         end do
 

@@ -113,13 +113,14 @@ module ncdfpars
     subroutine gethorGrid(infile)
 
       use globvar, only : nx,ny,ivar,stdclen,ingrid,xvals,yvals,xvals2d,yvals2d, &
-        & minx,maxx,miny,maxy,nblon,nblat,xunit,yunit,x,y,tp
+        & minx,maxx,miny,maxy,nblon,nblat,xunit,yunit,x,y,tp,advcor,diflon,diflat,reggrid
 
       implicit none
 
       include 'cdi.inc'
 
       character(len=*), intent(in) :: infile
+      real(kind=stdfloattype) :: ldifx,ldify,difx,dify
 
       ! Open the dataset
       streamID1=streamOpenRead(infile)
@@ -161,8 +162,8 @@ module ncdfpars
       if(ingrid.eq.GRID_GENERIC)then
         do x=1,nx
           do y=1,ny
-            xvals2d(x,y)=xvals(x-1)
-            yvals2d(x,y)=yvals(y-1)
+            xvals2d(x,y)=xvals(x)
+            yvals2d(x,y)=yvals(y)
           end do
         end do
       else if(ingrid.eq.GRID_CURVILINEAR)then
@@ -175,6 +176,53 @@ module ncdfpars
       maxx=MAXVAL(xvals)
       miny=MINVAL(yvals)
       maxy=MAXVAL(yvals)
+      
+      ! get grid spacing and find out whether the grid is regular
+      reggrid=.true.
+      if(ingrid.eq.GRID_GENERIC)then
+      ! x direction
+        do y=1,ny
+          do x=2,nx
+            ! x direction
+            difx=xvals2d(x,y)-xvals2d(x-1,y)
+            if(x.eq.2)then
+              ldifx=difx
+            else
+              if(ldifx.ne.difx)reggrid=.false.
+              ldifx=difx
+            end if 
+          end do
+        end do
+      ! y direction
+        do x=1,nx
+          do y=2,ny
+            ! y direction
+            dify=yvals2d(x,y)-yvals2d(x,y-1)
+            if(y.eq.2)then
+              ldify=dify
+            else
+              if(ldifx.ne.difx)reggrid=.false.
+              ldify=dify
+            end if 
+          end do
+        end do
+        ! finally set diflon and diflat
+        if(reggrid)then
+          diflon=difx
+          diflat=dify
+        else
+          if(advcor)then
+            write(*,*)"Error: irregular grid detected! Advection correction will not work with this!"
+            stop
+          else
+            write(*,*)"Warning: irregular grid detected!"
+          end if
+          diflon=-999.D0
+          diflat=-999.D0
+        end if
+      else if(ingrid.eq.GRID_CURVILINEAR)then
+        
+      end if
       
       ! get units
       CALL gridInqXunits(gridID1,xunit)

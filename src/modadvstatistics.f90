@@ -111,7 +111,7 @@ module advstats
         fcellID=lcellID-tp+1
 
         ! now allocate cellvalues for this time step
-        allocate(cellvalues(fcellID:lcellID,MAXVAL(clarea)))
+        allocate(cellvalues(fcellID:lcellID,MAXVAL(clareagrd)))
         cellvalues=-1
         allocate(cellcounter(fcellID:lcellID))
         cellcounter=1
@@ -125,15 +125,15 @@ module advstats
 
         ! now sort each cells values in ascending order
         do i=fcellID,lcellID
-          CALL QsortC(cellvalues(i,1:clarea(i)))
+          CALL QsortC(cellvalues(i,1:clareagrd(i)))
         end do
 
         ! now calculate cell value percentiles
         do i=fcellID,lcellID
-          cellperc(i,1)=MINVAL(cellvalues(i,1:clarea(i)))
-          cellperc(i,24)=MAXVAL(cellvalues(i,1:clarea(i)))
+          cellperc(i,1)=MINVAL(cellvalues(i,1:clareagrd(i)))
+          cellperc(i,24)=MAXVAL(cellvalues(i,1:clareagrd(i)))
           do p=1,22
-            CALL quantile(cellvalues(i,1:clarea(i)),probs(p),cellperc(i,p+1))
+            CALL quantile(cellvalues(i,1:clareagrd(i)),probs(p),cellperc(i,p+1))
           end do
         end do 
 

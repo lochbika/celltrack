@@ -99,24 +99,32 @@ module trackstatistics
 
         ! write stats
         write(4,'(1a4,1i12,1L4,1i4)')"### ",i,nobounds(i),trtypes(i)
-        write(4,*)"     clID    tsclID    clarea       clcmassX"//&
-          &"       clcmassY      wclcmassX      wclcmassY            peakVal              avVal  touchb"
+        write(4,*)"     clID    tsclID             clarea grd_clarea         clcmassX"//&
+        &"         clcmassY        wclcmassX        wclcmassY     grd_clcmassX"//&
+        &"     grd_clcmassY     grd_clcmassX     grd_clcmassY"//&
+        &"            peakVal"//&
+        &"              avVal  touchb      date(YYYYMMDD)        time(hhmmss)"
         do k=1,maxtrlen
           if(alltracks(i,k)==-1)exit
-          write(4,'(3i10,4f15.6,2f19.12,1L8)')clIDs(alltracks(i,k)),tsclID(alltracks(i,k)), &
-            & clarea(alltracks(i,k)),clcmass(alltracks(i,k),:), &
-            & wclcmass(alltracks(i,k),:),clpint(alltracks(i,k)),clavint(alltracks(i,k)),touchb(alltracks(i,k))
+          write(4,'(2i10,1f19.2,1i11,8f17.3,2f19.10,1L8,2i20.6)')clIDs(alltracks(i,k)),tsclID(alltracks(i,k)), &
+            & clarea(alltracks(i,k)),clareagrd(alltracks(i,k)),clcmass(alltracks(i,k),:), &
+            & wclcmass(alltracks(i,k),:),clcmassgrd(alltracks(i,k),:),wclcmassgrd(alltracks(i,k),:),&
+            & clpint(alltracks(i,k)),clavint(alltracks(i,k)),touchb(alltracks(i,k))
         end do
         ! write stats for clean tracks
         if(nobounds(i) .AND. trtypes(i)==9)then
           write(5,'(1a4,1i12,1L4,1i4)')"### ",i,nobounds(i),trtypes(i)
-          write(5,*)"     clID    tsclID    clarea       clcmassX"//&
-            &"       clcmassY      wclcmassX      wclcmassY            peakVal              avVal  touchb"
+          write(5,*)"     clID    tsclID             clarea grd_clarea         clcmassX"//&
+        &"         clcmassY        wclcmassX        wclcmassY     grd_clcmassX"//&
+        &"     grd_clcmassY     grd_clcmassX     grd_clcmassY"//&
+        &"            peakVal"//&
+        &"              avVal  touchb      date(YYYYMMDD)        time(hhmmss)"
           do k=1,maxtrlen
             if(alltracks(i,k)==-1)exit
-            write(5,'(3i10,4f15.6,2f19.12,1L8)')clIDs(alltracks(i,k)),tsclID(alltracks(i,k)), &
-            & clarea(alltracks(i,k)),clcmass(alltracks(i,k),:), &
-            & wclcmass(alltracks(i,k),:),clpint(alltracks(i,k)),clavint(alltracks(i,k)),touchb(alltracks(i,k))
+            write(5,'(2i10,1f19.2,1i11,8f17.3,2f19.10,1L8,2i20.6)')clIDs(alltracks(i,k)),tsclID(alltracks(i,k)), &
+            & clarea(alltracks(i,k)),clareagrd(alltracks(i,k)),clcmass(alltracks(i,k),:), &
+            & wclcmass(alltracks(i,k),:),clcmassgrd(alltracks(i,k),:),wclcmassgrd(alltracks(i,k),:),&
+            & clpint(alltracks(i,k)),clavint(alltracks(i,k)),touchb(alltracks(i,k))
           end do
         end if
 

@@ -50,6 +50,7 @@ module globvar
   
   ! variables containing information about the (horizontal) input grid
   integer :: ingrid       ! input grid type
+  logical :: reggrid      ! is the input grid regular
   integer :: nx,ny        ! size of the grid in x and y direction
   real(kind=stdfloattype) :: minx,maxx,miny,maxy        ! maximum values for each grid dimension
   integer :: nblon,nblat  ! number of values in each (x and y) direction
@@ -72,8 +73,11 @@ module globvar
   integer, allocatable :: clIDs(:),tsclID(:),cldate(:),cltime(:)
   logical, allocatable :: touchb(:)
   ! Variables used for cell statistics
-  integer, allocatable :: clarea(:)
-  real(kind=stdfloattype), allocatable :: clpint(:),clavint(:),clcmass(:,:),wclcmass(:,:)
+  integer, allocatable :: clareagrd(:) ! area in grid points
+  real(kind=stdfloattype), allocatable :: clarea(:) ! area in units**2
+  real(kind=stdfloattype), allocatable :: clpint(:),clavint(:)
+  real(kind=stdfloattype), allocatable :: clcmass(:,:),wclcmass(:,:) ! center of mass in unit coordinates
+  real(kind=stdfloattype), allocatable :: clcmassgrd(:,:),wclcmassgrd(:,:) ! center of mass in grid points
 
   ! variables containing information about *SUB*cells
   integer :: globsubnIDs
@@ -82,7 +86,9 @@ module globvar
   real(kind=stdfloattype), allocatable :: kernel(:,:)
   ! Variables used for cell statistics
   integer, allocatable :: subclarea(:)
-  real(kind=stdfloattype), allocatable :: subclpint(:),subclavint(:),subclcmass(:,:),subwclcmass(:,:)
+  real(kind=stdfloattype), allocatable :: subclpint(:),subclavint(:)
+  real(kind=stdfloattype), allocatable :: subclcmass(:,:),subwclcmass(:,:) ! center of mass in unit coordinates
+  real(kind=stdfloattype), allocatable :: subclcmassgrd(:,:),subwclcmassgrd(:,:) ! center of mass in grid points
   
   ! Variables for cell linking
   integer, allocatable :: nbw(:),nfw(:),clink(:),nlinks(:),links(:,:)
