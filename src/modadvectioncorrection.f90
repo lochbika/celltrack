@@ -84,7 +84,7 @@ module advectioncorrection
       do clID=1,globnIDs
         mindist=HUGE(mindist)
         do x=1,vnx
-          cdist=abs(vxvals(x)-(wclcmass(clID,1)+xvals(1)))
+          cdist=abs(vxvals(x)-wclcmass(clID,1))
           if(cdist<mindist)then
             vclxindex(clID)=x
             mindist=cdist
@@ -92,7 +92,7 @@ module advectioncorrection
         end do
         mindist=HUGE(mindist)
         do y=1,vny
-          cdist=abs(vyvals(y)-(wclcmass(clID,2)+yvals(1)))
+          cdist=abs(vyvals(y)-wclcmass(clID,2))
           if(cdist<mindist)then
             vclyindex(clID)=y
             mindist=cdist
