@@ -30,11 +30,11 @@ module celldetection
       include 'cdi.inc'      
       
       integer :: nIDs,globID
-      real(kind=8), allocatable :: cl(:,:)
+      real(kind=stdfloattype), allocatable :: cl(:,:)
       
       ! data arrays
-      real(kind=8), allocatable :: dat(:)          ! array for reading float from nc
-      real(kind=8), allocatable :: dat2d(:,:)      ! array for doing the clustering
+      real(kind=stdfloattype), allocatable :: dat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat2d(:,:)      ! array for doing the clustering
       
       globnIDs=0
       globID=1
@@ -46,77 +46,19 @@ module celldetection
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to input file..."
     
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(ifile)
-    
       ! Open the dataset 1
       streamID1=streamOpenRead(ifile)
       if(streamID1<0)then
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-    
       ! Set the variable IDs 1
-      varID1=ivar
+      varID1=getVarIDbyName(ifile,ivar)
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
       zaxisID1=vlistInqVarZaxis(vlistID1,varID1)
-    
-      ! Get information about longitudes and latitudes and levels
-      allocate(xvals(0:nx-1))
-      allocate(yvals(0:ny-1))
-      if(verbose)write(*,*)"Arrays for grid values successfully allocated!"
-      nlev=zaxisInqSize(zaxisID1)
-      !allocate(levels(1:nlev))
-      !call zaxisInqLevels(zaxisID1,levels)
-      nblon=gridInqXvals(gridID1,xvals)
-      nblat=gridInqYvals(gridID1,yvals)
-      diflon=(xvals(nx-1)-xvals(0))/(nblon-1)
-      diflat=(yvals(ny-1)-yvals(0))/(nblat-1)
-      level=zaxisInqLevel(zaxisID1,levelID)
-      CALL vlistInqVarUnits(vlistID1,varID1,vunit)
-      CALL gridInqXunits(gridID1,xunit)
-      CALL gridInqYunits(gridID1,yunit)
-      inmissval=vlistInqVarMissval(vlistID1,varID1)
-      call vlistInqVarName(vlistID1,varID1,vname)
-      ! extract dates and times for all time steps
-      allocate(vdate(ntp))
-      allocate(vtime(ntp))
-      do tsID=0,(ntp-1)
-        ! Set time step for input file
-        status=streamInqTimestep(streamID1,tsID)
-        ! read date and time
-        vdate(tsID+1) = taxisInqVdate(taxisID1)
-        vtime(tsID+1) = taxisInqVtime(taxisID1)
-      end do
       
-      write(*,*)"======================================="
-      write(*,*)"=== INPUT SUMMARY:"
-      write(*,*)"---------"
-      write(*,*)"Input   : ",trim(ifile)
-      write(*,*)"---------"
-      write(*,'(A,1a12)')" VAR        : ",trim(vname)
-      write(*,'(A,1a12)')" Unit       : ",trim(vunit)
-      write(*,'(A,1f12.2)')" MissVal    : ",inmissval
-      write(*,'(A,1i12)')" NX         : ",nx
-      write(*,'(A,1f12.2)')" MIN X      : ",xvals(0)
-      write(*,'(A,1f12.2)')" MAX X      : ",xvals(nblon-1)
-      write(*,'(A,1f12.2)')" DIF X      : ",diflon
-      write(*,'(A,1a12)')" Unit       : ",trim(xunit)
-      write(*,'(A,1i12)')" NY         : ",ny
-      write(*,'(A,1f12.2)')" MIN Y      : ",yvals(0)
-      write(*,'(A,1f12.2)')" MAX Y      : ",yvals(nblat-1)
-      write(*,'(A,1f12.2)')" DIF Y      : ",diflat
-      write(*,'(A,1a12)')" Unit       : ",trim(yunit)
-      write(*,'(A,1i8,1i8.6)')" START DATE : ",vdate(1),vtime(1)
-      write(*,'(A,1i8,1I8.6)')" END DATE   : ",vdate(ntp),vtime(ntp)
-      write(*,'(A,1i12)')" NTSTEPS    : ",ntp
-      write(*,'(A,1i12)')" TSTEP      : ",tstep
-      write(*,'(A,1i12)')" NLEV       : ",nlev
-      write(*,'(A,1f12.2)')" SELLEV     : ",level
-      write(*,*)"---------"
-    
       write(*,*)"======================================="
       write(*,*)"=== CREATING OUTPUT ..."
       write(*,*)"Output  :     ",trim(outfile)
@@ -124,13 +66,13 @@ module celldetection
     
       !! open new nc file for results
       ! define grid
-      gridID2=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID2,nx)
-      CALL gridDefYsize(gridID2,ny)
-      CALL gridDefXvals(gridID2,xvals)
-      CALL gridDefYvals(gridID2,yvals)
-      CALL gridDefXunits(gridID2,TRIM(xunit))
-      CALL gridDefYunits(gridID2,TRIM(yunit))
+      gridID2=gridDuplicate(gridID1)
+      !CALL gridDefXsize(gridID2,nx)
+      !CALL gridDefYsize(gridID2,ny)
+      !CALL gridDefXvals(gridID2,xvals)
+      !CALL gridDefYvals(gridID2,yvals)
+      !CALL gridDefXunits(gridID2,TRIM(xunit))
+      !CALL gridDefYunits(gridID2,TRIM(yunit))
       zaxisID2=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID2, level)
       ! define variables
@@ -267,8 +209,8 @@ module celldetection
       integer, intent(out) :: finID,numIDs
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
-      real(kind=8), intent(in) :: data2d(nx,ny),missval
-      real(kind=8),intent(out) :: tcl(nx,ny)
+      real(kind=stdfloattype), intent(in) :: data2d(nx,ny),missval
+      real(kind=stdfloattype),intent(out) :: tcl(nx,ny)
       logical :: mask(nx,ny)
     
       ! initialize variables and arrays
@@ -370,8 +312,8 @@ module celldetection
       integer, intent(out) :: finID
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
-      real(kind=8), intent(in) :: missval
-      real(kind=8),intent(inout) :: data2d(nx,ny)
+      real(kind=stdfloattype), intent(in) :: missval
+      real(kind=stdfloattype),intent(inout) :: data2d(nx,ny)
     
       ! initialize variables and arrays
     
@@ -456,8 +398,8 @@ module celldetection
       integer, intent(out) :: finID
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2),area(numIDs)
-      real(kind=8), intent(in) :: missval
-      real(kind=8),intent(inout) :: data2d(nx,ny)
+      real(kind=stdfloattype), intent(in) :: missval
+      real(kind=stdfloattype),intent(inout) :: data2d(nx,ny)
     
       ! calculate each cells area
       area=0

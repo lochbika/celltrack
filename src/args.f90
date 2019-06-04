@@ -18,7 +18,7 @@ subroutine cliarguments
 
   implicit none
 
-  character(len=1000) :: argc,command
+  character(len=stdclen) :: argc,command
   integer :: narg,arg
 
   call getarg(0,command)
@@ -30,7 +30,7 @@ subroutine cliarguments
   verbose=.false.
   thres=0.D0
   ifile=""
-  ivar=0
+  ivar=""
   levelID=0
   nants=-1
   maxnants=-1
@@ -48,6 +48,7 @@ subroutine cliarguments
   metanc=.false.
   tracknc=.false.
   nometa=.false.
+  nometamstr=.false.
   periodic=.false.
   maxvel=50
   minarea=0
@@ -74,8 +75,7 @@ subroutine cliarguments
       read(argc,*)thres
     case ("-var")
       arg=arg+1
-      call getarg(arg,argc)
-      read(argc,*)ivar
+      call getarg(arg,ivar)
     case ("-lev")
       arg=arg+1
       call getarg(arg,argc)
@@ -133,6 +133,8 @@ subroutine cliarguments
       metanc=.true.
     case ("-nometa")
       nometa=.true.
+    case ("-nometamstr")
+      nometamstr=.true.
     case ("-perbound")
       periodic=.true.
     case ("-maxv")

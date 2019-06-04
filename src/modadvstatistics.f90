@@ -32,10 +32,10 @@ module advstats
       include 'cdi.inc'
 
       ! local data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)     ! array for reading float from nc
-      real(kind=8), allocatable :: cellvalues(:,:)    ! holds all values of each cell
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)     ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: cellvalues(:,:)    ! holds all values of each cell
       integer, allocatable :: cellcounter(:)          ! current position for each cells grid points
-      real(kind=8) :: probs(22)
+      real(kind=stdfloattype) :: probs(22)
       integer :: fcellID,lcellID
 
       write(*,*)"======================================="
@@ -51,7 +51,6 @@ module advstats
 
       !!!!!!!!!
       ! gather all cell values and calculate percentiles
-      CALL datainfo(outfile)
 
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
@@ -59,7 +58,7 @@ module advstats
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=0
+      varID2=getVarIDbyName(outfile,"cellID")
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
@@ -71,7 +70,7 @@ module advstats
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-      varID1=ivar
+      varID1=getVarIDbyName(ifile,ivar)
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
@@ -112,7 +111,7 @@ module advstats
         fcellID=lcellID-tp+1
 
         ! now allocate cellvalues for this time step
-        allocate(cellvalues(fcellID:lcellID,MAXVAL(clarea)))
+        allocate(cellvalues(fcellID:lcellID,MAXVAL(clareagrd)))
         cellvalues=-1
         allocate(cellcounter(fcellID:lcellID))
         cellcounter=1
@@ -126,15 +125,15 @@ module advstats
 
         ! now sort each cells values in ascending order
         do i=fcellID,lcellID
-          CALL QsortC(cellvalues(i,1:clarea(i)))
+          CALL QsortC(cellvalues(i,1:clareagrd(i)))
         end do
 
         ! now calculate cell value percentiles
         do i=fcellID,lcellID
-          cellperc(i,1)=MINVAL(cellvalues(i,1:clarea(i)))
-          cellperc(i,24)=MAXVAL(cellvalues(i,1:clarea(i)))
+          cellperc(i,1)=MINVAL(cellvalues(i,1:clareagrd(i)))
+          cellperc(i,24)=MAXVAL(cellvalues(i,1:clareagrd(i)))
           do p=1,22
-            CALL quantile(cellvalues(i,1:clarea(i)),probs(p),cellperc(i,p+1))
+            CALL quantile(cellvalues(i,1:clareagrd(i)),probs(p),cellperc(i,p+1))
           end do
         end do 
 
@@ -175,12 +174,12 @@ module advstats
     subroutine quantile(x,prob,qu)
       ! taken from: http://fortranwiki.org/fortran/show/Quartiles
       implicit none
-      real(kind=8), intent(in)  :: x(:)
-      real(kind=8), intent(in)  :: prob
-      real(kind=8), intent(out) :: qu
+      real(kind=stdfloattype), intent(in)  :: x(:)
+      real(kind=stdfloattype), intent(in)  :: prob
+      real(kind=stdfloattype), intent(out) :: qu
       
       integer :: n,ib
-      real(kind=8) :: tol,a,b,c,diff
+      real(kind=stdfloattype) :: tol,a,b,c,diff
       
       n=SIZE(x)
       tol=1.e-8
@@ -202,7 +201,7 @@ module advstats
       ! taken from: http://fortranwiki.org/fortran/show/Quartiles
       implicit none
       ! Subroutine to that returns the Right hand and Left hand side digits of a decimal number
-      real(kind=8) :: a,b,c
+      real(kind=stdfloattype) :: a,b,c
       
       b=mod(a,1.0d0)
       c=a-b

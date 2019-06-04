@@ -14,9 +14,11 @@
 !
 subroutine scan_trackfile(filename,ntracks,maxlen)
 
+  use globvar, only : stdclen
+  
   implicit none
   character(len=*), intent(in) :: filename
-  character(len=5000) :: ttrack
+  character(len=stdclen) :: ttrack
   integer, intent(out) :: ntracks,maxlen
   integer :: length,riostat
 

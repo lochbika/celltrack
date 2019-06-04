@@ -17,14 +17,14 @@
 
 subroutine gaussian_kernel(sigma, truncate)
 
-    use globvar, only: kernel
+    use globvar, only: kernel,stdfloattype
 
-    real(kind=8), intent(in) :: sigma
+    real(kind=stdfloattype), intent(in) :: sigma
     integer, intent(in), optional :: truncate
 
-    real(kind=8), allocatable :: x(:,:), y(:,:)
+    real(kind=stdfloattype), allocatable :: x(:,:), y(:,:)
     integer :: radius, trunc, i, j
-    real(kind=8) :: s
+    real(kind=stdfloattype) :: s
 
     if (present(truncate)) then
         trunc = truncate

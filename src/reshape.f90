@@ -13,10 +13,13 @@
 ! Any help will be appreciated :)
 !
 subroutine reshapeF2d(datin,nx,ny,datout)
+
+  use globvar, only: stdfloattype
+
   implicit none
   integer                   :: tp,nx,ny,x,y
-  real(kind=8), intent(in)  :: datin(nx,ny)
-  real(kind=8), intent(out) :: datout(nx*ny)
+  real(kind=stdfloattype), intent(in)  :: datin(nx,ny)
+  real(kind=stdfloattype), intent(out) :: datout(nx*ny)
 
   tp=1
   do y=1,ny
@@ -29,10 +32,13 @@ subroutine reshapeF2d(datin,nx,ny,datout)
 end subroutine reshapeF2d
 
 subroutine reshapeT2d(datin,nx,ny,datout)
+
+  use globvar, only: stdfloattype
+
   implicit none
   integer                   :: tp,nx,ny,x,y
-  real(kind=8), intent(in)  :: datin(nx*ny)
-  real(kind=8), intent(out) :: datout(nx,ny)
+  real(kind=stdfloattype), intent(in)  :: datin(nx*ny)
+  real(kind=stdfloattype), intent(out) :: datout(nx,ny)
 
   tp=1
   do y=1,ny

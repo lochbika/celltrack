@@ -17,6 +17,7 @@ program celltrack
   ! global variables
   use globvar
   ! modules
+  use inputinfo
   use celldetection
   use subcelldetection
   use cellstatistics
@@ -71,6 +72,16 @@ program celltrack
   !======= FINISHED CLI ARGUMENTS ========
   !=======================================
 
+  !=======================================
+  !========= INPUT INFORMATION ===========
+  !=======================================
+  
+  CALL gatherInputInfo()
+  
+  !=======================================
+  !======= END INPUT INFORMATION =========
+  !=======================================
+  
   !=======================================
   !======== START CELL DETECTION =========
   !=======================================
@@ -179,7 +190,9 @@ program celltrack
     !=======================================
     !==== FINISHED META TRACK STATISTICS ===
     !=======================================
+  end if
   
+  if(.NOT.nometa .AND. .NOT.nometamstr)then
     !=======================================
     !======== MAINSTREAM DETECTION =========
     !=======================================

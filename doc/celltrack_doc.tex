@@ -234,8 +234,8 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
 \subsubsection*{Options}
 \begin{labeling}{-maxnantsoooooooo}
 	\item[-i \textless char\textgreater] Input file name.
-	\item[-var \textless int\textgreater] NetCDF/grib variable ID. Default is 0.
-	\item[-lev \textless int\textgreater] NetCDF/grib level ID. Default is 0 i.e. the first variable.
+	\item[-var \textless int\textgreater] NetCDF/grib variable name.
+	\item[-lev \textless int\textgreater] NetCDF/grib level ID. Default is 0.
 	\item[-thres \textless float\textgreater] All grid points with values greater than this are considered. Default is 0.
 	\item[-nants \textless int\textgreater] Number of ants/agents for mainstream detection. Default value is the number of nodes of a meta track.
 	\item[-maxnants \textless int\textgreater] The maximum number of ants/agents for mainstream detection. Setting this value can be useful to avoid long computation times for large meta track. Nevertheless it may decrease the validity of the detected mainstream.
@@ -247,8 +247,9 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
     \item[-nadviter \textless int\textgreater] The number of iterations for advection correction. Default is 6.
     \item[-maxv \textless float\textgreater] The maximum allowed velocity of cells. This prevents that errors in the advection correction (unrealistically high velocities) are taken into account. Default is 50 distance units/per second.
     \item[-nometa] Completely switch off all meta track routines.
+    \item[-nometamstr] Switch off only mainstream detection of meta tracks.
     \item[-perbound] Switch on periodic boundary conditions.
-    \item[-cx \textless int\textgreater] The divisor for the coarse graining of the grid (velocity fields, advection correction); x direction. A number of 2 would lead to a doubled grid spacing. 
+    \item[-cx \textless int\textgreater] Definition of the coarse graining of the grid for advection correction. Example: Given that there are 50 grid points in x direction, a value of 25 would lead to 2 grid points for the advection correction grid. 
     \item[-cy \textless int\textgreater] Same as -cx but for y direction.
     \item[-tstep \textless float\textgreater] The time step of the input file in seconds. Mandatory for advection correction!
     \item[-tracknc] Output of tracks to netCDF.
@@ -278,14 +279,19 @@ This is the first file celltrack will create. It has the same structure as the i
 
 \subsubsection{cell\_stats.txt}
 This file contains some simple statistics about the detected cells. The columns are:
-\begin{labeling}{wclcmassX}
+\begin{labeling}{grd\_wclcmassY}
 	\item[clID] The cell ID.
 	\item[tsclID] The time step this cell occurs.
-	\item[clarea] The area in unit grid points.
+	\item[clarea] The area.
+    \item[grd\_clarea] The area in grid points.
 	\item[clcmassX] The x coordinate of the center of mass.
 	\item[clcmassY] The y coordinate of the center of mass.
 	\item[wclcmassX] The x coordinate of the weighted center of mass.
 	\item[wclcmassY] The y coordinate of the weighted center of mass.
+   	\item[grd\_clcmassX] The x coordinate of the center of mass (in grid point index).
+    \item[grd\_clcmassY] The y coordinate of the center of mass (in grid point index).
+    \item[grd\_wclcmassX] The x coordinate of the weighted center of mass (in grid point index).
+    \item[grd\_wclcmassY] The y coordinate of the weighted center of mass (in grid point index).
 	\item[peakVal] The maximum value.
 	\item[avVal] The average value.
 	\item[touchb] TRUE if the cell touches the boundaries.
@@ -359,19 +365,8 @@ These files list tracks with an object-oriented structure. The first line of eac
 The difference between the two files is that tracks\_clean.txt only lists tracks which are of type 9 and do not touch the boundaries during their lifetime. 
 
 \subsubsection{tracks\_all\_stats.txt / tracks\_clean\_stats.txt}
-The structure of this files is the same as in tracks\_all.txt / tracks\_clean.txt. However, there are some additional columns:
-\begin{labeling}{peakVal}
-	\item[clID] The cell ID.
-	\item[tsclID] The time step this cell occurs.
-	\item[clarea] The area in unit grid points.
-	\item[clcmassX] The x coordinate of the center of mass.
-	\item[clcmassY] The y coordinate of the center of mass.
-	\item[wclcmassX] The x coordinate of the weighted center of mass.
-	\item[wclcmassY] The y coordinate of the weighted center of mass.
-	\item[peakVal] The maximum value.
-	\item[avVal] The average value.
-	\item[nobound] TRUE if all cells of this track are free of boundary contact.
-\end{labeling}
+The structure of this files is the same as in tracks\_all.txt / tracks\_clean.txt. However, all cells of a track are listed with their characteristics from the cell\_stats.txt file.
+
 The difference between the two files is that tracks\_clean\_stats.txt only lists tracks which are of type 9 and do not touch the boundaries during their lifetime.
 
 \subsubsection{tracks\_all\_summary.txt / tracks\_clean\_summary.txt}

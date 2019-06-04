@@ -27,7 +27,7 @@ module buildmetatracks
 
       integer, allocatable :: trcon(:,:),conbuffer(:,:),metabuffer(:),metbuffer1(:),metbuffer2(:)
       integer :: maxtrcons,ncon
-      real(kind=8) :: pint,avint
+      real(kind=stdfloattype) :: pint,avint
       logical :: nobound
 
       write(*,*)"======================================="

@@ -30,8 +30,8 @@ module subcelllinking
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: subcells(:)     ! array for reading from subcells nc
-      real(kind=8), allocatable :: cells(:)        ! array for reading from cells nc
+      real(kind=stdfloattype), allocatable :: subcells(:)     ! array for reading from subcells nc
+      real(kind=stdfloattype), allocatable :: cells(:)        ! array for reading from cells nc
 
       write(*,*)"======================================="
       write(*,*)"======== START SUBCELL LINKING ========"
@@ -39,9 +39,6 @@ module subcelllinking
 
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to cells file..."
-
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(outfile)
 
       ! Open the dataset
       streamID1=streamOpenRead(outfile)
@@ -59,9 +56,6 @@ module subcelllinking
       
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to SUBcells file..."
-
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(suboutfile)
 
       ! Open the dataset
       streamID2=streamOpenRead(suboutfile)

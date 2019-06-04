@@ -25,7 +25,7 @@ module metatrackstatistics
 
       implicit none
 
-      character(len=800) :: ttrack
+      character(len=stdclen) :: ttrack
       integer :: mints,maxts
 
       write(*,*)"======================================="
@@ -176,16 +176,13 @@ module metatrackstatistics
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
 
       write(*,*)"======================================="
       write(*,*)"====== WRITE META TRACKS TO FILE ======"
       write(*,*)"======================================="
       write(*,*)"=== ... to meta.nc ..."
       write(*,*)"---------"
-
-      ! Get initial Information about grid and timesteps
-      CALL datainfo(outfile)
 
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
@@ -203,13 +200,7 @@ module metatrackstatistics
 
       !! open new nc file for results
       ! define grid
-      gridID1=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID1,nx)
-      CALL gridDefYsize(gridID1,ny)
-      CALL gridDefXvals(gridID1,xvals)
-      CALL gridDefYvals(gridID1,yvals)
-      CALL gridDefXunits(gridID1,TRIM(xunit))
-      CALL gridDefYunits(gridID1,TRIM(yunit))
+      gridID1=gridDuplicate(gridID2)
       zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID1, level)
       ! define variables
@@ -297,16 +288,13 @@ module metatrackstatistics
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
 
       write(*,*)"======================================="
       write(*,*)"====== WRITE MAINSTREAMS TO FILE ======"
       write(*,*)"======================================="
       write(*,*)"=== ... to meta_mainstream.nc ..."
       write(*,*)"---------"
-
-      ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(outfile)
 
       ! Open the cells file
       streamID2=streamOpenRead(outfile)
@@ -324,13 +312,7 @@ module metatrackstatistics
 
       !! open new nc file for results
       ! define grid
-      gridID1=gridCreate(GRID_GENERIC, nx*ny)
-      CALL gridDefXsize(gridID1,nx)
-      CALL gridDefYsize(gridID1,ny)
-      CALL gridDefXvals(gridID1,xvals)
-      CALL gridDefYvals(gridID1,yvals)
-      CALL gridDefXunits(gridID1,"m")
-      CALL gridDefYunits(gridID1,"m")
+      gridID1=gridDuplicate(gridID2)
       zaxisID1=zaxisCreate(ZAXIS_GENERIC, 1)
       CALL zaxisDefLevels(zaxisID1, level)
       ! define variables

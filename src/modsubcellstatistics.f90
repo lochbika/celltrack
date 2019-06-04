@@ -29,11 +29,11 @@ module subcellstatistics
       include 'cdi.inc'
 
       ! data arrays
-      real(kind=8), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
-      real(kind=8), allocatable :: dat2d(:,:),pdat2d(:,:)  ! array for doing the clustering
+      real(kind=stdfloattype), allocatable :: dat(:),pdat(:)          ! array for reading float from nc
+      real(kind=stdfloattype), allocatable :: dat2d(:,:),pdat2d(:,:)  ! array for doing the clustering
 
-      real(kind=8), allocatable :: coords(:,:,:)     ! array for holding all cells coordinates
-      real(kind=8), allocatable :: ints(:,:)         ! array for holding all cells coordinates
+      real(kind=stdfloattype), allocatable :: coords(:,:,:)     ! array for holding all cells coordinates
+      real(kind=stdfloattype), allocatable :: ints(:,:)         ! array for holding all cells coordinates
       integer, allocatable :: cellcnt(:)             ! array for holding a counter for each cell
 
       logical :: clbnd ! true if a cell touches domain boundaries
@@ -42,7 +42,7 @@ module subcellstatistics
 
       integer :: minclID,maxclID,maxarea
 
-      real(kind=8), allocatable :: wsum(:)
+      real(kind=stdfloattype), allocatable :: wsum(:)
 
       write(*,*)"======================================="
       write(*,*)"========= SUBCELL STATISTICS =========="
@@ -63,15 +63,13 @@ module subcellstatistics
         subclIDs(i)=i
       end do
 
-      CALL datainfo(suboutfile)
-
       ! Open the cells file
       streamID2=streamOpenRead(suboutfile)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=0
+      varID2=getVarIDbyName(suboutfile,"subcellID")
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
@@ -130,7 +128,6 @@ module subcellstatistics
 
       !!!!!!!!!
       ! find center of mass and area of clusters
-      CALL datainfo(outfile)
 
       ! Open the cells file
       streamID2=streamOpenRead(suboutfile)
@@ -138,7 +135,7 @@ module subcellstatistics
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=0
+      varID2=getVarIDbyName(suboutfile,"subcellID")
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
@@ -150,7 +147,7 @@ module subcellstatistics
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-      varID1=ivar
+      varID1=getVarIDbyName(ifile,ivar)
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
