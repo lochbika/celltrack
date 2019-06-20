@@ -44,4 +44,15 @@ FIND_LIBRARY(CDI_LIB
   DOC "cdi library"
 )
 
+include(FindOpenMP)
+
+if (Fortran_COMPILER_NAME MATCHES "gfortran.*")
+  # gfortran
+  set (CMAKE_Fortran_FLAGS_RELEASE "-funroll-loops -fforce-addr -O3 ${OpenMP_Fortran_FLAGS}")
+  set (CMAKE_Fortran_FLAGS_DEBUG   "-fbounds-check -fbacktrace -Wall -Wextra -ggdb -fcheck=all ${OpenMP_Fortran_FLAGS}")
+  #message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
+else ()
+  message (FATAL_ERROR "Compiler gfortran not found! Stop!")
+endif ()
+
 add_subdirectory(src)
