@@ -38,6 +38,7 @@ module globvar
   logical :: nometa                          ! completely switch off meta track routines
   logical :: nometamstr                      ! completely switch off meta track mainstream routines
   logical :: periodic                        ! switch for periodic boundaries in input fields
+  logical :: subc                            ! switch to activate subcell routines
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
   integer :: minarea                         ! minimum area for clusters in grid points

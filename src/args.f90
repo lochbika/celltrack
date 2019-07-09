@@ -54,6 +54,7 @@ subroutine cliarguments
   minarea=0
   sigma=2
   truncate=4
+  subc=.false.
 
   do while (arg < narg)
     arg=arg+1
@@ -127,6 +128,8 @@ subroutine cliarguments
       read(argc,*)tstep
     case ("-advcor")
       advcor=.true.
+    case ("-subc")
+      subc=.true.
     case ("-tracknc")
       tracknc=.true.
     case ("-metanc")

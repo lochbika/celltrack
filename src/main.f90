@@ -87,7 +87,7 @@ program celltrack
   !=======================================
 
   CALL docelldetection()
-  CALL dosubcelldetection()
+  if(subc)CALL dosubcelldetection()
 
   !=======================================
   !======= FINISHED CELL DETECTION =======
@@ -98,7 +98,7 @@ program celltrack
   !=======================================
 
   CALL calccellstatistics()
-  CALL calcsubcellstatistics()
+  if(subc)CALL calcsubcellstatistics()
   
   CALL calccellshape()
 
