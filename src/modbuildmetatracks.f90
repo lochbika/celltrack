@@ -41,6 +41,8 @@ module buildmetatracks
       allocate(trcon(SUM(nfw),2))
       trcon=-1
       l=1
+      
+      !!$OMP PARALLEL DO PRIVATE(tp,k,j,n)
       do i=1,ntracks
         if(trtypes(i)==9)cycle
         ! get last cell of this track
@@ -73,6 +75,7 @@ module buildmetatracks
           end do
         end do
       end do
+      !!$OMP END PARALLEL DO 
       ncon=l-1
       write(*,*)"Found ",ncon," connections between tracks."
       ! this was the last time we needed links -> deallocate

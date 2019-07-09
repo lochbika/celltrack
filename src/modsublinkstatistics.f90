@@ -45,11 +45,13 @@ module sublinkstatistics
       write(*,*)"======================================="
       write(*,*)"=== find subcells for each cell ..."
       write(*,*)"---------"
-
+      
       ! which subcells belong to a cell
       allocate(clIDsub(globnIDs,MAXVAL(clIDnsub)))
-      clIDsub=-1
+      clIDsub=-1    
       cltp=1 ! this is an array with 1 dimension, see above!
+
+      !$OMP PARALLEL DO SHARED(clIDsub,cltp)
       do i=1,globnIDs
         do j=1,globsubnIDs
           if(sublinks(j)==i)then
@@ -58,6 +60,7 @@ module sublinkstatistics
           end if
         end do
       end do
+      !$OMP END PARALLEL DO
       
       write(*,*)"======================================="
       write(*,*)"=== writing links to sublinks.txt ..."
