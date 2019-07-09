@@ -259,8 +259,9 @@ celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
     \item[-tracknc] Output of tracks to netCDF.
     \item[-metanc] Output of meta tracks to netCDF.
     \item[-minarea \textless int\textgreater] The minimum area of a cluster in grid points. Smaller clusters will be omitted. Default is 0.
-    \item[-sigma \textless float\textgreater] The standard deviation for the gaussian low-pass filter. Higher values cause a stronger smoothing of the input field. Default is 2.
-    \item[-trunc \textless float\textgreater] Truncation of the filter weights. Higher values cause a wider filter span. Default is 4.
+    \item[-subc] Activate subcell routines.
+    \item[-sigma \textless float\textgreater] Preprocessing for subcell detection: The standard deviation for the gaussian low-pass filter. Higher values cause a stronger smoothing of the input field. Default is 2.
+    \item[-trunc \textless float\textgreater] Preprocessing for subcell detection: Truncation of the filter weights. Higher values cause a wider filter span. Default is 4.
 	\item[-v] Verbose output to stdout. Use with caution! Massively slows down code execution!
 	\item[-h] Show help.
 \end{labeling}
