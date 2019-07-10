@@ -131,7 +131,7 @@ program celltrack
   !=======================================
 
   CALL linking()
-  CALL dosubcelllinking()
+  if(subc)CALL dosubcelllinking()
 
   !=======================================
   !========== FINISHED LINKING ===========
@@ -142,7 +142,7 @@ program celltrack
   !=======================================
 
   CALL calclinkstatistics()
-  CALL calcsublinkstatistics()
+  if(subc)CALL calcsublinkstatistics()
 
   !=======================================
   !====== FINISHED LINK STATISTICS =======
