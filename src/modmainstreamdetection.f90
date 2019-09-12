@@ -22,6 +22,7 @@ module mainstreamdetection
     subroutine domainstreamdetection
 
       use globvar
+      use omp_lib
 
       implicit none
 
@@ -29,7 +30,7 @@ module mainstreamdetection
       integer, allocatable :: init(:),quit(:),qi(:),ninit,nquit
       integer, allocatable :: paths(:,:),pathsi(:,:),qicon(:,:)
       integer, allocatable :: thismainstream(:),lastmainstream(:)
-      real(kind=stdfloattype),allocatable :: eta(:),pher(:)
+      real(kind=stdfloattype),allocatable :: eta(:),pher(:),alleta(:,:),allpher(:,:)
       logical,allocatable :: backw(:)
       logical :: resetnants
       character(len=stdclen) :: ttrack
@@ -88,10 +89,17 @@ module mainstreamdetection
       write(*,*)"=== Do it! ..."
       write(*,*)"---------"
 
-      ! open file for connections and pheromone values
-      open(unit=1,file="meta_con_pher.txt",action="write",status="replace")
-
       ! loop meta tracks
+      allocate(alleta(nmeta,maxconlen))
+      allocate(allpher(nmeta,maxconlen))
+      alleta=-1
+      allpher=-1
+      
+      !$OMP PARALLEL PRIVATE(eta,pher,quit,init,numeqsol,n) &
+      !$OMP & PRIVATE(ninit,nquit,thismainstream,lastmainstream,paths,pathsi,backw,qicon,qi,k,j) &
+      !$OMP & PRIVATE(resetnants,intsum,areasum,isum,wsum,run,ant,tp) FIRSTPRIVATE(nants)
+      write(*,*)"Hello from thread #",OMP_GET_THREAD_NUM(),"!"
+      !$OMP DO      
       do i=1,nmeta
         ! status to stdout
         if(MOD(i,outstep/2)==0 .OR. i==1 .OR. i==nmeta)then
@@ -321,17 +329,29 @@ module mainstreamdetection
           if(.NOT.nobounds(allmainstream(i,k)))mstrnobounds(i)=.false.
         end do
         
-        ! write the connections with their pheromone values and distances
-        ! write header meta_con_pher.txt
+        ! save eta and pher
+        alleta(i,:) = eta(:)
+        allpher(i,:) = pher(:)
+        
+        ! deallocate
+        deallocate(init,quit,eta,pher,paths,pathsi,thismainstream,lastmainstream)
+        if(resetnants)nants=-1
+      end do
+      
+      !$OMP END DO 
+      !$OMP END PARALLEL
+      
+      ! open file for connections and pheromone values
+      open(unit=1,file="meta_con_pher.txt",action="write",status="replace")
+      ! write the connections with their pheromone values and distances
+      ! write header meta_con_pher.txt
+      do i=1,nmeta
         write(1,'(1a4,1i12,1L4,1i4)')"### ",i,mstrnobounds(i)
         write(1,*)"   trackID1    trackID2        pher        dist"
         do k=1,maxmetalen
           if(allcon(i,k,1)==-1)exit
-          write(1,'(2i12,2f12.5)')allcon(i,k,:),pher(k),eta(k)
-        end do
-
-        deallocate(init,quit,eta,pher,paths,pathsi,thismainstream,lastmainstream)
-        if(resetnants)nants=-1
+          write(1,'(2i12,2f12.5)')allcon(i,k,:),allpher(i,k),alleta(i,k)
+        end do   
       end do
       close(unit=1)
 

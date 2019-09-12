@@ -22,7 +22,8 @@ module buildmetatracks
     subroutine dobuildmetatracks
 
       use globvar
-
+      use omp_lib
+      
       implicit none
 
       integer, allocatable :: trcon(:,:),conbuffer(:,:),metabuffer(:),metbuffer1(:),metbuffer2(:)
@@ -41,8 +42,9 @@ module buildmetatracks
       allocate(trcon(SUM(nfw),2))
       trcon=-1
       l=1
-      
-      !!$OMP PARALLEL DO PRIVATE(tp,k,j,n)
+      !!$OMP PARALLEL PRIVATE(tp,k,j,n) SHARED(trcon,l)
+      !write(*,*)"Hello from thread #",OMP_GET_THREAD_NUM(),"!"
+      !!$OMP DO
       do i=1,ntracks
         if(trtypes(i)==9)cycle
         ! get last cell of this track
@@ -70,12 +72,15 @@ module buildmetatracks
               if(MOD(l,outstep*2)==0 .OR. l==1)then
                 write(*,*)"Found ",l," connections between tracks."
               end if
+              !!$OMP CRITICAL
               l=l+1
+              !!$OMP END CRITICAL
             end if
           end do
         end do
       end do
-      !!$OMP END PARALLEL DO 
+      !!$OMP END DO 
+      !!$OMP END PARALLEL
       ncon=l-1
       write(*,*)"Found ",ncon," connections between tracks."
       ! this was the last time we needed links -> deallocate

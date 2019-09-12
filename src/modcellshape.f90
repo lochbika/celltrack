@@ -23,6 +23,7 @@ module cellshape
 
       use ncdfpars
       use globvar
+      use omp_lib
 
       implicit none
 
@@ -181,10 +182,17 @@ module cellshape
             end if
           end do
         end do
+        
+        ! do the next step in parallel
+        
+        !$OMP PARALLEL
+        !write(*,*)"Hello from thread #",OMP_GET_THREAD_NUM(),"!"
 
         ! rotate each cell in steps of 1 degree
         ! x' = x*cos(theta) + y*sin(theta)
         ! y' = -1 * x*sin(theta) + y*cos(theta)
+        
+        !$OMP DO PRIVATE(i,j,maxLen,tmpcoords)
         do clID=minclID,maxclID
           ! rotate and save coordinates of the current rotation
           maxLen=0
@@ -205,6 +213,9 @@ module cellshape
             deallocate(tmpcoords)
           end do
         end do
+        
+        !$OMP END DO 
+        !$OMP END PARALLEL
 
         deallocate(coords,cellcnt)
       end do

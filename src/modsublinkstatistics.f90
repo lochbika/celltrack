@@ -51,7 +51,7 @@ module sublinkstatistics
       clIDsub=-1    
       cltp=1 ! this is an array with 1 dimension, see above!
 
-      !$OMP PARALLEL DO SHARED(clIDsub,cltp)
+      !$OMP PARALLEL DO SHARED(clIDsub,cltp) PRIVATE(i,j)
       do i=1,globnIDs
         do j=1,globsubnIDs
           if(sublinks(j)==i)then
