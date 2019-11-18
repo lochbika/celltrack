@@ -256,7 +256,7 @@ module ncdfpars
 
       nlev=zaxisInqSize(zaxisID1)
       allocate(levels(0:(nlev-1)))
-      nlev=zaxisInqLevels(zaxisID1,levels)
+      CALL zaxisInqLevels(zaxisID1,levels)
       level=zaxisInqLevel(zaxisID1,levelID)
       
       call streamClose(streamID1)
