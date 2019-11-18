@@ -142,26 +142,26 @@ module advectioncorrection
         CALL vlistDefVarLongname(vlistID2,vuID,"derived wind speed in x direction")
         CALL vlistDefVarUnits(vlistID2,vuID,"m/s")
         CALL vlistDefVarMissval(vlistID2,vuID,outmissval)
-        CALL vlistDefVarDatatype(vlistID2,vuID,CDI_DATATYPE_FLT64)
+        CALL vlistDefVarDatatype(vlistID2,vuID,DATATYPE_FLT64)
         vvID=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
         CALL vlistDefVarName(vlistID2,vvID,"v")
         CALL vlistDefVarLongname(vlistID2,vvID,"derived wind speed in y direction")
         CALL vlistDefVarUnits(vlistID2,vvID,"m/s")
         CALL vlistDefVarMissval(vlistID2,vvID,outmissval)
-        CALL vlistDefVarDatatype(vlistID2,vvID,CDI_DATATYPE_FLT64)
+        CALL vlistDefVarDatatype(vlistID2,vvID,DATATYPE_FLT64)
         ssizeID=vlistDefVar(vlistID2,gridID2,zaxisID2,TIME_VARIABLE)
         CALL vlistDefVarName(vlistID2,ssizeID,"sample_size")
         CALL vlistDefVarLongname(vlistID2,ssizeID,"number of cells in grid area")
         CALL vlistDefVarUnits(vlistID2,ssizeID,"-")
         CALL vlistDefVarMissval(vlistID2,ssizeID,outmissval)
-        CALL vlistDefVarDatatype(vlistID2,ssizeID,CDI_DATATYPE_INT32)
+        CALL vlistDefVarDatatype(vlistID2,ssizeID,DATATYPE_INT32)
         ! copy time axis from input
         taxisID2=vlistInqTaxis(vlistID1)
         call vlistDefTaxis(vlistID2,taxisID2)
 
         ! Open the dataset for writing
         write(vfile,'(A7,I0.3,A3)')"vfield_",adviter,".nc"
-        streamID2=streamOpenWrite(TRIM(vfile),CDI_FILETYPE_NC4)
+        streamID2=streamOpenWrite(TRIM(vfile),FILETYPE_NC4)
         if(streamID2<0)then
            write(*,*)cdiStringError(streamID2)
            stop
@@ -172,7 +172,7 @@ module advectioncorrection
         write(*,*)"---------"
 
         ! set netCDF4 compression
-        CALL streamDefCompType(streamID1,CDI_COMPRESS_ZIP)
+        CALL streamDefCompType(streamID1,COMPRESS_ZIP)
         CALL streamDefCompLevel(streamID1, 6)
         ! Assign variables to dataset
         call streamDefVList(streamID2,vlistID2)

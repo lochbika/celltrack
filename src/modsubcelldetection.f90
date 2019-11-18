@@ -103,18 +103,18 @@ module subcelldetection
       CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each subcell")
       CALL vlistDefVarUnits(vlistID2,varID2,"-")
       CALL vlistDefVarMissval(vlistID2,varID2,outmissval)
-      CALL vlistDefVarDatatype(vlistID2,varID2,CDI_DATATYPE_FLT32)
+      CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_FLT32)
       ! copy time axis from input
       taxisID2=vlistInqTaxis(vlistID1)
       call vlistDefTaxis(vlistID2,taxisID2)
       ! Open the dataset for writing
-      streamID2=streamOpenWrite(trim(suboutfile),CDI_FILETYPE_NC4)
+      streamID2=streamOpenWrite(trim(suboutfile),FILETYPE_NC4)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
       ! set netCDF4 compression
-      CALL streamDefCompType(streamID2,CDI_COMPRESS_ZIP)
+      CALL streamDefCompType(streamID2,COMPRESS_ZIP)
       CALL streamDefCompLevel(streamID2, 6)
       ! Assign variables to dataset
       call streamDefVList(streamID2,vlistID2)
@@ -142,18 +142,18 @@ module subcelldetection
       CALL vlistDefVarLongname(vlistID4,varID4,"")
       CALL vlistDefVarUnits(vlistID4,varID4,trim(vunit))
       CALL vlistDefVarMissval(vlistID4,varID4,outmissval)
-      CALL vlistDefVarDatatype(vlistID4,varID4,CDI_DATATYPE_FLT32)
+      CALL vlistDefVarDatatype(vlistID4,varID4,DATATYPE_FLT32)
       ! copy time axis from input
       taxisID4=vlistInqTaxis(vlistID1)
       call vlistDefTaxis(vlistID4,taxisID4)
       ! Open the dataset for writing
-      streamID4=streamOpenWrite(trim(blurfile),CDI_FILETYPE_NC4)
+      streamID4=streamOpenWrite(trim(blurfile),FILETYPE_NC4)
       if(streamID4<0)then
          write(*,*)cdiStringError(streamID4)
          stop
       end if
       ! set netCDF4 compression
-      CALL streamDefCompType(streamID4,CDI_COMPRESS_ZIP)
+      CALL streamDefCompType(streamID4,COMPRESS_ZIP)
       CALL streamDefCompLevel(streamID4, 6)
       ! Assign variables to dataset
       call streamDefVList(streamID4,vlistID4)

@@ -82,18 +82,18 @@ module celldetection
       CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each cell")
       CALL vlistDefVarUnits(vlistID2,varID2,"-")
       CALL vlistDefVarMissval(vlistID2,varID2,outmissval)
-      CALL vlistDefVarDatatype(vlistID2,varID2,CDI_DATATYPE_INT32)
+      CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
       ! copy time axis from input
       taxisID2=vlistInqTaxis(vlistID1)
       call vlistDefTaxis(vlistID2,taxisID2)
       ! Open the dataset for writing
-      streamID2=streamOpenWrite(trim(outfile),CDI_FILETYPE_NC4)
+      streamID2=streamOpenWrite(trim(outfile),FILETYPE_NC4)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
       ! set netCDF4 compression
-      CALL streamDefCompType(streamID2,CDI_COMPRESS_ZIP)
+      CALL streamDefCompType(streamID2,COMPRESS_ZIP)
       CALL streamDefCompLevel(streamID2, 6)
       ! Assign variables to dataset
       call streamDefVList(streamID2,vlistID2)
