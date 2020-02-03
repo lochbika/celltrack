@@ -49,7 +49,7 @@ module advectioncorrection
       vnx=nx/coarsex
       vny=ny/coarsey
       vxres=( (xvals(nx)+diflon/2) - (xvals(1)-diflon/2) ) / vnx
-      vyres=( (yvals(ny)+diflat/2) - (yvals(1)-diflat/2) ) / vnx
+      vyres=( (yvals(ny)+diflat/2) - (yvals(1)-diflat/2) ) / vny
       allocate(vxvals(vnx),vyvals(vny))
       vxvals(1)= (xvals(1)-diflon/2) + (vxres/2)
       vyvals(1)= (yvals(1)-diflat/2) + (vyres/2)
@@ -200,19 +200,19 @@ module advectioncorrection
                 !    this assumes selCL did not cross the boundaries
                 ! 2. the distance between clID and the projection of selCL
                 !    this assumes that selCL crossed the boundaries
-                distxo=wclcmass(clID,1)-wclcmass(selCL,1) ! 1 in x direction
-                distyo=wclcmass(clID,2)-wclcmass(selCL,2) ! 1 in y direction
+                distxo=wclcmassgrd(clID,1)-wclcmassgrd(selCL,1) ! 1 in x direction
+                distyo=wclcmassgrd(clID,2)-wclcmassgrd(selCL,2) ! 1 in y direction
                 ! 2 in x direction
-                if(wclcmass(clID,1)>=wclcmass(selCL,1))then
-                  distxp=wclcmass(clID,1)-wclcmass(selCL,1)+nx
+                if(wclcmassgrd(clID,1)>=wclcmassgrd(selCL,1))then
+                  distxp=wclcmassgrd(clID,1)-wclcmassgrd(selCL,1)+nx
                 else
-                  distxp=wclcmass(clID,1)+nx-wclcmass(selCL,1)
+                  distxp=wclcmassgrd(clID,1)+nx-wclcmassgrd(selCL,1)
                 end if
                 ! 2 in y direction
-                if(wclcmass(clID,2)>=wclcmass(selCL,2))then
-                  distyp=wclcmass(clID,2)-wclcmass(selCL,2)+ny
+                if(wclcmassgrd(clID,2)>=wclcmassgrd(selCL,2))then
+                  distyp=wclcmassgrd(clID,2)-wclcmassgrd(selCL,2)+ny
                 else
-                  distyp=wclcmass(clID,2)+ny-wclcmass(selCL,2)
+                  distyp=wclcmassgrd(clID,2)+ny-wclcmassgrd(selCL,2)
                 end if
                 if(verbose)write(*,*)"distances are x,y"
                 if(verbose)write(*,*)"  ",distxo,distyo
