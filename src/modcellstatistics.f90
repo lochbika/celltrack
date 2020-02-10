@@ -496,7 +496,7 @@ module cellstatistics
       open(unit=1,file="cell_stats.txt",action="write",status="replace")
       write(1,*)"     clID    tsclID             clarea grd_clarea         clcmassX"//&
       &"         clcmassY        wclcmassX        wclcmassY     grd_clcmassX"//&
-      &"     grd_clcmassY     grd_clcmassX     grd_clcmassY"//&
+      &"     grd_clcmassY    grd_wclcmassX    grd_wclcmassY"//&
       &"            peakVal"//&
       &"              avVal  touchb      date(YYYYMMDD)        time(hhmmss)"
       do i=1,globnIDs
