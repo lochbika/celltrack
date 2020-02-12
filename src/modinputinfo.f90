@@ -23,7 +23,7 @@ module inputinfo
       use ncdfpars
     
       use globvar, only : ifile,ntp,status,tp,ivar,stdclen,vunit,vname,vdate,vtime, &
-        & tstep,nx,ny,minx,maxx,miny,maxy,level,inmissval,nlev,xunit,yunit,diflon,diflat
+        & tstep,nx,ny,minx,maxx,miny,maxy,level,inmissval,nlev,xunit,yunit,diflon,diflat,thresdir,thres
     
       write(*,*)"======================================="
       write(*,*)"========== INPUT INFORMATION =========="
@@ -74,7 +74,7 @@ module inputinfo
       write(*,'(A,1i12)')" NLEV       : ",nlev
       write(*,'(A,1f12.2)')" SELLEV     : ",level
       write(*,*)"---------"
-      
+      write(*,'(A,1i8,1f12.2)')" thresh     : ",thresdir,thres
       write(*,*)"======================================="
       write(*,*)"======== END INPUT INFORMATION ========"
       write(*,*)"======================================="

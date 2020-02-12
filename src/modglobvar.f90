@@ -44,6 +44,7 @@ module globvar
   integer :: minarea                         ! minimum area for clusters in grid points
   real(kind=stdfloattype) :: sigma                      ! the std dev for the gaussian blur before subcelldetection
   integer :: truncate                        ! truncation(span) for the gaussian blur before subcelldetection
+  integer :: thresdir                        ! is the given threshold a minimum or maximum
   
   ! basic information about variable in input file
   character(len=stdclen) :: vunit,vname

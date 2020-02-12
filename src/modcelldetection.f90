@@ -222,8 +222,14 @@ module celldetection
       ! mask values higher than threshold and if not missing value
       do y=1,ny
         do x=1,nx
-          if(data2d(x,y)>thres .AND. data2d(x,y).ne.missval)then
-          mask(x,y)=.true.
+          if(thresdir.eq.1)then ! if the chosen threshold is supposed to be a MINimum
+            if(data2d(x,y)>thres .AND. data2d(x,y).ne.missval)then
+              mask(x,y)=.true.
+            end if
+          else  ! if the chosen threshold is supposed to be a MAXimum
+            if(data2d(x,y)<thres .AND. data2d(x,y).ne.missval)then
+              mask(x,y)=.true.
+            end if
           end if
         end do
       end do
