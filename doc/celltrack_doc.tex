@@ -80,6 +80,7 @@ The link (and link type) matrix makes it easy to check for overlaps between two 
 \subsection{The subcell detection}
 \label{sec:detectsubcells}
 A cell represents a continuous area of the key variable above a certain threshold. This definition groups neighboring grid points into the same cell while ignoring the variability of the key variable within the cell. Thus, it is possible that the output statistics (e.g. average or maximum value of a cell) become less representative in the case of large and/or complex cells. To obtain a more detailed picture of such complex cells, celltrack features an algorithm to subdivide cells into separate parts, each of them belonging to one local maximum within the cell.
+The basic principle of the algorithm follows \cite{Senf2018}.
 The following steps are taken to achieve this:
 \begin{enumerate}
 	\item Smooth the input data field with a gaussian blur.
@@ -215,32 +216,42 @@ As this project needs GNU gfortran to compile, the gfortran executable must be d
 cmake -DCMAKE_Fortran_COMPILER=gfortran ..
 \end{verbatim}
 
+\subsubsection{Compile with debugging symbols}
+In order to compile celltrack with debugging options use:
+\begin{verbatim}
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+\end{verbatim}
+
 \section{Usage}
 A basic example to run celltrack without advection correction:
 \begin{verbatim}
-celltrack -i <filename> -var <int> -lev <int> -thres <float> \
-          -nants <int> -nruns <int> -rho <float> \
-          -rseed <int> -lout [-h -v]
+celltrack -i <filename> -var <char> -thres <float> 
 \end{verbatim}   
 Run celltrack with advection correction:
 \begin{verbatim}       
-celltrack -i <filename> -var <int> -lev <int> -thres <float> \
-          -nants <int> -nruns <int> -rho <float> \
-          -rseed <int> -lout \
-          -advcor -nadviter <int> -cx <int> -cy <int> -tstep <int> [-h -v]
+celltrack -i <filename> -var <char> -thres <float> \
+          -advcor -nadviter <int> -cx <int> -cy <int> -tstep <int>
 \end{verbatim}
 
 \subsubsection*{Example}
+Run celltrack with a minimum threshold of $0.5$. 
+The + suffix for the -thres option can be omitted.
 \begin{verbatim}
-celltrack -i surfprec.nc -var 0 -lev 0 -thres 0.5
+celltrack -i surfprec.nc -var prec -thres 0.5+
 \end{verbatim}
+
+If you want to use a maximum threshold, that means that all values greater than a certain value are ignored, suffix the value with a -. E.g.:
+\begin{verbatim}
+celltrack -i surfprec.nc -var prec -thres 0.5-
+\end{verbatim}
+
 
 \subsubsection*{Options}
 \begin{labeling}{-maxnantsoooooooo}
 	\item[-i \textless char\textgreater] Input file name.
 	\item[-var \textless int\textgreater] NetCDF/grib variable name.
 	\item[-lev \textless int\textgreater] NetCDF/grib level ID. Default is 0.
-	\item[-thres \textless float\textgreater] All grid points with values greater than this are considered. Default is 0.
+	\item[-thres \textless float\textgreater{}+] A minimum (suffix: +, default and can be omitted) or maximum (suffix: -) threshold for the clustering routine. 
 	\item[-nants \textless int\textgreater] Number of ants/agents for mainstream detection. Default value is the number of nodes of a meta track.
 	\item[-maxnants \textless int\textgreater] The maximum number of ants/agents for mainstream detection. Setting this value can be useful to avoid long computation times for large meta track. Nevertheless it may decrease the validity of the detected mainstream.
 	\item[-nruns \textless int\textgreater] Number of iterations for mainstream detection. Default is 300.
