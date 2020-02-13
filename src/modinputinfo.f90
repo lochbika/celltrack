@@ -74,7 +74,11 @@ module inputinfo
       write(*,'(A,1i12)')" NLEV       : ",nlev
       write(*,'(A,1f12.2)')" SELLEV     : ",level
       write(*,*)"---------"
-      write(*,'(A,1i8,1f12.2)')" thresh     : ",thresdir,thres
+      if(thresdir.eq.1)then
+        write(*,'(A,1f12.2)')" threshold : MIN ",thres
+      else
+        write(*,'(A,1f12.2)')" threshold : MAX ",thres
+      end if
       write(*,*)"======================================="
       write(*,*)"======== END INPUT INFORMATION ========"
       write(*,*)"======================================="
