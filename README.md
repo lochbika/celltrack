@@ -19,6 +19,6 @@ Version 0.9.2 can be considered as a usable version with the following features:
  
 See doc/celltrack_doc.pdf for installing/usage infos and more detailed explanations of how it works.
 
-You will need the cdi library to compile and run celltrack: https://code.zmaw.de/projects/cdi/wiki
+You will need the cdi library to compile and run celltrack: https://code.mpimet.mpg.de/projects/cdi/wiki
 
 This software comes with absolutely no warranty! It is still under development!
