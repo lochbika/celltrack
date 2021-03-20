@@ -113,9 +113,11 @@ module cellstatistics
               tsclID(INT(dat(i)))=tsID+1
               cldate(INT(dat(i)))=vdate(tsID+1)
               cltime(INT(dat(i)))=vtime(tsID+1)
+              if(verbose)then
+                write(*,*)"cluster: ",clIDs(INT(dat(i)))," is at timestep: ",tsclID(INT(dat(i)))
+                write(*,*)cldate(INT(dat(i))),cltime(INT(dat(i)))
+              end if
             end if
-            if(verbose)write(*,*)"cluster: ",clIDs(INT(dat(i)))," is at timestep: ",tsclID(INT(dat(i)))
-            if(verbose)write(*,*)cldate(INT(dat(i))),cltime(INT(dat(i)))
           end if
         end do
         deallocate(dat)

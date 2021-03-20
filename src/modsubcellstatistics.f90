@@ -112,9 +112,11 @@ module subcellstatistics
               subtsclID(INT(dat(i)))=tsID+1
               subcldate(INT(dat(i)))=vdate(tsID+1)
               subcltime(INT(dat(i)))=vtime(tsID+1)
+              if(verbose)then
+                write(*,*)"subcluster: ",subclIDs(INT(dat(i)))," is at timestep: ",subtsclID(INT(dat(i)))
+                write(*,*)subcldate(INT(dat(i))),subcltime(INT(dat(i)))
+              end if
             end if
-            if(verbose)write(*,*)"subcluster: ",subclIDs(INT(dat(i)))," is at timestep: ",subtsclID(INT(dat(i)))
-            if(verbose)write(*,*)subcldate(INT(dat(i))),subcltime(INT(dat(i)))
           end if
         end do
         deallocate(dat)
