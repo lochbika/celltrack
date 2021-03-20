@@ -236,7 +236,7 @@ module cellstatistics
             end if
             ! cell area
             clareagrd(INT(dat2d(x,y))) = clareagrd(INT(dat2d(x,y))) + 1
-            clarea(INT(dat2d(x,y))) = clarea(INT(dat2d(x,y))) + (diflon*diflat)
+            clarea(INT(dat2d(x,y))) = clarea(INT(dat2d(x,y))) + abs(diflon*diflat)
             ! average intensity
             clavint(INT(dat2d(x,y))) = clavint(INT(dat2d(x,y))) + pdat2d(x,y)
             ! peak intensity
