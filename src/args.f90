@@ -77,17 +77,16 @@ subroutine cliarguments
       do i=1,stdclen
         if(argc(i:i)=="+")then
           thresdir=1
-          k=i
+          argc(i:i)=" "
           exit
         else if(argc(i:i)=="-")then
           thresdir=0
-          k=i
+          argc(i:i)=" "
           exit
         else
           thresdir=1
         endif  
       end do
-      argc(k:k)=" "
       read(argc,*)thres
     case ("-var")
       arg=arg+1
