@@ -140,13 +140,13 @@ module celldetection
         ! cluster the frame
         ! it is very important that at the end the cell IDs range from 1 to globnIDs without gaps
         allocate(cl(nx,ny))
-        CALL clustering(dat2d,globID,globID,nIDs,cl,inmissval)
+        CALL clustering(dat2d,globID,nIDs,cl,inmissval)
         !write(*,*)"clustering: Found ",nIDs," Cells"
         !write(*,*)nIDs,globnIDs,globID
         ! periodic boundaries
         if(nIDs>0 .AND. periodic)then
           globID=globID+1-nIDs
-          CALL mergeboundarycells(cl,globID,globID,nIDs,outmissval)
+          CALL mergeboundarycells(cl,globID,nIDs,outmissval)
           !write(*,*)"perbound: Found ",nIDs," Cells"
           !write(*,*)nIDs,globnIDs,globID
         end if
@@ -157,8 +157,8 @@ module celldetection
           !write(*,*)"dellsmall: Found ",nIDs," Cells"
           !write(*,*)nIDs,globnIDs,globID
         end if
-        if(nIDs.ne.0)globID=globID+1
         globnIDs=globnIDs+nIDs
+        if(nIDs.ne.0)globID=globID+1
         deallocate(dat2d)
         !write(*,*)nIDs,globnIDs,globID
     
@@ -199,14 +199,14 @@ module celldetection
     
     end subroutine docelldetection
     
-    subroutine clustering(data2d,startID,finID,numIDs,tcl,missval)
+    subroutine clustering(data2d,startID,numIDs,tcl,missval)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
       use ncdfpars, only : outmissval
       
       implicit none
-      integer, intent(in) :: startID
-      integer, intent(out) :: finID,numIDs
+      integer, intent(inout) :: startID
+      integer, intent(out) :: numIDs
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
       real(kind=stdfloattype), intent(in) :: data2d(nx,ny),missval
@@ -278,13 +278,13 @@ module celldetection
         ! gather IDs and rename to gapless ascending IDs
         if(numIDs>0)then
           allocate(allIDs(numIDs))
-          allIDs=outmissval
+          allIDs=0
           clID=startID-1
           tp=1
           do y=1,ny
             do x=1,nx
               if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.outmissval)then
-                allIDs(tp)=tcl(x,y)
+                allIDs(tp)=INT(tcl(x,y))
                 tp=tp+1
               end if
             end do
@@ -305,17 +305,16 @@ module celldetection
         
       end if
       ! return final cluster ID
-      finID=clID
+      startID=clID
     end subroutine clustering
 
-    subroutine mergeboundarycells(data2d,startID,finID,numIDs,missval)
+    subroutine mergeboundarycells(data2d,startID,numIDs,missval)
       
       use globvar, only : clID,y,x,i,tp,nx,ny,thres
       
       implicit none
-      integer, intent(in) :: startID
+      integer, intent(inout) :: startID
       integer, intent(inout) :: numIDs
-      integer, intent(out) :: finID
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2)
       real(kind=stdfloattype), intent(in) :: missval
@@ -391,7 +390,7 @@ module celldetection
       deallocate(allIDs)
         
       ! return final cluster ID
-      finID=clID
+      startID=clID
     end subroutine mergeboundarycells
     
     subroutine delsmallcells(data2d,startID,finID,numIDs,missval)
