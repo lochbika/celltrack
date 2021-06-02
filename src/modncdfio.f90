@@ -142,7 +142,7 @@ module ncdfpars
       ingrid=gridInqType(gridID1)
 
       ! extract grid point values (coordinates)
-      if(ingrid.eq.GRID_GENERIC)then
+      if(ingrid.eq.GRID_GENERIC .or. ingrid.eq.GRID_LONLAT)then
         allocate(xvals(nx))
         allocate(yvals(ny))
       else if(ingrid.eq.GRID_CURVILINEAR)then
@@ -159,7 +159,7 @@ module ncdfpars
       ! reshape grid values into 2d
       allocate(xvals2d(nx,ny))
       allocate(yvals2d(nx,ny))
-      if(ingrid.eq.GRID_GENERIC)then
+      if(ingrid.eq.GRID_GENERIC .or. ingrid.eq.GRID_LONLAT)then
         do x=1,nx
           do y=1,ny
             xvals2d(x,y)=xvals(x)
@@ -179,7 +179,7 @@ module ncdfpars
       
       ! get grid spacing and find out whether the grid is regular
       reggrid=.true.
-      if(ingrid.eq.GRID_GENERIC)then
+      if(ingrid.eq.GRID_GENERIC .or. ingrid.eq.GRID_LONLAT)then
       ! x direction
         do y=1,ny
           do x=2,nx
@@ -188,7 +188,13 @@ module ncdfpars
             if(x.eq.2)then
               ldifx=difx
             else
-              if(ldifx.ne.difx)reggrid=.false.
+              if(ingrid.eq.GRID_GENERIC) then
+                if(ldifx.ne.difx) reggrid=.false.
+              end if
+              if(ingrid.eq.GRID_LONLAT) then
+                ! only complain if difference is larger than 0.001
+                if(1000.*abs(ldifx-difx).ge.1.) reggrid=.false.
+              end if
               ldifx=difx
             end if 
           end do
@@ -201,7 +207,15 @@ module ncdfpars
             if(y.eq.2)then
               ldify=dify
             else
-              if(ldifx.ne.difx)reggrid=.false.
+              if(ingrid.eq.GRID_GENERIC) then
+                if(ldify.ne.dify) regrid=.false.
+              end if
+              if(ingrid.eq.GRID_LONLAT) then
+                ! only complain if difference is larger than 0.001
+                if(1000.*abs(ldify-dify).ge.1.) then 
+                  reggrid=.false.
+                end if
+              end if
               ldify=dify
             end if 
           end do
