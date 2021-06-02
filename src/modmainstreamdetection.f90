@@ -253,16 +253,14 @@ module mainstreamdetection
           ! pheromone update
           if(verbose)write(*,*)"----- performing pheromone update"
           do ant=1,nants
-
             ! calculate the cost (sum of eta) of each ants path
             wsum=0
             tp=0
             do k=1,(maxconlen*2) !path
               if(pathsi(ant,k)==-1)exit
-                wsum=wsum+eta(pathsi(ant,k))
-                tp=tp+1
+              wsum=wsum+eta(pathsi(ant,k))
+              tp=tp+1
             end do
-
             ! average by number of nodes
             wsum=wsum/tp
 
@@ -325,7 +323,7 @@ module mainstreamdetection
         ! write header meta_con_pher.txt
         write(1,'(1a4,1i12,1L4,1i4)')"### ",i,mstrnobounds(i)
         write(1,*)"   trackID1    trackID2        pher        dist"
-        do k=1,maxmetalen
+        do k=1,maxconlen
           if(allcon(i,k,1)==-1)exit
           write(1,'(2i12,2f12.5)')allcon(i,k,:),pher(k),eta(k)
         end do
@@ -374,16 +372,18 @@ module mainstreamdetection
 
       implicit none
 
-      integer,intent(out) :: path(ncons*2),pathi(ncons*2)
-      integer,intent(in)  :: cons(ncons,2),ncons,init
+      integer,intent(out) :: path(:),pathi(:)
+      integer,intent(in)  :: cons(:,:),ncons,init
       integer :: a,ai,next(500),pcount,i,tp
-      real(kind=stdfloattype),intent(in) :: pher(ncons),lens(ncons)
+      real(kind=stdfloattype),intent(in) :: pher(:),lens(:)
       real(kind=stdfloattype) :: tauij,etaij,tauil,etail,zeta,rnum,probsum
       real(kind=stdfloattype),allocatable :: cprob(:)
 
       pcount=0
       a=init
       ai=-1
+      path=-1
+      pathi=-1
 
       do
         ! add a to path
@@ -445,10 +445,10 @@ module mainstreamdetection
 
       implicit none
 
-      integer,intent(out) :: path(ncons*2),pathi(ncons*2)
-      integer,intent(in)  :: cons(ncons,2),ncons,init
+      integer,intent(out) :: path(:),pathi(:)
+      integer,intent(in)  :: cons(:,:),ncons,init
 
-      real(kind=stdfloattype),intent(in) :: lens(ncons)
+      real(kind=stdfloattype),intent(in) :: lens(:)
 
       real(kind=stdfloattype) :: clen
 
@@ -457,6 +457,8 @@ module mainstreamdetection
       pcount=0
       a=init
       ai=-1
+      path=-1
+      pathi=-1
       
       do
         ! add a to path
