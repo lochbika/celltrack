@@ -65,7 +65,7 @@ module mainstreamstatistics
       open(unit=1,file="meta_mainstream_summary.txt",action="write",status="replace")
       write(1,*)"     metaID         dur         MetaValSum         MstrValSum            valFrac"
       do i=1,nmeta
-        write(1,'(2i12,3f19.6)')i,mstrdur(i),metavalsum(i),mstrvalsum(i),mstrvalfrac(i)
+        write(1,'(2i12,2e19.12,1f10.5)')i,mstrdur(i),metavalsum(i),mstrvalsum(i),mstrvalfrac(i)
       end do
       close(unit=1)
 
