@@ -208,13 +208,11 @@ module ncdfpars
               ldify=dify
             else
               if(ingrid.eq.GRID_GENERIC) then
-                if(ldify.ne.dify) regrid=.false.
+                if(ldify.ne.dify) reggrid=.false.
               end if
               if(ingrid.eq.GRID_LONLAT) then
                 ! only complain if difference is larger than 0.001
-                if(1000.*abs(ldify-dify).ge.1.) then 
-                  reggrid=.false.
-                end if
+                if(1000.*abs(ldify-dify).ge.1.) reggrid=.false.
               end if
               ldify=dify
             end if 
