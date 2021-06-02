@@ -49,6 +49,13 @@ subroutine scan_trackfile(filename,ntracks,maxlen)
       length=length+1
     end if
   end do
+  
+  ! finally check one more time (for the last track) 
+  ! whether it is longer than all other tracks..
+  ! Credits go to Hylke de Vries (KNMI) for this fix
+  if(maxlen<length)then
+    maxlen=length
+  end if
 
   close(unit=1)
 
