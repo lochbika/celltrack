@@ -397,10 +397,10 @@ module subcelldetection
       npart=0
       nlocmax=0
 
-      ! mask values if not missing value
+      ! mask values if not missing value, and a cellID exists for that location..
       do y=1,ny
         do x=1,nx
-          if(data2d(x,y).ne.missval)then
+          if(data2d(x,y).ne.missval .and. cIDs(x,y).ne.missval)then
             mask(x,y)=.true.
           end if
         end do
