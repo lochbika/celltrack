@@ -50,6 +50,11 @@ subroutine scan_trackfile(filename,ntracks,maxlen)
     end if
   end do
 
+  if(maxlen<length)then
+    maxlen=length
+  end if
+
+
   close(unit=1)
 
 end subroutine scan_trackfile
