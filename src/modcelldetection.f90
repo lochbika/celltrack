@@ -153,7 +153,7 @@ module celldetection
         ! delete small clusters/cells
         if(nIDs>0 .AND. minarea>0)then
           globID=globID+1-nIDs
-          CALL delsmallcells(cl,globID,globID,nIDs,outmissval)
+          CALL delsmallcells(cl,globID,nIDs,outmissval)
           !write(*,*)"dellsmall: Found ",nIDs," Cells"
           !write(*,*)nIDs,globnIDs,globID
         end if
@@ -223,11 +223,11 @@ module celldetection
       do y=1,ny
         do x=1,nx
           if(thresdir.eq.1)then ! if the chosen threshold is supposed to be a MINimum
-            if(data2d(x,y)>thres .AND. data2d(x,y).ne.missval)then
+            if(data2d(x,y)>=thres .AND. data2d(x,y).ne.missval)then
               mask(x,y)=.true.
             end if
           else  ! if the chosen threshold is supposed to be a MAXimum
-            if(data2d(x,y)<thres .AND. data2d(x,y).ne.missval)then
+            if(data2d(x,y)<=thres .AND. data2d(x,y).ne.missval)then
               mask(x,y)=.true.
             end if
           end if
@@ -310,7 +310,7 @@ module celldetection
 
     subroutine mergeboundarycells(data2d,startID,numIDs,missval)
       
-      use globvar, only : clID,y,x,i,tp,nx,ny,thres
+      use globvar, only : clID,y,x,i,tp,nx,ny
       
       implicit none
       integer, intent(inout) :: startID
@@ -393,14 +393,13 @@ module celldetection
       startID=clID
     end subroutine mergeboundarycells
     
-    subroutine delsmallcells(data2d,startID,finID,numIDs,missval)
+    subroutine delsmallcells(data2d,startID,numIDs,missval)
       
-      use globvar, only : clID,y,x,i,tp,nx,ny,thres,minarea
+      use globvar, only : clID,y,x,i,tp,nx,ny,minarea
       
       implicit none
-      integer, intent(in) :: startID
+      integer, intent(inout) :: startID
       integer, intent(inout) :: numIDs
-      integer, intent(out) :: finID
       integer, allocatable :: allIDs(:)
       integer :: conx,cony,neighb(2),area(numIDs)
       real(kind=stdfloattype), intent(in) :: missval
@@ -462,9 +461,7 @@ module celldetection
         deallocate(allIDs)
         
         ! return final cluster ID
-        finID=clID
-      else
-        finID=startID
+        startID=clID
       end if
     
     end subroutine delsmallcells
