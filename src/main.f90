@@ -100,7 +100,7 @@ program celltrack
   CALL calccellstatistics()
   if(subc)CALL calcsubcellstatistics()
   
-  !CALL calccellshape()
+  CALL calccellshape()
 
   !=======================================
   !========= FINISHED STATISTICS =========
@@ -110,7 +110,7 @@ program celltrack
   !======== MORE  CELL STATISTICS ========
   !=======================================
 
-  !CALL calccellpercentiles()
+  CALL calccellpercentiles()
 
   !=======================================
   !====== FINISHED MORE STATISTICS =======

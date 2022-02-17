@@ -201,7 +201,7 @@ module celldetection
     
     subroutine clustering(data2d,startID,numIDs,tcl,missval)
       
-      use globvar, only : clID,y,x,i,tp,nx,ny,thres
+      use globvar, only : clID,y,x,i,tp,nx,ny,thres,cellexpandradius,periodic
       use ncdfpars, only : outmissval
       
       implicit none
@@ -212,6 +212,9 @@ module celldetection
       real(kind=stdfloattype), intent(in) :: data2d(nx,ny),missval
       real(kind=stdfloattype),intent(out) :: tcl(nx,ny)
       logical :: mask(nx,ny)
+      logical, allocatable  :: maskcopy(:,:)
+      integer, allocatable  :: xloc(:,:),yloc(:,:)
+    
     
       ! initialize variables and arrays
       tcl=outmissval
@@ -233,6 +236,35 @@ module celldetection
           end if
         end do
       end do
+      
+      ! new feature - expand masks circularly based on minimum or maximum for better linking...
+      if(cellexpandradius .gt. 1) then
+      	if(periodic) then
+      		write(*,*) 'periodicity not implemented in cellexpandradius' 
+      	end if 
+      	allocate(xloc(nx,ny))
+      	allocate(yloc(nx,ny))
+      	allocate(maskcopy(nx,ny))
+      	! circular box around each point
+      	do y=1,ny
+      	  do x=1,nx
+      			xloc(x,y) = x
+      			yloc(x,y) = y
+      		end do
+      	end do 
+      	maskcopy = mask
+      	do y=1,ny
+      		do x=1,nx
+      			if(mask(x,y)) then
+      				where(((xloc - x)**2 + (yloc - y)**2) < (cellexpandradius**2)) maskcopy = .true.
+      			end if
+      		end do
+      	end do
+      	mask = maskcopy 
+      	deallocate(xloc)
+      	deallocate(yloc)
+      	deallocate(maskcopy)
+      end if     
       
       ! check if there are any gridpoints to cluster
       if(ANY(mask))then

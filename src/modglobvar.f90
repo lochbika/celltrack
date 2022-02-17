@@ -45,6 +45,8 @@ module globvar
   real(kind=stdfloattype) :: sigma                      ! the std dev for the gaussian blur before subcelldetection
   integer :: truncate                        ! truncation(span) for the gaussian blur before subcelldetection
   integer :: thresdir                        ! is the given threshold a minimum or maximum
+  integer :: cellexpandradius                ! radius for expanding each masked grid 
+  
   
   ! basic information about variable in input file
   character(len=stdclen) :: vunit,vname
