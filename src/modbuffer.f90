@@ -46,9 +46,6 @@ module buffering
       write(*,*)"======================================="
       write(*,*)"=== Opening connection to input file..."
     
-      ! Get initial Information about grid and timesteps of both files
-      CALL getVarInfo(bffile)
-    
       ! Open the dataset 1
       streamID1=streamOpenRead(bffile)
       if(streamID1<0)then
