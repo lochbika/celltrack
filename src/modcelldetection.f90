@@ -24,6 +24,7 @@ module celldetection
       
       use globvar
       use ncdfpars
+      use cellroutines
       
       implicit none
       
@@ -98,13 +99,58 @@ module celldetection
       ! Assign variables to dataset
       call streamDefVList(streamID2,vlistID2)
       
+      if(buffer>0)then
+
+        write(*,*)"======================================="
+        write(*,*)"=== CREATING OUTPUT ..."
+        write(*,*)"Output  :     ",trim(bffile)
+        write(*,*)"---------"
+      
+        !! open new nc file for results
+        ! define grid
+        gridID3=gridCreate(GRID_GENERIC, nx*ny)
+        CALL gridDefXsize(gridID3,nx)
+        CALL gridDefYsize(gridID3,ny)
+        CALL gridDefXvals(gridID3,xvals)
+        CALL gridDefYvals(gridID3,yvals)
+        CALL gridDefXunits(gridID3,TRIM(xunit))
+        CALL gridDefYunits(gridID3,TRIM(yunit))
+        zaxisID3=zaxisCreate(ZAXIS_GENERIC, 1)
+        CALL zaxisDefLevels(zaxisID3, level)
+        ! define variables
+        vlistID3=vlistCreate()
+        varID3=vlistDefVar(vlistID3,gridID3,zaxisID3,TIME_VARIABLE)
+        CALL vlistDefVarName(vlistID3,varID3,"bfarea")
+        CALL vlistDefVarLongname(vlistID3,varID3,"buffered area around cells; 1=true, 0=false")
+        CALL vlistDefVarUnits(vlistID3,varID3,"-")
+        CALL vlistDefVarMissval(vlistID3,varID3,inmissval)
+        CALL vlistDefVarDatatype(vlistID3,varID3,DATATYPE_INT32)
+        ! copy time axis from input
+        taxisID3=vlistInqTaxis(vlistID1)
+        call vlistDefTaxis(vlistID3,taxisID3)
+        ! Open the dataset for writing
+        streamID3=streamOpenWrite(trim(bffile),FILETYPE_NC)
+        if(streamID3<0)then
+           write(*,*)cdiStringError(streamID3)
+           stop
+        end if
+        ! Assign variables to dataset
+        call streamDefVList(streamID3,vlistID3)
+        
+      end if
+      
       ! save which time steps are completely filled with NA
       allocate(tsALLna(ntp))
       tsALLna=.false.
 
       ! Get data
-      write(*,*)"======================================="
-      write(*,*)"=== Find continous cells ..."
+      if(buffer==0)then
+        write(*,*)"======================================="
+        write(*,*)"=== Find continous cells ..."
+      else
+        write(*,*)"======================================="
+        write(*,*)"=== Find continous cells and calculate buffers ..."        
+      end if
       do tsID=0,(ntp-1)
         if(MOD(tsID+1,outstep)==0 .OR. tsID==0 .OR. tsID==ntp-1 .OR. verbose)then
           write(*,*)"Processing timestep: ",tsID+1,"/",ntp,"..."
@@ -118,6 +164,9 @@ module celldetection
 
         ! set time step for output file
         status=streamDefTimestep(streamID2,tsID)
+        if(buffer>0)then
+          status=streamDefTimestep(streamID3,tsID)
+        end if
 
         ! Read time step from input
         call streamReadVarSlice(streamID1,varID1,levelID,dat,nmiss1)
@@ -128,6 +177,10 @@ module celldetection
           dat=outmissval
           tsALLna(tsID+1)=.true.
           CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
+          if(buffer>0)then
+            nmiss3=nmiss1
+            CALL streamWriteVar(streamID3,varID3,dat,nmiss3)
+          end if
           deallocate(dat)
           cycle
         end if
@@ -161,16 +214,32 @@ module celldetection
         if(nIDs.ne.0)globID=globID+1
         deallocate(dat2d)
         !write(*,*)nIDs,globnIDs,globID
-    
-        ! reshape array for writing to nc
+        
+        ! buffer around remaining cells
+        if(buffer>0)then
+          allocate(bfmask(nx,ny))
+          CALL distCellEdge(cl,bfmask)
+        end if
+        
+        ! cells: reshape array and write to nc
         allocate(dat(nx*ny))
         CALL reshapeF2d(cl,nx,ny,dat)
         deallocate(cl)
-    
-        ! write time step to output file
         nmiss2=nmiss1
         CALL streamWriteVar(streamID2,varID2,dat,nmiss2)
         deallocate(dat)
+
+        ! cells: reshape array and write to nc
+        if(buffer>0)then
+          allocate(dat(nx*ny))
+          CALL reshapeF2d(bfmask,nx,ny,dat)
+          deallocate(bfmask)
+          nmiss3=(nx*ny)-sum(dat)
+          CALL streamWriteVar(streamID3,varID3,dat,nmiss3)
+          deallocate(dat)
+        end if
+        
+        
       end do
     
       ! close input and output
@@ -178,6 +247,12 @@ module celldetection
       CALL vlistDestroy(vlistID2)
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)
+      if(buffer>0)then
+        CALL gridDestroy(gridID3)
+        CALL vlistDestroy(vlistID3)
+        CALL streamClose(streamID3)
+      end if
+
     
       write(*,*)"======================================="
       write(*,*)"=== Summary ..."
@@ -198,272 +273,5 @@ module celldetection
       write(*,*)"======================================="
     
     end subroutine docelldetection
-    
-    subroutine clustering(data2d,startID,numIDs,tcl,missval)
-      
-      use globvar, only : clID,y,x,i,tp,nx,ny,thres
-      use ncdfpars, only : outmissval
-      
-      implicit none
-      integer, intent(inout) :: startID
-      integer, intent(out) :: numIDs
-      integer, allocatable :: allIDs(:)
-      integer :: conx,cony,neighb(2)
-      real(kind=stdfloattype), intent(in) :: data2d(nx,ny),missval
-      real(kind=stdfloattype),intent(out) :: tcl(nx,ny)
-      logical :: mask(nx,ny)
-    
-      ! initialize variables and arrays
-      tcl=outmissval
-      mask=.false.
-      clID=startID
-      numIDs=0
-    
-      ! mask values higher than threshold and if not missing value
-      do y=1,ny
-        do x=1,nx
-          if(thresdir.eq.1)then ! if the chosen threshold is supposed to be a MINimum
-            if(data2d(x,y)>=thres .AND. data2d(x,y).ne.missval)then
-              mask(x,y)=.true.
-            end if
-          else  ! if the chosen threshold is supposed to be a MAXimum
-            if(data2d(x,y)<=thres .AND. data2d(x,y).ne.missval)then
-              mask(x,y)=.true.
-            end if
-          end if
-        end do
-      end do
-      
-      ! check if there are any gridpoints to cluster
-      if(ANY(mask))then
-      
-        ! assign IDs to continous cells
-        do y=1,ny
-          do x=1,nx
-            neighb=outmissval
-            if(mask(x,y))then
-              ! gather neighbouring IDs; left,up
-              if(x.ne.1)  neighb(1)=tcl((x-1),y)
-              if(y.ne.1)  neighb(2)=tcl(x,(y-1))
-              ! check if there is NO cluster around the current pixel; create new one
-              if(ALL(neighb==outmissval))then
-                tcl(x,y)=clID
-                clID=clID+1
-                numIDs=numIDs+1
-              else
-                ! both neighbours are in the same cluster
-                if(neighb(1)==neighb(2).and.neighb(1).ne.outmissval)then
-                  tcl(x,y)=neighb(1)
-                end if
-                ! both neighbors are in different clusters but none of them is (-999)
-                if(neighb(1).ne.neighb(2) .and. neighb(1).ne.outmissval .and. neighb(2).ne.outmissval)then
-                  numIDs=numIDs-1
-                  tcl(x,y)=MINVAL(neighb)
-                  ! update the existing higher cluster with the lowest neighbour
-                  do cony=1,ny
-                    do conx=1,nx
-                      if(tcl(conx,cony)==MAXVAL(neighb))tcl(conx,cony)=MINVAL(neighb)
-                    end do
-                  end do
-                end if
-                ! both neighbors are in different clusters but ONE of them is empty(-999)
-                if(neighb(1).ne.neighb(2) .and. (neighb(1)==outmissval .or. neighb(2)==outmissval))then
-                  tcl(x,y)=MAXVAL(neighb)
-                end if
-              end if
-            end if
-          end do
-        end do
-        
-        ! gather IDs and rename to gapless ascending IDs
-        if(numIDs>0)then
-          allocate(allIDs(numIDs))
-          allIDs=0
-          clID=startID-1
-          tp=1
-          do y=1,ny
-            do x=1,nx
-              if(.NOT.ANY(allIDs==tcl(x,y)) .AND. tcl(x,y).ne.outmissval)then
-                allIDs(tp)=INT(tcl(x,y))
-                tp=tp+1
-              end if
-            end do
-          end do
-      
-          do i=1,tp-1
-            clID=clID+1
-            do y=1,ny
-              do x=1,nx
-                if(tcl(x,y)==allIDs(i))then
-                  tcl(x,y)=clID
-                end if
-              end do
-            end do
-          end do
-          deallocate(allIDs)
-        end if
-        
-      end if
-      ! return final cluster ID
-      startID=clID
-    end subroutine clustering
-
-    subroutine mergeboundarycells(data2d,startID,numIDs,missval)
-      
-      use globvar, only : clID,y,x,i,tp,nx,ny
-      
-      implicit none
-      integer, intent(inout) :: startID
-      integer, intent(inout) :: numIDs
-      integer, allocatable :: allIDs(:)
-      integer :: conx,cony,neighb(2)
-      real(kind=stdfloattype), intent(in) :: missval
-      real(kind=stdfloattype),intent(inout) :: data2d(nx,ny)
-    
-      ! initialize variables and arrays
-    
-      ! check in y direction if there are cells connected beyond boundaries
-      do y=1,ny
-        neighb=missval
-        ! gather neighbouring IDs
-        if(data2d(nx,y).ne.missval .AND. data2d(1,y).ne.missval)then
-          neighb(1)=data2d(nx,y) ! this is the ID of the current gridpoint
-          neighb(2)=data2d(1,y)  ! this is the ID of the neighbouring point over the edge of x
-          if(neighb(1).ne.neighb(2))then
-            ! now iterate the complete matrix and rename higher cluster ID to the lower ID
-            do cony=1,ny
-              do conx=1,nx
-                if(data2d(conx,cony)==MAXVAL(neighb))data2d(conx,cony)=MINVAL(neighb)
-              end do
-            end do
-            if(verbose)write(*,*)"y Cluster # ",MAXVAL(neighb)," replaced  by",MINVAL(neighb)
-            ! one cluster was deleted
-            numIDs=numIDs-1            
-          end if
-        end if
-      end do
-      ! check in x direction if there are cells connected beyond boundaries
-      do x=1,nx
-        neighb=missval
-        ! gather neighbouring IDs
-        if(data2d(x,ny).ne.missval .AND. data2d(x,1).ne.missval)then
-          neighb(1)=data2d(x,ny) ! this is the ID of the current gridpoint
-          neighb(2)=data2d(x,1)  ! this is the ID of the neighbouring point over the edge of y
-          if(neighb(1).ne.neighb(2))then
-            ! now iterate the complete matrix and rename higher cluster ID to the lower ID
-            do cony=1,ny
-              do conx=1,nx
-                if(data2d(conx,cony)==MAXVAL(neighb))data2d(conx,cony)=MINVAL(neighb)
-              end do
-            end do
-            if(verbose)write(*,*)"x Cluster # ",MAXVAL(neighb)," replaced  by",MINVAL(neighb)
-            ! one cluster was deleted
-            numIDs=numIDs-1            
-          end if
-        end if
-      end do
-      
-      ! gather IDs and rename to gapless ascending IDs
-      allocate(allIDs(numIDs))
-      allIDs=-999
-      tp=1
-      do y=1,ny
-        do x=1,nx
-          if(.NOT.ANY(allIDs==data2d(x,y)) .AND. data2d(x,y).ne.missval)then
-            allIDs(tp)=data2d(x,y)
-            tp=tp+1
-          end if
-        end do
-      end do
-  
-      clID=startID-1
-      do i=1,tp-1
-        clID=clID+1
-        do y=1,ny
-          do x=1,nx
-            if(data2d(x,y)==allIDs(i))then
-              data2d(x,y)=clID
-            end if
-          end do
-        end do
-      end do
-      deallocate(allIDs)
-        
-      ! return final cluster ID
-      startID=clID
-    end subroutine mergeboundarycells
-    
-    subroutine delsmallcells(data2d,startID,numIDs,missval)
-      
-      use globvar, only : clID,y,x,i,tp,nx,ny,minarea
-      
-      implicit none
-      integer, intent(inout) :: startID
-      integer, intent(inout) :: numIDs
-      integer, allocatable :: allIDs(:)
-      integer :: conx,cony,neighb(2),area(numIDs)
-      real(kind=stdfloattype), intent(in) :: missval
-      real(kind=stdfloattype),intent(inout) :: data2d(nx,ny)
-    
-      ! calculate each cells area
-      area=0
-      do x=1,nx
-        do y=1,ny
-          if(data2d(x,y).ne.missval)then
-          !write(*,*)data2d(x,y),x,y
-          area(INT(data2d(x,y))+1-startID) = area(INT(data2d(x,y))+1-startID) + 1
-          end if
-        end do
-      end do
-      
-      ! how many clusters will be deleted?
-      do i=1,numIDs
-        if(area(i)<minarea)numIDs=numIDs-1 
-      end do
-      
-      ! delete clusters with area smaller than minarea
-      do y=1,ny
-        do x=1,nx
-          if(data2d(x,y).ne.missval)then
-            if(area(INT(data2d(x,y))+1-startID)<minarea)then
-              data2d(x,y)=missval
-              if(verbose)write(*,*)"Cluster # ",i," deleted"
-            end if
-          end if
-        end do
-      end do      
-      
-      if(numIDs>0)then ! otherwise all clusters were deleted!
-        ! gather IDs and rename to gapless ascending IDs
-        allocate(allIDs(numIDs))
-        allIDs=missval
-        tp=1
-        do y=1,ny
-          do x=1,nx
-            if(.NOT.ANY(allIDs==data2d(x,y)) .AND. data2d(x,y).ne.missval)then
-              allIDs(tp)=data2d(x,y)
-              tp=tp+1
-            end if
-          end do
-        end do
-    
-        clID=startID-1
-        do i=1,tp-1
-          clID=clID+1
-          do y=1,ny
-            do x=1,nx
-              if(data2d(x,y)==allIDs(i))then
-                data2d(x,y)=clID
-              end if
-            end do
-          end do
-        end do
-        deallocate(allIDs)
-        
-        ! return final cluster ID
-        startID=clID
-      end if
-    
-    end subroutine delsmallcells
 
 end module celldetection

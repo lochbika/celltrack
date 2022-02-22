@@ -42,10 +42,11 @@ module globvar
   integer :: coarsex,coarsey                 ! factor for coarse graining of the grid for advection correction
   integer :: tstep                           ! timestep of input data in seconds
   integer :: minarea                         ! minimum area for clusters in grid points
-  real(kind=stdfloattype) :: sigma                      ! the std dev for the gaussian blur before subcelldetection
+  real(kind=stdfloattype) :: sigma           ! the std dev for the gaussian blur before subcelldetection
   integer :: truncate                        ! truncation(span) for the gaussian blur before subcelldetection
   integer :: thresdir                        ! is the given threshold a minimum or maximum
-  
+  integer :: buffer                          ! buffer around clusters in grid points
+
   ! basic information about variable in input file
   character(len=stdclen) :: vunit,vname
   real(kind=stdfloattype) :: inmissval
@@ -86,7 +87,7 @@ module globvar
   integer, allocatable :: subclIDs(:),subtsclID(:),subcldate(:),subcltime(:)
   logical, allocatable :: subtouchb(:)
   real(kind=stdfloattype), allocatable :: kernel(:,:)
-  ! Variables used for cell statistics
+  ! Variables used for *SUB*cell statistics
   integer, allocatable :: subclarea(:)
   real(kind=stdfloattype), allocatable :: subclpint(:),subclavint(:)
   real(kind=stdfloattype), allocatable :: subclcmass(:,:),subwclcmass(:,:) ! center of mass in unit coordinates
@@ -101,6 +102,14 @@ module globvar
   integer, allocatable :: sublinks(:) ! each subcell can only be linked to one cell :)
   integer, allocatable :: clIDnsub(:) ! how many subcells does a cell have?
   integer, allocatable :: clIDsub(:,:) ! which subcells are linked to which cell?
+
+  ! Variables for buffering around cells
+  integer :: bglobnIDs
+  real(kind=8), allocatable :: bfmask(:,:)
+  integer, allocatable :: bclIDs(:),btsclID(:),bcldate(:),bcltime(:)
+  logical, allocatable :: btouchb(:)
+  integer, allocatable :: bclarea(:),bclforcl(:)
+  real(kind=8), allocatable :: bclpint(:),bclavint(:),bclcmass(:,:),bwclcmass(:,:)
 
   ! variables for advection correction
   character(len=stdclen) :: vfile                         ! basename for velocity fields
@@ -144,6 +153,7 @@ module globvar
   character(len=stdclen) :: suboutfile
   character(len=stdclen) :: blurfile
   real(kind=stdfloattype) :: pi=3.141592653589793238462643383279502884197169399373510
+  character(len=stdclen) :: bffile,bfclfile
 
   ! random number
   real(kind=stdfloattype) :: rnum

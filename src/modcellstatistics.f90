@@ -470,6 +470,8 @@ module cellstatistics
           if(wclcmass(i,2)<miny)wclcmass(i,2)=maxy-abs(wclcmass(i,2))
         end if
       end do
+      
+      deallocate(wsum)
 
       CALL streamClose(streamID1)
       CALL streamClose(streamID2)

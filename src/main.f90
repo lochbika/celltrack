@@ -34,6 +34,7 @@ program celltrack
   use mainstreamdetection
   use advectioncorrection
   use mainstreamstatistics
+  use buffering
   use cellshape
 
   implicit none
@@ -45,11 +46,15 @@ program celltrack
   ! current advection iteration 
   adviter=0
   ! name for the cells file
-  outfile="cells.nc"  
+  outfile="cells.nc"
   ! name for the *SUB*cells file
   suboutfile="subcells.nc"
   ! name for the smoothed input file
   blurfile="input_smoothed.nc"
+  ! name for the buffer file
+  bffile="cells_buffer.nc"
+  ! name for the buffered cells (with IDs) file
+  bfclfile="cells_bufferID.nc"
 
   ! init the random seed if not specified with cli option
   if(rseed.eq.-1)then
@@ -91,6 +96,16 @@ program celltrack
 
   !=======================================
   !======= FINISHED CELL DETECTION =======
+  !=======================================
+
+  !=======================================
+  !====== START BUFFER CLUSTERING ========
+  !=======================================
+
+  if(buffer>0)CALL dobuffercluster()
+
+  !=======================================
+  !===== FINISHED BUFFER CLUSTERING ======
   !=======================================
 
   !=======================================
