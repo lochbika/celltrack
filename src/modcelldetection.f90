@@ -124,12 +124,12 @@ module celldetection
         CALL vlistDefVarLongname(vlistID3,varID3,"buffered area around cells; 1=true, 0=false")
         CALL vlistDefVarUnits(vlistID3,varID3,"-")
         CALL vlistDefVarMissval(vlistID3,varID3,inmissval)
-        CALL vlistDefVarDatatype(vlistID3,varID3,DATATYPE_INT32)
+        CALL vlistDefVarDatatype(vlistID3,varID3,CDI_DATATYPE_INT32)
         ! copy time axis from input
         taxisID3=vlistInqTaxis(vlistID1)
         call vlistDefTaxis(vlistID3,taxisID3)
         ! Open the dataset for writing
-        streamID3=streamOpenWrite(trim(bffile),FILETYPE_NC)
+        streamID3=streamOpenWrite(trim(bffile),CDI_FILETYPE_NC)
         if(streamID3<0)then
            write(*,*)cdiStringError(streamID3)
            stop

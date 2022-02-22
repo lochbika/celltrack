@@ -47,7 +47,7 @@ module buffering
       write(*,*)"=== Opening connection to input file..."
     
       ! Get initial Information about grid and timesteps of both files
-      CALL datainfo(bffile)
+      CALL getVarInfo(bffile)
     
       ! Open the dataset 1
       streamID1=streamOpenRead(bffile)
@@ -57,7 +57,7 @@ module buffering
       end if
     
       ! Set the variable IDs 1
-      varID1=ivar
+      varID1=getVarIDbyName(bffile,"bfarea")
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
@@ -86,12 +86,12 @@ module buffering
       CALL vlistDefVarLongname(vlistID2,varID2,"unique ID of each cell")
       CALL vlistDefVarUnits(vlistID2,varID2,"-")
       CALL vlistDefVarMissval(vlistID2,varID2,inmissval)
-      CALL vlistDefVarDatatype(vlistID2,varID2,DATATYPE_INT32)
+      CALL vlistDefVarDatatype(vlistID2,varID2,CDI_DATATYPE_INT32)
       ! copy time axis from input
       taxisID2=vlistInqTaxis(vlistID1)
       call vlistDefTaxis(vlistID2,taxisID2)
       ! Open the dataset for writing
-      streamID2=streamOpenWrite(trim(bfclfile),FILETYPE_NC)
+      streamID2=streamOpenWrite(trim(bfclfile),CDI_FILETYPE_NC)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
@@ -137,13 +137,13 @@ module buffering
         ! cluster the frame
         ! it is very important that at the end the cell IDs range from 1 to bglobnIDs without gaps
         allocate(cl(nx,ny))
-        CALL clustering(dat2d,globID,globID,nIDs,cl,inmissval)
+        CALL clustering(dat2d,globID,nIDs,cl,inmissval)
         !write(*,*)"clustering: Found ",nIDs," Cells"
         !write(*,*)nIDs,globnIDs,globID
         ! periodic boundaries
         if(nIDs>0 .AND. periodic)then
           globID=globID+1-nIDs
-          CALL mergeboundarycells(cl,globID,globID,nIDs,inmissval)
+          CALL mergeboundarycells(cl,globID,nIDs,outmissval)
           !write(*,*)"perbound: Found ",nIDs," Cells"
           !write(*,*)nIDs,globnIDs,globID
         end if
@@ -214,15 +214,13 @@ module buffering
         bclIDs(i)=i
       end do
 
-      CALL datainfo(bfclfile)
-
-      ! Open the cells file
+      ! Open the buffered cells file
       streamID2=streamOpenRead(bfclfile)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=0
+      varID2=getVarIDbyName(outfile,"cellID")
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
@@ -279,17 +277,13 @@ module buffering
       write(*,*)"=== calculating area, (weighted) center of mass, peak and average values ..."
       write(*,*)"---------"
 
-      !!!!!!!!!
-      ! find center of mass and area of clusters
-      CALL datainfo(bfclfile)
-
       ! Open the buffered cells file
       streamID2=streamOpenRead(bfclfile)
       if(streamID2<0)then
          write(*,*)cdiStringError(streamID2)
          stop
       end if
-      varID2=0
+      varID2=getVarIDbyName(bfclfile,"cellID")
       vlistID2=streamInqVlist(streamID2)
       gridID2=vlistInqVarGrid(vlistID2,varID2)
       taxisID2=vlistInqTaxis(vlistID2)
@@ -301,7 +295,7 @@ module buffering
          write(*,*)cdiStringError(streamID1)
          stop
       end if
-      varID1=0
+      varID1=getVarIDbyName(outfile,"cellID")
       vlistID1=streamInqVlist(streamID1)
       gridID1=vlistInqVarGrid(vlistID1,varID1)
       taxisID1=vlistInqTaxis(vlistID1)
