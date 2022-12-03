@@ -315,15 +315,15 @@ module subcellstatistics
             projx=.false.
             projy=.false.
             do i=1,cellcnt(clID)
-              if(coords(clID,i,1)==1 .OR. coords(clID,i,1)==nx .OR. &
-                 & coords(clID,i,2)==1 .OR. coords(clID,i,2)==ny)then
+              if(coords(clID,i,1)==minx .OR. coords(clID,i,1)==maxx .OR. &
+                 & coords(clID,i,2)==miny .OR. coords(clID,i,2)==maxy)then
                 clbnd=.true.
                 exit
               end if
             end do
             do i=1,cellcnt(clID)
-              if(coords(clID,i,1)==1 .OR. coords(clID,i,1)==nx)projx=.true.
-              if(coords(clID,i,2)==1 .OR. coords(clID,i,2)==ny)projy=.true.
+              if(coords(clID,i,1)==minx .OR. coords(clID,i,1)==maxx)projx=.true.
+              if(coords(clID,i,2)==miny .OR. coords(clID,i,2)==maxy)projy=.true.
               if(projx .AND. projy)exit
             end do
             ! if that's the case count how many are closer to the upper boundary
@@ -333,7 +333,7 @@ module subcellstatistics
               ! x direction
               if(projx)then
                 do i=1,cellcnt(clID)
-                  if(coords(clID,i,1)>(nx/2))then
+                  if((coords(clID,i,1)-minx)>((maxx-minx)/2))then
                     nrupbndx=nrupbndx+1
                   end if
                 end do
@@ -341,15 +341,15 @@ module subcellstatistics
                 if((nrupbndx)>(subclarea(clID)/2))then ! project at nx
                   if(verbose)write(*,*)"projecting cell",clID,"at nx with ",nrupbndx,"of",subclarea(clID),"points"
                   do i=1,cellcnt(clID)
-                    if(coords(clID,i,1)<(nx/2))then
-                      coords(clID,i,1)=coords(clID,i,1)+nx
+                    if((coords(clID,i,1)-minx)<((maxx-minx)/2))then
+                      coords(clID,i,1)=maxx-(minx-coords(clID,i,1))
                     end if
                   end do                  
                 else ! project at x=1
                   if(verbose)write(*,*)"projecting cell",clID,"at x=1 with ",subclarea(clID)-nrupbndx,"of",subclarea(clID),"points"
                   do i=1,cellcnt(clID)
-                    if(coords(clID,i,1)>=(nx/2))then
-                      coords(clID,i,1)=1-(nx-coords(clID,i,1))
+                    if((coords(clID,i,1)-minx)>=((maxx-minx)/2))then
+                      coords(clID,i,1)=minx-(maxx-coords(clID,i,1))
                     end if
                   end do                   
                 end if
@@ -357,7 +357,7 @@ module subcellstatistics
               ! y direction
               if(projy)then
                 do i=1,cellcnt(clID)
-                  if(coords(clID,i,2)>(ny/2))then
+                  if((coords(clID,i,2)-miny)>((maxy-miny)/2))then
                     nrupbndy=nrupbndy+1
                   end if
                 end do
@@ -365,15 +365,15 @@ module subcellstatistics
                 if((nrupbndy)>(subclarea(clID)/2))then ! project at ny
                   if(verbose)write(*,*)"projecting cell",clID,"at ny with ",nrupbndy,"of",subclarea(clID),"points"
                   do i=1,cellcnt(clID)
-                    if(coords(clID,i,2)<(ny/2))then
-                      coords(clID,i,2)=coords(clID,i,2)+ny
+                    if((coords(clID,i,2)-miny)<((maxy-miny)/2))then
+                      coords(clID,i,2)=maxy-(miny-coords(clID,i,2))
                     end if
                   end do                  
                 else ! project at y=1
                   if(verbose)write(*,*)"projecting cell",clID,"at y=1 with ",subclarea(clID)-nrupbndy,"of",subclarea(clID),"points"
                   do i=1,cellcnt(clID)
-                    if(coords(clID,i,2)>=(ny/2))then
-                      coords(clID,i,2)=1-(ny-coords(clID,i,2))
+                    if((coords(clID,i,2)-miny)>=((maxy-miny)/2))then
+                      coords(clID,i,2)=miny-(maxy-coords(clID,i,2))
                     end if
                   end do                   
                 end if
@@ -427,14 +427,14 @@ module subcellstatistics
         subwclcmass(i,1)=subwclcmass(i,1)/wsum(i)
         subwclcmass(i,2)=subwclcmass(i,2)/wsum(i)
         ! bring projected center of mass back into the domain
-        if(subclcmass(i,1)>nx)subclcmass(i,1)=subclcmass(i,1)-nx
-        if(subclcmass(i,1)<1)subclcmass(i,1)=nx-abs(subclcmass(i,1))
-        if(subclcmass(i,2)>ny)subclcmass(i,2)=subclcmass(i,2)-ny
-        if(subclcmass(i,2)<1)subclcmass(i,2)=ny-abs(subclcmass(i,2))
-        if(subwclcmass(i,1)>nx)subwclcmass(i,1)=subwclcmass(i,1)-nx
-        if(subwclcmass(i,1)<1)subwclcmass(i,1)=nx-abs(subwclcmass(i,1))
-        if(subwclcmass(i,2)>ny)subwclcmass(i,2)=subwclcmass(i,2)-ny
-        if(subwclcmass(i,2)<1)subwclcmass(i,2)=ny-abs(subwclcmass(i,2))
+        if(subclcmass(i,1)>maxx)subclcmass(i,1)=minx + (subclcmass(i,1)-maxx)
+        if(subclcmass(i,1)<minx)subclcmass(i,1)=maxx + (subclcmass(i,1)-minx)
+        if(subclcmass(i,2)>maxy)subclcmass(i,2)=miny + (subclcmass(i,2)-maxy)
+        if(subclcmass(i,2)<miny)subclcmass(i,2)=maxy + (subclcmass(i,2)-miny)
+        if(subwclcmass(i,1)>maxx)subwclcmass(i,1)=minx + (subwclcmass(i,1)-maxx)
+        if(subwclcmass(i,1)<minx)subwclcmass(i,1)=maxx + (subwclcmass(i,1)-minx)
+        if(subwclcmass(i,2)>maxy)subwclcmass(i,2)=miny + (subwclcmass(i,2)-maxy)
+        if(subwclcmass(i,2)<miny)subwclcmass(i,2)=maxy + (subwclcmass(i,2)-miny)
       end do
 
       CALL streamClose(streamID1)
